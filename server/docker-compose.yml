@@ -1,0 +1,38 @@
+name: booking-app
+
+services:
+  database:
+    image: postgres:16-alpine
+    container_name: bookingapp_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: BookingApp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - booking_network
+
+  api:
+    build:
+      context: .
+      dockerfile: BookingApp.Api/Dockerfile
+    container_name: bookingapp_api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=database;Database=BookingApp;Username=postgres;Password=postgres
+    ports:
+      - "18000:8080"
+    depends_on:
+      - database
+    networks:
+      - booking_network
+
+volumes:
+  postgres_data:
+
+networks:
+  booking_network:
+    driver: bridge

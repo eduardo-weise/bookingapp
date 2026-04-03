@@ -1,0 +1,146 @@
+root = true
+
+###############################################
+# GLOBAL
+###############################################
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+indent_style = tab
+indent_size = 4
+trim_trailing_whitespace = true
+
+###############################################
+# C#
+###############################################
+[*.cs]
+
+###############
+# NAMESPACE
+###############
+csharp_style_namespace_declarations = file_scoped:error
+
+###############
+# USING
+###############
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+csharp_new_line_after_using_directives = true
+
+###############
+# VAR
+###############
+csharp_style_var_for_built_in_types = true:error
+csharp_style_var_when_type_is_apparent = true:error
+csharp_style_var_elsewhere = true:error
+
+###############
+# EXPRESSÃO / CORPO
+###############
+csharp_style_expression_bodied_methods = when_possible:suggestion
+csharp_style_expression_bodied_constructors = when_possible:suggestion
+csharp_style_expression_bodied_operators = when_possible:suggestion
+csharp_style_expression_bodied_properties = when_possible:suggestion
+
+###############
+# NULLABLE / SIMPLIFICAÇÃO
+###############
+dotnet_style_null_propagation = true:error
+dotnet_style_coalesce_expression = true:error
+dotnet_style_prefer_is_null_check_over_reference_equality_method = true:error
+
+###############
+# PADRÕES MODERNOS
+###############
+csharp_style_prefer_pattern_matching = true:error
+csharp_style_prefer_switch_expression = true:error
+csharp_style_prefer_not_pattern = true:error
+
+###############
+# TIPAGEM
+###############
+dotnet_style_predefined_type_for_locals_parameters_members = true:error
+dotnet_style_predefined_type_for_member_access = true:error
+
+###############
+# BRACES
+###############
+csharp_prefer_braces = when_multiline:error
+
+###############
+# CONSTRUTORES PRIMÁRIOS (C# 12+)
+###############
+csharp_style_prefer_primary_constructors = true:suggestion
+
+###############
+# MODIFIERS
+###############
+csharp_preferred_modifier_order = public, private, protected, internal, static, extern, new, virtual, abstract, sealed, override, readonly, unsafe, required, volatile, async:error
+
+###############
+# NAMING
+###############
+
+# Interfaces com I
+dotnet_naming_rule.interfaces_should_start_with_i.symbols = interfaces
+dotnet_naming_rule.interfaces_should_start_with_i.style = prefix_i
+dotnet_naming_rule.interfaces_should_start_with_i.severity = error
+
+dotnet_naming_symbols.interfaces.applicable_kinds = interface
+
+dotnet_naming_style.prefix_i.required_prefix = I
+dotnet_naming_style.prefix_i.capitalization = pascal_case
+
+# Métodos PascalCase
+dotnet_naming_rule.methods_pascal_case.symbols = methods
+dotnet_naming_rule.methods_pascal_case.style = pascal_case
+dotnet_naming_rule.methods_pascal_case.severity = error
+
+dotnet_naming_symbols.methods.applicable_kinds = method
+
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+
+# Campos privados _camelCase
+dotnet_naming_rule.private_fields_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_underscore.style = underscore_camel
+dotnet_naming_rule.private_fields_underscore.severity = error
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+dotnet_naming_style.underscore_camel.required_prefix = _
+dotnet_naming_style.underscore_camel.capitalization = camel_case
+
+###############
+# ANALYZERS IMPORTANTES
+###############
+
+# Remover usings não usados
+dotnet_diagnostic.IDE0005.severity = error
+
+# Simplificações
+dotnet_diagnostic.IDE0003.severity = error
+dotnet_diagnostic.IDE0044.severity = error
+
+# Async
+dotnet_diagnostic.VSTHRD200.severity = warning
+
+# Nullable warnings como erro
+dotnet_analyzer_diagnostic.category-NullableAnalysis.severity = error
+
+dotnet_diagnostic.IDE0029.severity = none
+dotnet_diagnostic.IDE0030.severity = none
+dotnet_diagnostic.IDE0270.severity = none
+
+###############
+# FORMAT
+###############
+csharp_new_line_before_open_brace = all
+csharp_new_line_between_query_expression_clauses = true
+
+###############################################
+# JSON / YAML / OUTROS
+###############################################
+[*.{json,yml,yaml}]
+indent_size = 2

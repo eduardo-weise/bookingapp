@@ -1,0 +1,182 @@
+@HostAddress = http://localhost:18001
+@Token = YOUR_JWT_TOKEN_HERE
+
+### ==========================================
+### 1. AUTHENTICATION MODULE
+### ==========================================
+
+### Mapeado em LoginEndpoint, RegisterEndpoint, RefreshTokenEndpoint, SetupMfaEndpoint, VerifyMfaEndpoint
+
+### Register User
+POST {{HostAddress}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "Password123!"
+}
+
+###
+
+### Login User
+POST {{HostAddress}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "Password123!"
+}
+
+###
+
+### Refresh Token
+POST {{HostAddress}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "your_refresh_token_here"
+}
+
+###
+
+### Setup MFA (Requires Auth)
+POST {{HostAddress}}/auth/mfa/setup
+Authorization: Bearer {{Token}}
+
+###
+
+### Verify MFA (Requires Auth)
+POST {{HostAddress}}/auth/mfa/verify
+Content-Type: application/json
+Authorization: Bearer {{Token}}
+
+{
+  "code": "123456"
+}
+
+### ==========================================
+### 2. USERS MODULE
+### ==========================================
+
+### Get User Profile (Requires Auth)
+GET {{HostAddress}}/users/profile
+Authorization: Bearer {{Token}}
+
+###
+
+### Update User Profile (Requires Auth)
+PUT {{HostAddress}}/users/profile
+Content-Type: application/json
+Authorization: Bearer {{Token}}
+
+{
+  "name": "Eduardo Weise",
+  "phoneNumber": "+5511999999999"
+}
+
+###
+
+### Soft Delete User Profile (Requires Auth)
+DELETE {{HostAddress}}/users/profile
+Authorization: Bearer {{Token}}
+
+
+### ==========================================
+### 3. SERVICES MODULE
+### ==========================================
+
+### Get All Services
+GET {{HostAddress}}/services
+
+###
+
+### Get Service By ID
+@ServiceId = 00000000-0000-0000-0000-000000000000
+GET {{HostAddress}}/services/{{ServiceId}}
+
+###
+
+### Manage Client Service Duration (Requires Auth - Should be Admin/Staff, but requires Auth only now)
+POST {{HostAddress}}/services/{{ServiceId}}/client-duration
+Content-Type: application/json
+Authorization: Bearer {{Token}}
+
+{
+  "clientId": "00000000-0000-0000-0000-000000000000",
+  "durationMinutes": 45
+}
+
+
+### ==========================================
+### 4. SCHEDULING MODULE
+### ==========================================
+
+### Get Available Slots
+GET {{HostAddress}}/appointments/available-slots?date=2026-10-15&serviceId={{ServiceId}}
+
+###
+
+### Book Appointment (Requires Auth)
+POST {{HostAddress}}/appointments
+Content-Type: application/json
+Authorization: Bearer {{Token}}
+
+{
+  "serviceId": "{{ServiceId}}",
+  "startTime": "2026-10-15T14:30:00Z"
+}
+
+###
+
+### Get Appointment History (Requires Auth)
+GET {{HostAddress}}/appointments/history
+Authorization: Bearer {{Token}}
+
+###
+
+### Cancel Appointment (Requires Auth)
+@AppointmentId = 00000000-0000-0000-0000-000000000000
+POST {{HostAddress}}/appointments/{{AppointmentId}}/cancel
+Authorization: Bearer {{Token}}
+
+
+### --- SWAP REQUESTS ---
+
+### Create Swap Request (Requires Auth)
+POST {{HostAddress}}/appointments/swaps
+Content-Type: application/json
+Authorization: Bearer {{Token}}
+
+{
+  "requesterAppointmentId": "{{AppointmentId}}",
+  "targetAppointmentId": "11111111-1111-1111-1111-111111111111"
+}
+
+###
+
+### Accept Swap Request (Requires Auth)
+@SwapRequestId = 00000000-0000-0000-0000-000000000000
+POST {{HostAddress}}/appointments/swaps/{{SwapRequestId}}/accept
+Authorization: Bearer {{Token}}
+
+###
+
+### Decline Swap Request (Requires Auth)
+POST {{HostAddress}}/appointments/swaps/{{SwapRequestId}}/decline
+Authorization: Bearer {{Token}}
+
+
+### ==========================================
+### 5. PAYMENTS MODULE
+### ==========================================
+
+### Get Debt Balances (Requires Auth)
+GET {{HostAddress}}/payments/debts
+Authorization: Bearer {{Token}}
+
+###
+
+### Pay Debt Balance (Requires Auth)
+@DebtId = 00000000-0000-0000-0000-000000000000
+POST {{HostAddress}}/payments/debts/{{DebtId}}/pay
+Authorization: Bearer {{Token}}

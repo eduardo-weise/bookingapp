@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/server/">
+    <Project Path="BookingApp.API\BookingApp.API.csproj" />
+    <Project Path="BookingApp.Domain\BookingApp.Domain.csproj" />
+    <Project Path="BookingApp.Infrastructure/BookingApp.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
+</Solution>
