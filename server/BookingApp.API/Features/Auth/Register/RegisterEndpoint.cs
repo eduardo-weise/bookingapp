@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using BookingApp.Domain.Entities;
 using BookingApp.Domain.Exceptions;
 using BookingApp.Infrastructure.Authentication;
@@ -63,7 +64,7 @@ public sealed class RegisterEndpoint(ApplicationDbContext dbContext)
 			user.Id.ToString(),
 			privileges =>
 			{
-				privileges.Claims.Add(new("UserID", user.Id.ToString()));
+				privileges.Claims.Add(new(ClaimTypes.NameIdentifier, user.Id.ToString()));
 				privileges.Roles.Add(user.Role);
 			});
 

@@ -4,16 +4,18 @@ using BookingApp.Infrastructure.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace BookingApp.API.Features.Users.SoftDeleteUser;
+namespace BookingApp.API.Features.Users.GetUserProfile;
 
-public sealed class SoftDeleteUserEndpoint(ApplicationDbContext dbContext)
-	: EndpointWithoutRequest
+public sealed record UserProfileDto(Guid Id, string Email, string? Name, string? PhoneNumber, bool IsMfaEnabled);
+
+public sealed class GetUserProfileEndpoint(ApplicationDbContext dbContext)
+	: EndpointWithoutRequest<UserProfileDto>
 {
 	public override void Configure()
 	{
-		Delete("/users/me");
+		Get("/users");
 		Tags("Users");
-		Options(x => x.WithName("SoftDeleteUser"));
+		Options(x => x.WithName("GetUserProfile"));
 	}
 
 	public override async Task HandleAsync(CancellationToken ct)
@@ -26,14 +28,10 @@ public sealed class SoftDeleteUserEndpoint(ApplicationDbContext dbContext)
 		}
 
 		var user = await dbContext.Users
+			.AsNoTracking()
 			.SingleOrDefaultAsync(u => u.Id == userId, ct)
 			?? throw new NotFoundException("Usuário não encontrado.");
 
-		user.SoftDelete();
-		user.RevokeAllRefreshTokens();
-
-		await dbContext.SaveChangesAsync(ct);
-
-		await Send.NoContentAsync(ct);
+		await Send.OkAsync(new UserProfileDto(user.Id, user.Email, user.Name, user.PhoneNumber, user.IsMfaEnabled), cancellation: ct);
 	}
 }

@@ -1,9 +1,10 @@
-namespace BookingApp.API.Extentions;
-
+using System.Security.Claims;
 using BookingApp.Infrastructure.Authentication;
 using FastEndpoints.Security;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+
+namespace BookingApp.API.Extentions;
 
 public static class AuthExtensions
 {
@@ -15,9 +16,9 @@ public static class AuthExtensions
 			.AddAuthenticationJwtBearer(o => o.SigningKey = configuration["JwtOptions:SecretKey"])
 			.AddAuthorization()
 			.AddAuthorizationBuilder()
-				.AddPolicy("AdminsOnly", x => x.RequireRole("Admin").RequireClaim("UserId"))
-				.AddPolicy("AdminOrManager", x => x.RequireRole("Admin", "Manager").RequireClaim("UserId"))
-				.AddPolicy("All", x => x.RequireRole("Admin", "Manager", "Client").RequireClaim("UserId"));
+				.AddPolicy("AdminsOnly", x => x.RequireRole("Admin").RequireClaim(ClaimTypes.NameIdentifier))
+				.AddPolicy("AdminOrManager", x => x.RequireRole("Admin", "Manager").RequireClaim(ClaimTypes.NameIdentifier))
+				.AddPolicy("All", x => x.RequireRole("Admin", "Manager", "Client").RequireClaim(ClaimTypes.NameIdentifier));
 
 		return services;
 	}

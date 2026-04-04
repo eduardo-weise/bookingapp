@@ -23,7 +23,7 @@ public sealed class UpdateUserProfileEndpoint(ApplicationDbContext dbContext)
 {
 	public override void Configure()
 	{
-		Put("/users/me");
+		Put("/users");
 		Tags("Users");
 		Options(x => x.WithName("UpdateUserProfile"));
 	}

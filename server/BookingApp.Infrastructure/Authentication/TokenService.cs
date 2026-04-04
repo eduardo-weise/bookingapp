@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using BookingApp.Domain.Entities;
 using BookingApp.Infrastructure.Data;
 using FastEndpoints;
@@ -33,79 +34,86 @@ public class TokenService : RefreshTokenService<TokenRequest, CustomTokenRespons
 		});
 	}
 
-	// chamado sempre que um novo par access/refresh é gerado — persiste no banco
-	public override async Task PersistTokenAsync(CustomTokenResponse response)
+	private async Task ExecuteWithDbContextAsync(Func<ApplicationDbContext, Task> action)
 	{
 		using var scope = _scopeFactory.CreateScope();
 		var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+		await action(dbContext);
+	}
 
+	// chamado sempre que um novo par access/refresh é gerado — persiste no banco
+	public override async Task PersistTokenAsync(CustomTokenResponse response)
+	{
 		if (!Guid.TryParse(response.UserId, out var userId))
 		{
 			AddError(_credentialsError);
 			return;
 		}
 
-		var user = await dbContext.Users
-			.SingleOrDefaultAsync(u => u.Id == userId);
-
-		if (user is null)
+		await ExecuteWithDbContextAsync(async dbContext =>
 		{
-			AddError(_credentialsError);
-			return;
-		}
+			var user = await dbContext.Users
+				.SingleOrDefaultAsync(u => u.Id == userId);
 
-		user.AddRefreshToken(new RefreshToken(
-			user.Id,
-			response.RefreshToken,
-			response.RefreshExpiry));
+			if (user is null)
+			{
+				AddError(_credentialsError);
+				return;
+			}
 
-		await dbContext.SaveChangesAsync();
+			user.AddRefreshToken(new RefreshToken(
+				user.Id,
+				response.RefreshToken,
+				response.RefreshExpiry));
+
+			await dbContext.SaveChangesAsync();
+		});
 	}
 
 	public override async Task RefreshRequestValidationAsync(TokenRequest request)
 	{
-		using var scope = _scopeFactory.CreateScope();
-		var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
 		if (!Guid.TryParse(request.UserId, out var userId))
 		{
 			AddError(_credentialsError);
 			return;
 		}
 
-		var user = await dbContext.Users
-			.Include(u => u.RefreshTokens)
-			.SingleOrDefaultAsync(u => u.Id == userId);
-
-		if (user is null)
+		await ExecuteWithDbContextAsync(async dbContext =>
 		{
-			AddError(_credentialsError);
-			return;
-		}
+			var user = await dbContext.Users
+				.Include(u => u.RefreshTokens)
+				.SingleOrDefaultAsync(u => u.Id == userId);
 
-		var hasValidToken = user.HasValidRefreshToken(request.RefreshToken);
-		if (!hasValidToken)
-			AddError(r => r.RefreshToken, "Refresh token inválido ou expirado.");
+			if (user is null)
+			{
+				AddError(_credentialsError);
+				return;
+			}
+
+			var hasValidToken = user.HasValidRefreshToken(request.RefreshToken);
+			if (!hasValidToken)
+				AddError(r => r.RefreshToken, "Refresh token inválido ou expirado.");
+		});
 	}
 
 	public override async Task SetRenewalPrivilegesAsync(TokenRequest request, UserPrivileges privileges)
 	{
-		using var scope = _scopeFactory.CreateScope();
-		var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
 		if (Guid.TryParse(request.UserId, out var userId))
 		{
-			var userRole = await dbContext.Users
-				.Where(u => u.Id == userId)
-				.Select(u => u.Role)
-				.SingleOrDefaultAsync();
-
-			if (!string.IsNullOrEmpty(userRole))
+			await ExecuteWithDbContextAsync(async dbContext =>
 			{
-				privileges.Roles.Add(userRole);
-			}
+				var userRole = await dbContext.Users
+					.Where(u => u.Id == userId)
+					.Select(u => u.Role)
+					.SingleOrDefaultAsync();
+
+				if (!string.IsNullOrEmpty(userRole))
+				{
+					privileges.Roles.Add(userRole);
+				}
+			});
 		}
 
-		privileges.Claims.Add(new("UserID", request.UserId));
+		privileges.Claims.Add(new(ClaimTypes.NameIdentifier, request.UserId));
 	}
 }

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using BookingApp.Infrastructure.Authentication;
 using BookingApp.Infrastructure.Data;
 using FastEndpoints;
@@ -46,7 +47,7 @@ public sealed class LoginEndpoint(ApplicationDbContext dbContext)
 			user.Id.ToString(),
 			privileges =>
 			{
-				privileges.Claims.Add(new("UserID", user.Id.ToString()));
+				privileges.Claims.Add(new(ClaimTypes.NameIdentifier, user.Id.ToString()));
 				privileges.Roles.Add(user.Role);
 			});
 
