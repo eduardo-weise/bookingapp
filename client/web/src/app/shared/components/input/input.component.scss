@@ -1,0 +1,41 @@
+:host {
+    display: block;
+}
+
+.field {
+    display: grid;
+    gap: var(--space-2);
+
+    &__label {
+        color: var(--color-text);
+        font-size: var(--text-sm);
+        font-weight: 600;
+    }
+
+    &__input {
+        width: 100%;
+        min-height: 48px;
+        padding: 0 var(--space-4);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        background: var(--color-surface);
+        color: var(--color-text);
+        font: inherit;
+        outline: none;
+        box-shadow: none;
+
+        &::placeholder {
+            color: var(--color-text-muted);
+        }
+
+        &:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+    }
+
+    &__hint {
+        color: var(--color-text-muted);
+        font-size: var(--text-sm);
+    }
+}

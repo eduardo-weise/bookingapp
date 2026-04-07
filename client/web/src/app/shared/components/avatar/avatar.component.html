@@ -1,0 +1,15 @@
+<div
+    [class]="avatarClass()"
+    [attr.aria-label]="name()"
+    role="img"
+>
+    @if (imageUrl()) {
+    <img
+        class="avatar__image"
+        [src]="imageUrl()"
+        [alt]="name()"
+    />
+    } @else {
+    <span class="avatar__initials">{{ initials() }}</span>
+    }
+</div>

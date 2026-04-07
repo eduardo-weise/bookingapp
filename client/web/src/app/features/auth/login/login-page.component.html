@@ -1,0 +1,68 @@
+<section class="login-screen">
+  <div class="login-shell">
+    <header class="login-hero">
+      <div class="login-hero__mark">
+        <img src="/images/login-example.svg" alt="Ilustração de calendário para exemplo de login" />
+      </div>
+    </header>
+
+    <section class="login-card" aria-labelledby="login-title">
+      <div class="login-card__header">
+        <h2 id="login-title">{{ mode() === 'login' ? 'Entrar na sua conta' : 'Crie sua conta' }}</h2>
+      </div>
+
+      <form class="login-form" [formGroup]="authForm" (ngSubmit)="submitAuth()">
+        <label class="login-field">
+          <span>Email</span>
+          <div class="login-field__control" [class.login-field__control--invalid]="isFieldInvalid('email')">
+            <input type="email" placeholder="seu@email.com" formControlName="email" />
+            <span class="login-field__icon" aria-hidden="true">✉</span>
+          </div>
+
+          @if (isFieldInvalid('email')) {
+            <span class="login-field__error">Digite um email valido.</span>
+          }
+        </label>
+
+        <label class="login-field">
+          <span>Senha</span>
+          <div class="login-field__control" [class.login-field__control--invalid]="isFieldInvalid('password')">
+            <input type="password" placeholder="••••••••" formControlName="password" />
+            <span class="login-field__icon" aria-hidden="true">◉</span>
+          </div>
+
+          @if (isFieldInvalid('password')) {
+            <span class="login-field__error">A senha deve ter pelo menos 8 caracteres.</span>
+          }
+        </label>
+
+        <div class="login-form__meta" [class.login-form__meta--single]="mode() === 'register'">
+          <label class="remember-me">
+            <input type="checkbox" formControlName="rememberMe" />
+            <span>Lembrar-me</span>
+          </label>
+
+          @if (mode() === 'login') {
+            <span class="login-form__soon">Esqueceu a senha? Em breve.</span>
+          }
+        </div>
+
+        @if (authError()) {
+          <p class="login-feedback login-feedback--error">{{ authError() }}</p>
+        }
+
+        <button class="login-submit" type="submit" [disabled]="isSubmitting()">{{ submitLabel }}</button>
+      </form>
+    </section>
+
+    <footer class="login-footer">
+      @if (mode() === 'login') {
+        <span>Nao tem uma conta?</span>
+        <button type="button" class="login-footer__action" (click)="setMode('register')">Cadastre-se</button>
+      } @else {
+        <span>Ja possui conta?</span>
+        <button type="button" class="login-footer__action" (click)="setMode('login')">Entrar</button>
+      }
+    </footer>
+  </div>
+</section>

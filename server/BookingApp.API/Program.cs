@@ -8,6 +8,15 @@ var configuration = builder.Configuration;
 
 // Add services to the container.
 builder.Services
+	.AddCors(options =>
+	{
+		options.AddDefaultPolicy(policy =>
+		{
+			policy.AllowAnyOrigin()
+				  .AllowAnyMethod()
+				  .AllowAnyHeader();
+		});
+	})
 	.AddDbContext(configuration)
 	.AddAuth(configuration)
 	.AddFastEndpoints()
@@ -19,7 +28,8 @@ var app = builder.Build();
 
 await app.UseDbContext();
 
-app.UseAuthentication()
+app.UseCors()
+	.UseAuthentication()
 	.UseAuthorization()
 	.UseOutputCache()
 	.UseDefaultExceptionHandler()

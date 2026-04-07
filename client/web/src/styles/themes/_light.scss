@@ -1,0 +1,8 @@
+@use '../tokens/colors' as *;
+
+:root {
+	--color-bg: #{$color-cream-20};
+	--color-surface: #{$color-cream-60};
+	--color-primary: #{$color-espresso};
+	--color-text: #{$color-espresso};
+}

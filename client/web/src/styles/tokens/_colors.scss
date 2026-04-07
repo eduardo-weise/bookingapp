@@ -1,0 +1,21 @@
+$color-espresso: #4A2C2A;
+$color-espresso-80: #6A3E3B;
+$color-espresso-60: #92615D;
+$color-espresso-20: #D1B3AF;
+
+$color-cream: #F5EFE6;
+$color-cream-80: #F0E7DC;
+$color-cream-60: #FAF6F0;
+$color-cream-20: #FFFCF8;
+
+:root {
+	--color-espresso: #{$color-espresso};
+	--color-espresso-80: #{$color-espresso-80};
+	--color-espresso-60: #{$color-espresso-60};
+	--color-espresso-20: #{$color-espresso-20};
+
+	--color-cream: #{$color-cream};
+	--color-cream-80: #{$color-cream-80};
+	--color-cream-60: #{$color-cream-60};
+	--color-cream-20: #{$color-cream-20};
+}

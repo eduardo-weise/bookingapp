@@ -1,0 +1,33 @@
+@if (open()) {
+<div
+    class="sheet-backdrop"
+    (click)="close()"
+></div>
+
+<dialog
+    class="sheet"
+    open
+>
+    <header class="sheet__header">
+        <div class="sheet__heading">
+            @if (title()) {
+            <h3>{{ title() }}</h3>
+            }
+
+            @if (description()) {
+            <p>{{ description() }}</p>
+            }
+        </div>
+
+        <button
+            class="sheet__close"
+            type="button"
+            (click)="close()"
+        >Fechar</button>
+    </header>
+
+    <div class="sheet__content">
+        <ng-content></ng-content>
+    </div>
+</dialog>
+}

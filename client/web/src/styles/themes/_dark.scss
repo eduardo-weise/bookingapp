@@ -1,0 +1,8 @@
+@use '../tokens/colors' as *;
+
+[data-theme="dark"] {
+	--color-bg: #{$color-espresso-20};
+	--color-surface: #{$color-espresso-60};
+	--color-primary: #{$color-cream};
+	--color-text: #{$color-cream};
+}

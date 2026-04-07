@@ -1,0 +1,23 @@
+<label
+    class="field"
+    [attr.for]="inputId"
+>
+    @if (label()) {
+    <span class="field__label">{{ label() }}</span>
+    }
+
+    <input
+        class="field__input"
+        [id]="inputId"
+        [attr.type]="type()"
+        [attr.placeholder]="placeholder()"
+        [value]="value()"
+        [disabled]="disabled()"
+        [readOnly]="readonly()"
+        [required]="required()"
+    />
+
+    @if (hint()) {
+    <span class="field__hint">{{ hint() }}</span>
+    }
+</label>
