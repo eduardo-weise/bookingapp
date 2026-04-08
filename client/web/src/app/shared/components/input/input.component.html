@@ -1,6 +1,6 @@
 <label
     class="field"
-    [attr.for]="inputId"
+    [attr.for]="resolvedInputId"
 >
     @if (label()) {
     <span class="field__label">{{ label() }}</span>
@@ -8,13 +8,15 @@
 
     <input
         class="field__input"
-        [id]="inputId"
+        [id]="resolvedInputId"
         [attr.type]="type()"
         [attr.placeholder]="placeholder()"
-        [value]="value()"
-        [disabled]="disabled()"
+        [value]="value"
+        [disabled]="disabled() || isDisabled"
         [readOnly]="readonly()"
         [required]="required()"
+        (input)="handleInput($event)"
+        (blur)="handleBlur()"
     />
 
     @if (hint()) {

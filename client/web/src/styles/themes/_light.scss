@@ -1,8 +1,25 @@
-@use '../tokens/colors' as *;
-
 :root {
-	--color-bg: #{$color-cream-20};
-	--color-surface: #{$color-cream-60};
-	--color-primary: #{$color-espresso};
-	--color-text: #{$color-espresso};
+	--color-bg: linear-gradient(135deg, rgba(248, 240, 225, 0.96), rgba(227, 230, 213, 0.9));
+	--color-bg-solid: #f3ebdc;
+	--color-bg-elevated: rgba(255, 248, 239, 0.72);
+	--color-surface: rgba(255, 247, 238, 0.58);
+	--color-surface-strong: rgba(255, 250, 243, 0.78);
+	--color-surface-soft: rgba(255, 247, 240, 0.42);
+	--color-panel: rgba(226, 226, 214, 0.34);
+	--color-glass: rgba(255, 250, 244, 0.38);
+	--color-glass-strong: rgba(255, 252, 248, 0.54);
+	--color-border: rgba(255, 255, 255, 0.38);
+	--color-border-strong: rgba(255, 255, 255, 0.62);
+	--color-primary: var(--palette-amber-500);
+	--color-primary-strong: var(--palette-amber-600);
+	--color-primary-soft: rgba(255, 159, 28, 0.18);
+	--color-accent: var(--palette-sage-500);
+	--color-on-primary: #fffaf4;
+	--color-text: rgba(39, 35, 31, 0.95);
+	--color-text-muted: rgba(97, 88, 77, 0.7);
+	--color-text-soft: rgba(117, 106, 95, 0.56);
+	--color-danger: var(--palette-danger-500);
+	--color-danger-soft: rgba(214, 82, 56, 0.12);
+	--color-success: var(--palette-success-500);
+	--page-blur-tint: rgba(255, 248, 235, 0.2);
 }

@@ -10,5 +10,5 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 export class CardComponent {
     readonly title = input('');
     readonly subtitle = input('');
-    readonly padded = input(true);
+    readonly variant = input<'glass' | 'solid'>('glass');
 }

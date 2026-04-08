@@ -15,6 +15,20 @@ export interface AuthResponse {
   expiry: Date;
 }
 
+export interface RegisterPayload {
+  email: string;
+  password: string;
+  cpf: string;
+  address?: {
+    street: string;
+    number: string;
+    neighborhood: string;
+    zipCode: string;
+    city: string;
+    state: string;
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -36,7 +50,7 @@ export class AuthService {
     );
   }
 
-  register(userData: { email: string; password: string }): Observable<AuthResponse> {
+  register(userData: RegisterPayload): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, userData).pipe(
       tap(res => {
         this.setAuthenticatedSession(res.token, userData.email);

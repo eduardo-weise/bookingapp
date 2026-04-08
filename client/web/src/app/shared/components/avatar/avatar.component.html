@@ -1,8 +1,4 @@
-<div
-    [class]="avatarClass()"
-    [attr.aria-label]="name()"
-    role="img"
->
+<figure [class]="avatarClass()">
     @if (imageUrl()) {
     <img
         class="avatar__image"
@@ -10,6 +6,6 @@
         [alt]="name()"
     />
     } @else {
-    <span class="avatar__initials">{{ initials() }}</span>
+    <span class="avatar__initials" [attr.aria-label]="name()">{{ initials() }}</span>
     }
-</div>
+</figure>

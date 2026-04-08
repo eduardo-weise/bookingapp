@@ -1,68 +1,248 @@
-<section class="login-screen">
-  <div class="login-shell">
-    <header class="login-hero">
-      <div class="login-hero__mark">
-        <img src="/images/login-example.svg" alt="Ilustração de calendário para exemplo de login" />
-      </div>
-    </header>
+<section
+	class="auth-page"
+	#stage
+	[attr.data-mode]="mode()"
+>
+	<aside
+		class="auth-info js-entrance"
+		#infoPanel
+	>
+		<div class="auth-info__logo">BA</div>
 
-    <section class="login-card" aria-labelledby="login-title">
-      <div class="login-card__header">
-        <h2 id="login-title">{{ mode() === 'login' ? 'Entrar na sua conta' : 'Crie sua conta' }}</h2>
-      </div>
+		<div class="auth-info__copy">
+			<span class="auth-info__eyebrow">{{ welcomeEyebrow }}</span>
+			<h2>{{ welcomeTitle }}</h2>
+		</div>
 
-      <form class="login-form" [formGroup]="authForm" (ngSubmit)="submitAuth()">
-        <label class="login-field">
-          <span>Email</span>
-          <div class="login-field__control" [class.login-field__control--invalid]="isFieldInvalid('email')">
-            <input type="email" placeholder="seu@email.com" formControlName="email" />
-            <span class="login-field__icon" aria-hidden="true">✉</span>
-          </div>
+		<app-button
+			class="auth-info__action"
+			type="button"
+			variant="secondary"
+			size="lg"
+			[label]="sideButtonLabel"
+			[disabled]="isAnimating()"
+			(click)="toggleMode()"
+		></app-button>
+	</aside>
 
-          @if (isFieldInvalid('email')) {
-            <span class="login-field__error">Digite um email valido.</span>
-          }
-        </label>
+	<app-card
+		class="auth-card js-entrance"
+		#cardShell
+		variant="glass"
+	>
+		<div
+			class="auth-card__body"
+			#formBody
+		>
+			<header class="auth-card__header">
+				<span class="auth-card__eyebrow">{{ cardEyebrow }}</span>
+				<h1>{{ cardTitle }}</h1>
+				<p>{{ cardDescription }}</p>
+			</header>
 
-        <label class="login-field">
-          <span>Senha</span>
-          <div class="login-field__control" [class.login-field__control--invalid]="isFieldInvalid('password')">
-            <input type="password" placeholder="••••••••" formControlName="password" />
-            <span class="login-field__icon" aria-hidden="true">◉</span>
-          </div>
+			<form
+				class="auth-form"
+				[class.auth-form--register]="isRegisterMode"
+				[formGroup]="authForm"
+				(ngSubmit)="submitAuth()"
+			>
+				@if (isRegisterMode) {
+					<div class="auth-form__register-grid">
+						<div class="auth-form__column">
+							<div class="auth-field">
+								<app-input
+									id="auth-email"
+									label="Email"
+									type="email"
+									placeholder="username@gmail.com"
+									formControlName="email"
+								></app-input>
 
-          @if (isFieldInvalid('password')) {
-            <span class="login-field__error">A senha deve ter pelo menos 8 caracteres.</span>
-          }
-        </label>
+								@if (isFieldInvalid('email')) {
+									<span class="auth-field__error">Digite um email valido.</span>
+								}
+							</div>
 
-        <div class="login-form__meta" [class.login-form__meta--single]="mode() === 'register'">
-          <label class="remember-me">
-            <input type="checkbox" formControlName="rememberMe" />
-            <span>Lembrar-me</span>
-          </label>
+							<div class="auth-field">
+								<app-input
+									id="auth-password"
+									label="Password"
+									type="password"
+									placeholder="Password"
+									formControlName="password"
+								></app-input>
 
-          @if (mode() === 'login') {
-            <span class="login-form__soon">Esqueceu a senha? Em breve.</span>
-          }
-        </div>
+								@if (isFieldInvalid('password')) {
+									<span class="auth-field__error">A senha deve ter pelo menos 8 caracteres.</span>
+								}
+							</div>
 
-        @if (authError()) {
-          <p class="login-feedback login-feedback--error">{{ authError() }}</p>
-        }
+							<div class="auth-field">
+								<app-input
+									id="auth-confirm-password"
+									label="Confirm password"
+									type="password"
+									placeholder="Repeat your password"
+									formControlName="confirmPassword"
+								></app-input>
 
-        <button class="login-submit" type="submit" [disabled]="isSubmitting()">{{ submitLabel }}</button>
-      </form>
-    </section>
+								@if (isFieldInvalid('confirmPassword')) {
+									<span class="auth-field__error">Repita a senha exatamente como no campo anterior.</span>
+								}
+							</div>
 
-    <footer class="login-footer">
-      @if (mode() === 'login') {
-        <span>Nao tem uma conta?</span>
-        <button type="button" class="login-footer__action" (click)="setMode('register')">Cadastre-se</button>
-      } @else {
-        <span>Ja possui conta?</span>
-        <button type="button" class="login-footer__action" (click)="setMode('login')">Entrar</button>
-      }
-    </footer>
-  </div>
+							<div class="auth-field">
+								<app-input
+									id="auth-cpf"
+									label="CPF"
+									type="tel"
+									placeholder="00000000000"
+									formControlName="cpf"
+								></app-input>
+
+								@if (isFieldInvalid('cpf')) {
+									<span class="auth-field__error">Informe um CPF valido com 11 numeros.</span>
+								}
+							</div>
+						</div>
+
+						<div class="auth-form__column">
+							<div class="auth-field">
+								<app-input
+									id="auth-zip-code"
+									label="CEP"
+									type="tel"
+									placeholder="00000000"
+									formControlName="zipCode"
+									[hint]="zipFeedback()"
+								></app-input>
+
+								@if (isFieldInvalid('zipCode')) {
+									<span class="auth-field__error">Informe o CEP com 8 numeros.</span>
+								}
+							</div>
+
+							<div class="auth-field auth-field--row">
+								<app-input
+									id="auth-street"
+									label="Rua / Avenida"
+									type="text"
+									placeholder="Rua Exemplo"
+									formControlName="street"
+								></app-input>
+
+								<app-input
+									id="auth-number"
+									label="Numero"
+									type="text"
+									placeholder="123"
+									formControlName="number"
+								></app-input>
+							</div>
+
+							<div class="auth-field">
+								<app-input
+									id="auth-neighborhood"
+									label="Bairro"
+									type="text"
+									placeholder="Centro"
+									formControlName="neighborhood"
+								></app-input>
+							</div>
+
+							<div class="auth-field auth-field--row">
+								<app-input
+									id="auth-city"
+									label="Cidade"
+									type="text"
+									placeholder="Cidade"
+									formControlName="city"
+									[readonly]="true"
+								></app-input>
+
+								<app-input
+									id="auth-state"
+									label="Estado"
+									type="text"
+									placeholder="UF"
+									formControlName="state"
+									[readonly]="true"
+								></app-input>
+							</div>
+						</div>
+					</div>
+				} @else {
+					<div class="auth-field">
+						<app-input
+							id="auth-email"
+							label="Email"
+							type="email"
+							placeholder="username@gmail.com"
+							formControlName="email"
+						></app-input>
+
+						@if (isFieldInvalid('email')) {
+							<span class="auth-field__error">Digite um email valido.</span>
+						}
+					</div>
+
+					<div class="auth-field">
+						<div class="auth-field__label-row">
+							<label for="auth-password">Password</label>
+							<button
+								class="auth-link"
+								type="button"
+							>
+								Forgot password?
+							</button>
+						</div>
+
+						<app-input
+							id="auth-password"
+							type="password"
+							placeholder="Password"
+							formControlName="password"
+						></app-input>
+
+						@if (isFieldInvalid('password')) {
+							<span class="auth-field__error">A senha deve ter pelo menos 8 caracteres.</span>
+						}
+					</div>
+
+					<label class="auth-check">
+						<input
+							type="checkbox"
+							formControlName="rememberMe"
+						/>
+						<span>Remember me</span>
+					</label>
+				}
+
+				@if (authError()) {
+					<p class="auth-feedback auth-feedback--error">{{ authError() }}</p>
+				}
+
+				<app-button
+					class="auth-submit"
+					type="submit"
+					size="lg"
+					variant="primary"
+					[label]="submitLabel"
+					[fullWidth]="true"
+					[disabled]="isSubmitting() || isAnimating()"
+				></app-button>
+			</form>
+
+			<footer class="auth-card__footer">
+				@if (isRegisterMode) {
+					<p>Ao continuar, sua conta sera criada imediatamente.</p>
+				} @else {
+					<p>Don&apos;t have an account yet? <button
+							type="button"
+							(click)="toggleMode()"
+						>Register for free</button></p>
+				}
+			</footer>
+		</div>
+	</app-card>
 </section>

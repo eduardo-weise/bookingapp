@@ -1,8 +1,25 @@
-@use '../tokens/colors' as *;
-
 [data-theme="dark"] {
-	--color-bg: #{$color-espresso-20};
-	--color-surface: #{$color-espresso-60};
-	--color-primary: #{$color-cream};
-	--color-text: #{$color-cream};
+	--color-bg: linear-gradient(135deg, rgba(46, 41, 35, 0.96), rgba(67, 63, 53, 0.92));
+	--color-bg-solid: #302a24;
+	--color-bg-elevated: rgba(77, 72, 63, 0.74);
+	--color-surface: rgba(82, 77, 69, 0.56);
+	--color-surface-strong: rgba(93, 88, 79, 0.78);
+	--color-surface-soft: rgba(88, 82, 73, 0.42);
+	--color-panel: rgba(110, 103, 90, 0.26);
+	--color-glass: rgba(99, 92, 82, 0.34);
+	--color-glass-strong: rgba(108, 101, 90, 0.5);
+	--color-border: rgba(255, 255, 255, 0.14);
+	--color-border-strong: rgba(255, 255, 255, 0.24);
+	--color-primary: #ffab34;
+	--color-primary-strong: #ff9813;
+	--color-primary-soft: rgba(255, 171, 52, 0.16);
+	--color-accent: #91c66d;
+	--color-on-primary: #251f18;
+	--color-text: rgba(255, 247, 239, 0.94);
+	--color-text-muted: rgba(234, 223, 212, 0.7);
+	--color-text-soft: rgba(234, 223, 212, 0.54);
+	--color-danger: #ff9b83;
+	--color-danger-soft: rgba(255, 155, 131, 0.12);
+	--color-success: #9fd283;
+	--page-blur-tint: rgba(20, 18, 15, 0.22);
 }
