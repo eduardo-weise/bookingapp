@@ -1,0 +1,26 @@
+name: app
+description: "BookingApp - Agendamento de serviços"
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  dio: ^5.9.2
+  flutter:
+    sdk: flutter
+  google_fonts: ^6.2.1
+  jwt_decoder: ^2.0.1
+  mask_text_input_formatter: ^2.9.0
+  shared_preferences: ^2.5.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/

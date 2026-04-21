@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookingApp.API.Features.Auth.Register;
 
-public sealed record RegisterRequest(string Email, string Password);
+public sealed record RegisterRequest(string Email, string Password, string Name, string Phone, string Cpf);
 
 public sealed class RegisterValidator : Validator<RegisterRequest>
 {
@@ -23,6 +23,15 @@ public sealed class RegisterValidator : Validator<RegisterRequest>
 		RuleFor(x => x.Password)
 			.NotEmpty().WithMessage("A senha é obrigatória.")
 			.MinimumLength(8).WithMessage("A senha deve ter no mínimo 8 caracteres.");
+			
+		RuleFor(x => x.Name)
+			.NotEmpty().WithMessage("O nome é obrigatório.");
+			
+		RuleFor(x => x.Phone)
+			.NotEmpty().WithMessage("O telefone é obrigatório.");
+			
+		RuleFor(x => x.Cpf)
+			.NotEmpty().WithMessage("O CPF é obrigatório.");
 	}
 }
 
@@ -51,7 +60,7 @@ public sealed class RegisterEndpoint(ApplicationDbContext dbContext)
 			throw new EmailAlreadyExistsException(request.Email);
 
 		var passwordHash = PasswordHasher.Hash(request.Password);
-		var user = new User(request.Email, passwordHash);
+		var user = new User(request.Email, passwordHash, request.Name, request.Phone, request.Cpf);
 
 		await dbContext.Users.AddAsync(user, ct);
 

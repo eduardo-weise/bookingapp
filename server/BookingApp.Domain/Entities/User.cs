@@ -8,6 +8,7 @@ public sealed class User : AggregateRoot
 	public string PasswordHash { get; private set; }
 	public string? Name { get; private set; }
 	public string? PhoneNumber { get; private set; }
+	public string? Cpf { get; private set; }
 	public bool IsMfaEnabled { get; private set; }
 	public string? MfaSecret { get; private set; }
 	public bool IsDeleted { get; private set; }
@@ -19,19 +20,23 @@ public sealed class User : AggregateRoot
 
 	private User() { Email = null!; PasswordHash = null!; Role = null!; } // EF Core
 
-	public User(string email, string passwordHash, string role = "All")
+	public User(string email, string passwordHash, string? name, string? phoneNumber, string? cpf, string role = "Client")
 	{
 		Email = email;
 		PasswordHash = passwordHash;
+		Name = name;
+		PhoneNumber = phoneNumber;
+		Cpf = cpf;
 		Role = role;
 		IsMfaEnabled = false;
 		IsDeleted = false;
 	}
 
-	public void UpdateProfile(string name, string phoneNumber)
+	public void UpdateProfile(string name, string phoneNumber, string? cpf = null)
 	{
 		Name = name;
 		PhoneNumber = phoneNumber;
+		if (cpf != null) Cpf = cpf;
 	}
 
 	public void AssignRole(string role)
