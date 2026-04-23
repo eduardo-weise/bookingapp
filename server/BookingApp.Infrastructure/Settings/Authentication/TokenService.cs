@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-namespace BookingApp.Infrastructure.Authentication;
+namespace BookingApp.Infrastructure.Settings.Authentication;
 
 public class TokenService : RefreshTokenService<TokenRequest, CustomTokenResponse>
 {

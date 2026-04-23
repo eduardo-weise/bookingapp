@@ -1,6 +1,6 @@
 using BCrypt.Net;
 
-namespace BookingApp.Infrastructure.Authentication;
+namespace BookingApp.Infrastructure.Settings.Authentication;
 
 public static class PasswordHasher
 {

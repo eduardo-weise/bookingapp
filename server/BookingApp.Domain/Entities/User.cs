@@ -14,6 +14,10 @@ public sealed class User : AggregateRoot
 	public bool IsDeleted { get; private set; }
 	public string Role { get; private set; } // Admin, Manager, Client
 
+	// Password Recovery
+	public string? ResetPasswordToken { get; private set; }
+	public DateTime? ResetPasswordExpiry { get; private set; }
+
 	// Navigation property
 	private readonly List<RefreshToken> _refreshTokens = new();
 	public IReadOnlyList<RefreshToken> RefreshTokens => _refreshTokens;
@@ -37,6 +41,19 @@ public sealed class User : AggregateRoot
 		Name = name;
 		PhoneNumber = phoneNumber;
 		if (cpf != null) Cpf = cpf;
+	}
+
+	public void GeneratePasswordResetToken(string token, DateTime expiry)
+	{
+		ResetPasswordToken = token;
+		ResetPasswordExpiry = expiry;
+	}
+
+	public void UpdatePassword(string newPasswordHash)
+	{
+		PasswordHash = newPasswordHash;
+		ResetPasswordToken = null;
+		ResetPasswordExpiry = null;
 	}
 
 	public void AssignRole(string role)

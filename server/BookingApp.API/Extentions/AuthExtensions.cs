@@ -1,8 +1,6 @@
 using System.Security.Claims;
-using BookingApp.Infrastructure.Authentication;
+using BookingApp.Infrastructure.Settings.Authentication;
 using FastEndpoints.Security;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
 
 namespace BookingApp.API.Extentions;
 

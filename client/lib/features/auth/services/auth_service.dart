@@ -71,6 +71,44 @@ class AuthService {
     }
   }
 
+  Future<void> forgotPassword(String email) async {
+    try {
+      await _client.post('/auth/forgot-password', data: {'email': email});
+    } on DioException catch (e) {
+      throw Exception(_handleError(e));
+    }
+  }
+
+  Future<void> validateResetToken({
+    required String email,
+    required String token,
+  }) async {
+    try {
+      await _client.post('/auth/validate-reset-token', data: {
+        'email': email,
+        'token': token,
+      });
+    } on DioException catch (e) {
+      throw Exception(_handleError(e));
+    }
+  }
+
+  Future<void> resetPassword({
+    required String email,
+    required String token,
+    required String newPassword,
+  }) async {
+    try {
+      await _client.post('/auth/reset-password', data: {
+        'email': email,
+        'token': token,
+        'newPassword': newPassword,
+      });
+    } on DioException catch (e) {
+      throw Exception(_handleError(e));
+    }
+  }
+
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('access_token');

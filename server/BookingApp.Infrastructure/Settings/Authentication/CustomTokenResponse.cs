@@ -1,7 +1,7 @@
 using System.Globalization;
 using FastEndpoints.Security;
 
-namespace BookingApp.Infrastructure.Authentication;
+namespace BookingApp.Infrastructure.Settings.Authentication;
 
 public sealed class CustomTokenResponse : TokenResponse
 {

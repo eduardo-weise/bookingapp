@@ -30,6 +30,15 @@ services:
     networks:
       - booking_network
 
+  email-server:
+    image: maildev/maildev
+    container_name: bookingapp_email
+    ports:
+      - "1080:1080"
+      - "1025:1025"
+    networks:
+      - booking_network
+
 volumes:
   postgres_data:
 

@@ -1,6 +1,6 @@
 using System.Security.Claims;
-using BookingApp.Infrastructure.Authentication;
 using BookingApp.Infrastructure.Data;
+using BookingApp.Infrastructure.Settings.Authentication;
 using FastEndpoints;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
