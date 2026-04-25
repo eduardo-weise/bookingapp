@@ -10,6 +10,7 @@ Future<void> showAppBottomSheet({
   required Widget child,
   String? title,
   BottomSheetHeight height = BottomSheetHeight.medium,
+  VoidCallback? onBack,
 }) {
   final screenHeight = MediaQuery.of(context).size.height;
   final sheetHeight = switch (height) {
@@ -27,6 +28,7 @@ Future<void> showAppBottomSheet({
     builder: (context) => _AppBottomSheet(
       title: title,
       height: sheetHeight,
+      onBack: onBack,
       child: child,
     ),
   );
@@ -36,15 +38,20 @@ class _AppBottomSheet extends StatelessWidget {
   final String? title;
   final double? height;
   final Widget child;
+  final VoidCallback? onBack;
 
   const _AppBottomSheet({
     this.title,
     required this.height,
     required this.child,
+    this.onBack,
   });
 
   @override
   Widget build(BuildContext context) {
+    final hasTitle = title != null && title!.isNotEmpty;
+    final hasBack = onBack != null;
+
     return Container(
       height: height,
       constraints: height == null
@@ -64,7 +71,10 @@ class _AppBottomSheet extends StatelessWidget {
           // Handle bar
           Center(
             child: Padding(
-              padding: const EdgeInsets.only(top: 12, bottom: AppTheme.spacingMd),
+              padding: const EdgeInsets.only(
+                top: 12,
+                bottom: AppTheme.spacingMd,
+              ),
               child: Container(
                 width: 36,
                 height: 4,
@@ -75,39 +85,58 @@ class _AppBottomSheet extends StatelessWidget {
               ),
             ),
           ),
-          // Title row
-          if (title != null && title!.isNotEmpty)
+          // Title row with optional back button
+          if (hasTitle)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingLg),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTheme.spacingLg,
+              ),
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  Text(title!, style: AppTextStyles.heading2),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: AppColors.muted,
-                        borderRadius: BorderRadius.circular(AppTheme.radiusFull),
-                      ),
-                      child: const Icon(Icons.close, size: 16, color: AppColors.textSecondary),
-                    ),
+                  // Title always centered
+                  Center(
+                    child: Text(title!, style: AppTextStyles.heading2),
                   ),
+                  // Back button anchored to the left
+                  if (hasBack)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: GestureDetector(
+                        onTap: onBack,
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: AppColors.muted,
+                            borderRadius:
+                                BorderRadius.circular(AppTheme.radiusFull),
+                          ),
+                          child: const Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            size: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
-          if (title != null && title!.isNotEmpty)
-            const SizedBox(height: AppTheme.spacingMd),
+          if (hasTitle) const SizedBox(height: AppTheme.spacingMd),
           // Content
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingLg),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTheme.spacingLg,
+              ),
               child: child,
             ),
           ),
-          SizedBox(height: MediaQuery.of(context).viewInsets.bottom + AppTheme.spacingMd),
+          SizedBox(
+            height:
+                MediaQuery.of(context).viewInsets.bottom + AppTheme.spacingMd,
+          ),
         ],
       ),
     );

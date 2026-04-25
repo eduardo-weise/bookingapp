@@ -40,7 +40,7 @@ class BookingFlow {
             padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
             child: AppCard(
               onTap: () {
-                Navigator.pop(context); // Close services sheet
+                Navigator.of(context).pop();
                 _showDatePickerSheet(context, s['name'] as String);
               },
               padding: const EdgeInsets.all(AppTheme.spacingMd),
@@ -54,11 +54,16 @@ class BookingFlow {
                       const SizedBox(height: 2),
                       Text(
                         '${s['duration']} • R\$ ${(s['price'] as double).toStringAsFixed(2)}',
-                        style: AppTextStyles.caption.copyWith(color: AppColors.textTertiary),
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.textTertiary,
+                        ),
                       ),
                     ],
                   ),
-                  const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                  const Icon(
+                    Icons.chevron_right,
+                    color: AppColors.textSecondary,
+                  ),
                 ],
               ),
             ),
@@ -73,16 +78,23 @@ class BookingFlow {
       context: context,
       title: 'Data - $serviceName',
       height: BottomSheetHeight.flexible,
+      onBack: () {
+        Navigator.of(context).pop();
+        _showServicesSheet(context);
+      },
       child: Column(
         children: [
-          const Text('Selecione uma data para o agendamento.', style: TextStyle(color: AppColors.textSecondary)),
+          const Text(
+            'Selecione uma data para o agendamento.',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
           const SizedBox(height: AppTheme.spacingMd),
           CalendarDatePicker(
             initialDate: DateTime.now().add(const Duration(days: 1)),
             firstDate: DateTime.now(),
             lastDate: DateTime.now().add(const Duration(days: 90)),
             onDateChanged: (date) {
-              Navigator.pop(context); // Close date picker sheet
+              Navigator.of(context).pop();
               _showTimesSheet(context, serviceName, date);
             },
           ),
@@ -91,13 +103,22 @@ class BookingFlow {
     );
   }
 
-  static void _showTimesSheet(BuildContext context, String serviceName, DateTime date) {
+  static void _showTimesSheet(
+    BuildContext context,
+    String serviceName,
+    DateTime date,
+  ) {
     String? selectedTime;
 
     showAppBottomSheet(
       context: context,
-      title: 'Horário - ${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}',
+      title:
+          'Horário - ${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}',
       height: BottomSheetHeight.flexible,
+      onBack: () {
+        Navigator.of(context).pop();
+        _showDatePickerSheet(context, serviceName);
+      },
       child: StatefulBuilder(
         builder: (context, setState) {
           return Column(
@@ -110,7 +131,9 @@ class BookingFlow {
               const SizedBox(height: AppTheme.spacingLg),
               Text(
                 'Horários Disponíveis',
-                style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w500),
+                style: AppTextStyles.caption.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               const SizedBox(height: AppTheme.spacingSm),
               Wrap(
@@ -121,12 +144,16 @@ class BookingFlow {
                   return GestureDetector(
                     onTap: () => setState(() => selectedTime = time),
                     child: Container(
-                      width: (MediaQuery.of(context).size.width - 48 - 24 - 16) / 3, // Roughly 3 columns
+                      width:
+                          (MediaQuery.of(context).size.width - 48 - 24 - 16) /
+                          3, // Roughly 3 columns
                       height: 44,
                       decoration: BoxDecoration(
                         color: selected ? AppColors.muted : AppColors.surface,
                         border: Border.all(
-                          color: selected ? AppColors.brandPrimary : AppColors.border,
+                          color: selected
+                              ? AppColors.brandPrimary
+                              : AppColors.border,
                           width: selected ? 2 : 1,
                         ),
                         borderRadius: BorderRadius.circular(AppTheme.radiusSm),
@@ -135,8 +162,12 @@ class BookingFlow {
                       child: Text(
                         time,
                         style: AppTextStyles.body.copyWith(
-                          color: selected ? AppColors.brandPrimary : AppColors.textSecondary,
-                          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                          color: selected
+                              ? AppColors.brandPrimary
+                              : AppColors.textSecondary,
+                          fontWeight: selected
+                              ? FontWeight.w600
+                              : FontWeight.w400,
                         ),
                       ),
                     ),
