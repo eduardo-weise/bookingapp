@@ -32,7 +32,10 @@ class _RecoveryNewPasswordSheetState extends State<RecoveryNewPasswordSheet> {
   final _confirmPasswordController = TextEditingController();
   final _authService = AuthService();
   bool _isLoading = false;
-  bool _obscurePassword = true;
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmPassword = true;
+  bool _autoValidateNew = false;
+  bool _autoValidateConfirm = false;
   final _passwordPattern = RegExp(r'^.{8,}$');
 
   Future<void> _resetPassword() async {
@@ -42,7 +45,6 @@ class _RecoveryNewPasswordSheetState extends State<RecoveryNewPasswordSheet> {
     }
 
     final password = _newPasswordController.text.trim();
-    final confirm = _confirmPasswordController.text.trim();
 
     setState(() => _isLoading = true);
     try {
@@ -90,86 +92,104 @@ class _RecoveryNewPasswordSheetState extends State<RecoveryNewPasswordSheet> {
   Widget build(BuildContext context) {
     return Form(
       key: _formKey,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
       child: Column(
         children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: AppColors.muted,
-            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-          ),
-          child: const Icon(
-            Icons.lock_outline_rounded,
-            color: AppColors.brandPrimary,
-            size: 26,
-          ),
-        ),
-        const SizedBox(height: AppTheme.spacingMd),
-        Text(
-          'Redefinir Senha',
-          style: AppTextStyles.heading2,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: AppTheme.spacingSm),
-        Text(
-          'Digite a nova senha para a sua conta',
-          style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: AppTheme.spacingLg),
-        AppInput(
-          controller: _newPasswordController,
-          label: 'Nova Senha',
-          placeholder: 'Mínimo 8 caracteres',
-          obscureText: _obscurePassword,
-          validator: (value) {
-            final password = value?.trim() ?? '';
-            if (password.isEmpty) {
-              return 'Informe a nova senha.';
-            }
-            if (!_passwordPattern.hasMatch(password)) {
-              return 'A senha deve ter no mínimo 8 caracteres.';
-            }
-            return null;
-          },
-          trailingIcon: IconButton(
-            icon: Icon(
-              _obscurePassword
-                  ? Icons.visibility_off_outlined
-                  : Icons.visibility_outlined,
-              color: AppColors.textSecondary,
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: AppColors.muted,
+              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
             ),
-            onPressed: () =>
-                setState(() => _obscurePassword = !_obscurePassword),
+            child: const Icon(
+              Icons.lock_outline_rounded,
+              color: AppColors.brandPrimary,
+              size: 26,
+            ),
           ),
-        ),
-        const SizedBox(height: AppTheme.spacingMd),
-        AppInput(
-          controller: _confirmPasswordController,
-          label: 'Confirmar Nova Senha',
-          placeholder: 'Repita a nova senha',
-          obscureText: _obscurePassword,
-          validator: (value) {
-            final confirm = value?.trim() ?? '';
-            if (confirm.isEmpty) {
-              return 'Confirme a nova senha.';
-            }
-            if (confirm != _newPasswordController.text.trim()) {
-              return 'As senhas não coincidem.';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: AppTheme.spacingLg),
-        AppButton(
-          label: 'Redefinir Senha',
-          fullWidth: true,
-          isLoading: _isLoading,
-          onPressed: _resetPassword,
-        ),
-        const SizedBox(height: AppTheme.spacingMd),
+          const SizedBox(height: AppTheme.spacingMd),
+          Text(
+            'Redefinir Senha',
+            style: AppTextStyles.heading2,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppTheme.spacingSm),
+          Text(
+            'Digite a nova senha para a sua conta',
+            style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppTheme.spacingLg),
+          AppInput(
+            controller: _newPasswordController,
+            label: 'Nova Senha',
+            placeholder: 'Mínimo 8 caracteres',
+            obscureText: _obscureNewPassword,
+            autovalidateMode: _autoValidateNew
+                ? AutovalidateMode.onUserInteraction
+                : AutovalidateMode.disabled,
+            validator: (value) {
+              final password = value?.trim() ?? '';
+              if (password.isEmpty) {
+                return 'Informe a nova senha.';
+              }
+              if (!_passwordPattern.hasMatch(password)) {
+                return 'A senha deve ter no mínimo 8 caracteres.';
+              }
+              return null;
+            },
+            onChanged: (_) => setState(() => _autoValidateNew = true),
+            trailingIcon: IconButton(
+              icon: Icon(
+                _obscureNewPassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                color: AppColors.textSecondary,
+              ),
+              onPressed: () =>
+                  setState(() => _obscureNewPassword = !_obscureNewPassword),
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingMd),
+          AppInput(
+            controller: _confirmPasswordController,
+            label: 'Confirmar Nova Senha',
+            placeholder: 'Repita a nova senha',
+            obscureText: _obscureConfirmPassword,
+            autovalidateMode: _autoValidateConfirm
+                ? AutovalidateMode.onUserInteraction
+                : AutovalidateMode.disabled,
+            validator: (value) {
+              final confirm = value?.trim() ?? '';
+              if (confirm.isEmpty) {
+                return 'Confirme a nova senha.';
+              }
+              if (confirm != _newPasswordController.text.trim()) {
+                return 'As senhas não coincidem.';
+              }
+              return null;
+            },
+            onChanged: (_) => setState(() => _autoValidateConfirm = true),
+            trailingIcon: IconButton(
+              icon: Icon(
+                _obscureConfirmPassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                color: AppColors.textSecondary,
+              ),
+              onPressed: () => setState(
+                () => _obscureConfirmPassword = !_obscureConfirmPassword,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingLg),
+          AppButton(
+            label: 'Redefinir Senha',
+            fullWidth: true,
+            isLoading: _isLoading,
+            onPressed: _resetPassword,
+          ),
+          const SizedBox(height: AppTheme.spacingMd),
         ],
       ),
     );

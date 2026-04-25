@@ -36,6 +36,14 @@ class _RegisterSheetState extends State<RegisterSheet> {
 
   final _authService = AuthService();
   bool _isLoading = false;
+  bool _validateName = false;
+  bool _validateCpf = false;
+  bool _validateEmail = false;
+  bool _validatePhone = false;
+  bool _validatePassword = false;
+  bool _validateConfirm = false;
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
@@ -49,7 +57,9 @@ class _RegisterSheetState extends State<RegisterSheet> {
   }
 
   void _handleRegister() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
     if (_passwordCtrl.text != _confirmCtrl.text) {
       AppSnackBar.showError(context, 'As senhas não coincidem.');
@@ -66,10 +76,14 @@ class _RegisterSheetState extends State<RegisterSheet> {
         phone: _phoneCtrl.text,
         cpf: _cpfCtrl.text,
       );
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       widget.onSuccess();
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       AppSnackBar.showError(
         context,
         e.toString().replaceAll('Exception: ', ''),
@@ -83,67 +97,113 @@ class _RegisterSheetState extends State<RegisterSheet> {
   Widget build(BuildContext context) {
     return Form(
       key: _formKey,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AppInput(
             label: 'Nome Completo',
+            isRequired: true,
             controller: _nameCtrl,
             placeholder: 'Seu nome',
             trailingIcon: const Icon(Icons.person_outline_rounded),
+            autovalidateMode: _validateName
+                ? AutovalidateMode.onUserInteraction
+                : AutovalidateMode.disabled,
+            onChanged: (_) => setState(() => _validateName = true),
             validator: (v) =>
                 (v == null || v.isEmpty) ? 'Informe seu nome' : null,
           ),
           const SizedBox(height: AppTheme.spacingMd),
           AppInput(
             label: 'CPF',
+            isRequired: true,
             controller: _cpfCtrl,
             placeholder: '000.000.000-00',
             trailingIcon: const Icon(Icons.badge_outlined),
             keyboardType: TextInputType.number,
             inputFormatters: [_cpfMask],
+            autovalidateMode: _validateCpf
+                ? AutovalidateMode.onUserInteraction
+                : AutovalidateMode.disabled,
+            onChanged: (_) => setState(() => _validateCpf = true),
             validator: (v) =>
-              (v == null || v.length != 14) ? 'CPF inválido' : null,
+                (v == null || v.length != 14) ? 'CPF inválido' : null,
           ),
           const SizedBox(height: AppTheme.spacingMd),
           AppInput(
             label: 'Email',
+            isRequired: true,
             controller: _emailCtrl,
             placeholder: 'seu@email.com',
             trailingIcon: const Icon(Icons.mail_outline_rounded),
             keyboardType: TextInputType.emailAddress,
+            autovalidateMode: _validateEmail
+                ? AutovalidateMode.onUserInteraction
+                : AutovalidateMode.disabled,
+            onChanged: (_) => setState(() => _validateEmail = true),
             validator: (v) =>
-              (v == null || !v.contains('@')) ? 'Email inválido' : null,
+                (v == null || !v.contains('@')) ? 'Email inválido' : null,
           ),
           const SizedBox(height: AppTheme.spacingMd),
           AppInput(
             label: 'Telefone',
+            isRequired: true,
             controller: _phoneCtrl,
             placeholder: '(11) 99999-9999',
             trailingIcon: const Icon(Icons.phone_outlined),
             keyboardType: TextInputType.phone,
             inputFormatters: [_phoneMask],
+            autovalidateMode: _validatePhone
+                ? AutovalidateMode.onUserInteraction
+                : AutovalidateMode.disabled,
+            onChanged: (_) => setState(() => _validatePhone = true),
             validator: (v) =>
-              (v == null || v.length < 14) ? 'Telefone inválido' : null,
+                (v == null || v.length < 14) ? 'Telefone inválido' : null,
           ),
           const SizedBox(height: AppTheme.spacingMd),
           AppInput(
             label: 'Senha',
+            isRequired: true,
             controller: _passwordCtrl,
             placeholder: '••••••••',
-            obscureText: true,
-            trailingIcon: const Icon(Icons.visibility_outlined),
+            obscureText: _obscureNewPassword,
+            trailingIcon: IconButton(
+              icon: Icon(
+                _obscureNewPassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+              ),
+              onPressed: () =>
+                  setState(() => _obscureNewPassword = !_obscureNewPassword),
+            ),
+            autovalidateMode: _validatePassword
+                ? AutovalidateMode.onUserInteraction
+                : AutovalidateMode.disabled,
+            onChanged: (_) => setState(() => _validatePassword = true),
             validator: (v) =>
-              (v == null || v.length < 6) ? 'Mínimo de 6 caracteres' : null,
+                (v == null || v.length < 6) ? 'Mínimo de 6 caracteres' : null,
           ),
           const SizedBox(height: AppTheme.spacingMd),
           AppInput(
             label: 'Confirmar Senha',
+            isRequired: true,
             controller: _confirmCtrl,
             placeholder: '••••••••',
-            obscureText: true,
-            trailingIcon: const Icon(Icons.visibility_outlined),
+            obscureText: _obscureConfirmPassword,
+            trailingIcon: IconButton(
+              icon: Icon(
+                _obscureConfirmPassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+              ),
+              onPressed: () => setState(
+                () => _obscureConfirmPassword = !_obscureConfirmPassword,
+              ),
+            ),
+            autovalidateMode: _validateConfirm
+                ? AutovalidateMode.onUserInteraction
+                : AutovalidateMode.disabled,
+            onChanged: (_) => setState(() => _validateConfirm = true),
             validator: (v) =>
                 (v != _passwordCtrl.text) ? 'Senhas diferentes' : null,
           ),
