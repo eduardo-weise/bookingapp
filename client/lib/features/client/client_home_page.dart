@@ -107,15 +107,13 @@ class _ClientHomePageState extends State<ClientHomePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── Header (shared widget) ──
-              const PageHeader(
-                greeting: 'Bem-vindo ao seu painel',
-                name: 'Olá, Maria',
-                notificationCount: 1,
-              ),
+              const PageHeader(name: 'Olá, Maria', notificationCount: 1),
 
               // ── Avatar ──
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingLg),
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppTheme.spacingLg,
+                ),
                 child: Center(
                   child: AppAvatar(
                     size: AvatarSize.large,
@@ -126,24 +124,18 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 ),
               ),
 
-
-
               // ── Debt Banner (shared widget) ──
               DebtBanner(
                 amount: 'R\$ 150,00',
                 description: 'Referente ao serviço de 10 Mar 2026',
-                onButtonPressed: () => Navigator.pushNamed(
-                  context,
-                  '/client/finances',
-                ),
+                onButtonPressed: () =>
+                    Navigator.pushNamed(context, '/client/finances'),
               ),
 
               const SizedBox(height: AppTheme.spacingLg),
 
               // ── Section Header (shared widget) ──
-              const SectionHeader(
-                title: 'Próximos Agendamentos',
-              ),
+              const SectionHeader(title: 'Próximos Agendamentos'),
               const SizedBox(height: AppTheme.spacingMd),
 
               // ── Appointment Cards (shared widget) ──
@@ -199,4 +191,3 @@ class _ClientHomePageState extends State<ClientHomePage> {
     );
   }
 }
-
