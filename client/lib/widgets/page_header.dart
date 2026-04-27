@@ -7,14 +7,14 @@ import '../core/theme/app_theme.dart';
 ///
 /// Used in both Client Home and Admin Dashboard.
 class PageHeader extends StatelessWidget {
-  final String greeting;
+  final String? greeting;
   final String name;
   final int notificationCount;
   final VoidCallback? onNotificationTap;
 
   const PageHeader({
     super.key,
-    required this.greeting,
+    this.greeting,
     required this.name,
     this.notificationCount = 0,
     this.onNotificationTap,
@@ -36,13 +36,15 @@ class PageHeader extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                greeting,
-                style: AppTextStyles.caption.copyWith(
-                  color: AppColors.textTertiary,
+              if (greeting != null) ...[
+                Text(
+                  greeting!,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppTheme.spacingXs),
+                const SizedBox(height: AppTheme.spacingXs),
+              ],
               Text(name, style: AppTextStyles.heading1),
             ],
           ),
@@ -53,9 +55,7 @@ class PageHeader extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(
-                      AppTheme.radiusSm,
-                    ),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                   ),
                   child: const Icon(
                     Icons.notifications_none_rounded,
