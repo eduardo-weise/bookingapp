@@ -1,3 +1,4 @@
+import 'package:app/core/config/api_config.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -10,20 +11,27 @@ class AuthService {
     try {
       final response = await _client.post(
         '/auth/login',
-        data: {
-          'email': email,
-          'password': password,
-        },
+        data: {'email': email, 'password': password},
       );
 
       final data = response.data;
       if (data != null && data['accessToken'] != null) {
         final token = data['accessToken'];
+        final refreshToken = data['refreshToken'];
+        final userId = data['userId'];
+
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('access_token', token);
-        
+        if (refreshToken != null) {
+          await prefs.setString('refresh_token', refreshToken);
+        }
+        if (userId != null) await prefs.setString('user_id', userId);
+
         final decodedToken = JwtDecoder.decode(token);
-        final role = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ?? decodedToken['role'] ?? 'Client';
+        final role =
+            decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ??
+            decodedToken['role'] ??
+            'Client';
         return role.toString();
       } else {
         throw Exception('Token not found in response.');
@@ -59,8 +67,18 @@ class AuthService {
 
       final data = response.data;
       if (data != null && data['accessToken'] != null) {
+        final token = data['accessToken'];
+        final refreshToken = data['refreshToken'];
+        final userId = data['userId'];
+
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('access_token', data['accessToken']);
+        await prefs.setString('access_token', token);
+        if (refreshToken != null) {
+          await prefs.setString('refresh_token', refreshToken);
+        }
+        if (userId != null) {
+          await prefs.setString('user_id', userId);
+        }
       } else {
         throw Exception('Token not found in response.');
       }
@@ -84,10 +102,10 @@ class AuthService {
     required String token,
   }) async {
     try {
-      await _client.post('/auth/validate-reset-token', data: {
-        'email': email,
-        'token': token,
-      });
+      await _client.post(
+        '/auth/validate-reset-token',
+        data: {'email': email, 'token': token},
+      );
     } on DioException catch (e) {
       throw Exception(_handleError(e));
     }
@@ -99,11 +117,10 @@ class AuthService {
     required String newPassword,
   }) async {
     try {
-      await _client.post('/auth/reset-password', data: {
-        'email': email,
-        'token': token,
-        'newPassword': newPassword,
-      });
+      await _client.post(
+        '/auth/reset-password',
+        data: {'email': email, 'token': token, 'newPassword': newPassword},
+      );
     } on DioException catch (e) {
       throw Exception(_handleError(e));
     }
@@ -112,6 +129,44 @@ class AuthService {
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('access_token');
+    await prefs.remove('refresh_token');
+    await prefs.remove('user_id');
+  }
+
+  Future<bool> refreshToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final refreshToken = prefs.getString('refresh_token');
+    final userId = prefs.getString('user_id');
+
+    if (refreshToken == null || userId == null) {
+      return false;
+    }
+
+    try {
+      final refreshDio = Dio(
+        BaseOptions(
+          baseUrl: ApiConfig.baseUrl,
+          headers: {'Accept': 'application/json'},
+        ),
+      );
+
+      final response = await refreshDio.post(
+        '/auth/refresh',
+        data: {'userId': userId, 'refreshToken': refreshToken},
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        await prefs.setString('access_token', data['accessToken']);
+        if (data['refreshToken'] != null) {
+          await prefs.setString('refresh_token', data['refreshToken']);
+        }
+        return true;
+      }
+    } catch (_) {
+      await logout();
+    }
+    return false;
   }
 
   String _handleError(DioException e) {
@@ -122,7 +177,9 @@ class AuthService {
         if (data.containsKey('errors') && data['errors'] is List) {
           final errList = data['errors'] as List;
           if (errList.isNotEmpty) {
-            return errList.map((err) => err['reason'] ?? err['message']).join('\n');
+            return errList
+                .map((err) => err['reason'] ?? err['message'])
+                .join('\n');
           }
         }
         if (data.containsKey('message')) {

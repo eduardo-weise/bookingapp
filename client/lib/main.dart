@@ -13,6 +13,7 @@ void main() async {
 }
 
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+final navigatorKey = GlobalKey<NavigatorState>();
 
 class BookingApp extends StatelessWidget {
   const BookingApp({super.key});
@@ -24,6 +25,7 @@ class BookingApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       scaffoldMessengerKey: scaffoldMessengerKey,
+      navigatorKey: navigatorKey,
       initialRoute: '/',
       routes: {
         '/': (_) => const LoginPage(),
