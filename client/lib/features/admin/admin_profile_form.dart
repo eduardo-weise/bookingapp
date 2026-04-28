@@ -3,7 +3,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_avatar.dart';
-import 'admin_absences_flow.dart';
+import 'absences/admin_absences_flow.dart';
 import '../auth/services/auth_service.dart';
 
 class AdminProfileForm extends StatelessWidget {

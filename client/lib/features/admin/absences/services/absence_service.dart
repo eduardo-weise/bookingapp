@@ -1,21 +1,55 @@
+import 'package:app/core/services/api_client.dart';
 import 'package:dio/dio.dart';
-import '../../../core/services/api_client.dart';
 
 class AbsenceDayModel {
   final String id;
-  final DateTime date;
+  final DateTime startDate;
+  final DateTime endDate;
 
-  const AbsenceDayModel({required this.id, required this.date});
+  const AbsenceDayModel({
+    required this.id,
+    required this.startDate,
+    required this.endDate,
+  });
 
   factory AbsenceDayModel.fromJson(Map<String, dynamic> json) {
     return AbsenceDayModel(
       id: json['id'] as String,
-      date: DateTime.parse(json['date'] as String),
+      startDate: DateTime.parse(json['startDate'] as String),
+      endDate: DateTime.parse(json['endDate'] as String),
     );
   }
 
-  String get formattedDate {
+  bool get isSingleDayWithTime {
+    return startDate.year == endDate.year &&
+        startDate.month == endDate.month &&
+        startDate.day == endDate.day &&
+        (startDate.hour != 0 ||
+            startDate.minute != 0 ||
+            endDate.hour != 0 ||
+            endDate.minute != 0);
+  }
+
+  String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
+  String _formatTime(DateTime date) {
+    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
+  String get formattedDate {
+    if (isSingleDayWithTime) {
+      return '${_formatDate(startDate)} (${_formatTime(startDate)} - ${_formatTime(endDate)})';
+    }
+
+    if (startDate.year == endDate.year &&
+        startDate.month == endDate.month &&
+        startDate.day == endDate.day) {
+      return _formatDate(startDate);
+    }
+
+    return '${_formatDate(startDate)} - ${_formatDate(endDate)}';
   }
 }
 

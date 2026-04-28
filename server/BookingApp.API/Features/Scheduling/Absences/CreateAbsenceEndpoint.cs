@@ -27,38 +27,37 @@ public sealed class CreateAbsenceEndpoint(ApplicationDbContext dbContext)
 	{
 		Post("/absences");
 		Policies("AdminOrManager");
-		Tags("Scheduling");
+		Tags("Absences");
 		Options(x => x.WithName("CreateAbsence"));
 	}
 
 	public override async Task HandleAsync(CreateAbsenceRequest req, CancellationToken ct)
 	{
-		var start = req.StartDate.Date;
-		var end = req.EndDate.Date;
+		var start = req.StartDate;
+		var end = req.EndDate;
 
-		// Generate all dates in the range
-		var dates = Enumerable
-			.Range(0, (end - start).Days + 1)
-			.Select(offset => start.AddDays(offset))
-			.ToList();
-
-		// Skip dates that are already registered
-		var existing = await dbContext.AbsenceDays
-			.AsNoTracking()
-			.Where(a => a.Date >= start && a.Date <= end)
-			.Select(a => a.Date)
-			.ToListAsync(ct);
-
-		var toInsert = dates
-			.Where(d => !existing.Contains(d))
-			.Select(d => new AbsenceDay(d))
-			.ToList();
-
-		if (toInsert.Count > 0)
+		if (end < start)
 		{
-			await dbContext.AbsenceDays.AddRangeAsync(toInsert, ct);
-			await dbContext.SaveChangesAsync(ct);
+			AddError("A data final deve ser igual ou posterior à data inicial.");
+			await Send.ErrorsAsync(cancellation: ct);
+			return;
 		}
+
+		var hasOverlap = await dbContext.AbsenceDays
+			.AsNoTracking()
+			.AnyAsync(a => a.StartDate < end && a.EndDate > start, ct);
+
+		if (hasOverlap)
+		{
+			AddError("Já existe uma ausência registrada nesse período.");
+			await Send.ErrorsAsync(cancellation: ct);
+			return;
+		}
+
+		var absence = new AbsenceDay(start, end);
+
+		await dbContext.AbsenceDays.AddAsync(absence, ct);
+		await dbContext.SaveChangesAsync(ct);
 
 		await Send.NoContentAsync(ct);
 	}

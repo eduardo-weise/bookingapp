@@ -32,16 +32,12 @@ public sealed class GetAvailableSlotsEndpoint(ApplicationDbContext dbContext)
 	public override async Task HandleAsync(GetAvailableSlotsRequest req, CancellationToken ct)
 	{
 		var targetDate = req.Date.Date;
+		var targetDayEnd = targetDate.AddDays(1);
 
-		var isAbsenceDay = await dbContext.AbsenceDays
+		var absences = await dbContext.AbsenceDays
 			.AsNoTracking()
-			.AnyAsync(a => a.Date == targetDate, ct);
-
-		if (isAbsenceDay)
-		{
-			await Send.OkAsync([], cancellation: ct);
-			return;
-		}
+			.Where(a => a.StartDate < targetDayEnd && a.EndDate > targetDate)
+			.ToListAsync(ct);
 
 		var service = await dbContext.Services
 			.AsNoTracking()
@@ -70,8 +66,9 @@ public sealed class GetAvailableSlotsEndpoint(ApplicationDbContext dbContext)
 			var slotEndTime = slotStartTime.AddMinutes(durationMinutes);
 
 			var hasOverlap = existingAppointments.Any(a => a.StartTime < slotEndTime && a.EndTime > slotStartTime);
+			var hasAbsenceOverlap = absences.Any(a => a.StartDate < slotEndTime && a.EndDate > slotStartTime);
 
-			if (!hasOverlap)
+			if (!hasOverlap && !hasAbsenceOverlap)
 			{
 				availableSlots.Add(currentSlot);
 			}

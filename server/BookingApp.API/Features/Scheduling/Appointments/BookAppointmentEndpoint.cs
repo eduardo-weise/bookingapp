@@ -53,11 +53,11 @@ public sealed class BookAppointmentEndpoint(ApplicationDbContext dbContext)
 
 		var endTime = req.StartTime.Add(duration);
 
-		var isAbsenceDay = await dbContext.AbsenceDays
+		var hasAbsenceConflict = await dbContext.AbsenceDays
 			.AsNoTracking()
-			.AnyAsync(a => a.Date == req.StartTime.Date, ct);
+			.AnyAsync(a => a.StartDate < endTime && a.EndDate > req.StartTime, ct);
 
-		if (isAbsenceDay)
+		if (hasAbsenceConflict)
 			throw new ConflictException("Não é possível agendar em um dia de ausência programada.");
 
 		var hasOverlap = await dbContext.Appointments

@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text_styles.dart';
-import '../../core/theme/app_theme.dart';
-import '../../widgets/app_avatar.dart';
-import '../../widgets/app_badge.dart';
-import '../../widgets/app_button.dart';
-import '../../widgets/app_card.dart';
-import '../../widgets/app_bottom_sheet.dart';
-import '../../widgets/booking_form.dart';
-import '../../widgets/page_header.dart';
-import '../../widgets/section_header.dart';
-import '../../widgets/appointment_card.dart';
+import 'package:app/widgets/app_date_picker.dart';
+import 'package:app/core/theme/app_colors.dart';
+import 'package:app/core/theme/app_text_styles.dart';
+import 'package:app/core/theme/app_theme.dart';
+import 'package:app/widgets/app_avatar.dart';
+import 'package:app/widgets/app_badge.dart';
+import 'package:app/widgets/app_button.dart';
+import 'package:app/widgets/app_card.dart';
+import 'package:app/widgets/app_bottom_sheet.dart';
+import 'package:app/widgets/booking_form.dart';
+import 'package:app/widgets/page_header.dart';
+import 'package:app/widgets/section_header.dart';
+import 'package:app/widgets/appointment_card.dart';
 import 'admin_profile_form.dart';
 
 // ── Mock Data ────────────────────────────────────────────────────────────────
@@ -39,8 +40,6 @@ class _TodayAppointment {
     required this.status,
   });
 }
-
-
 
 const _debts = [
   _Debt(
@@ -71,7 +70,6 @@ const _todayAppointments = [
     status: BadgeVariant.pending,
   ),
 ];
-
 
 // ── Admin Dashboard ──────────────────────────────────────────────────────────
 class AdminDashboardPage extends StatefulWidget {
@@ -156,7 +154,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 
-
   void _showBookingSheet() {
     BookingFlow.start(context);
   }
@@ -170,7 +167,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: _debts.length,
-        separatorBuilder: (context, index) => const SizedBox(height: AppTheme.spacingSm),
+        separatorBuilder: (context, index) =>
+            const SizedBox(height: AppTheme.spacingSm),
         itemBuilder: (context, i) {
           final d = _debts[i];
           return AppCard(
@@ -184,18 +182,35 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               children: [
                 Row(
                   children: [
-                    AppAvatar(size: AvatarSize.small, initials: d.clientName[0]),
+                    AppAvatar(
+                      size: AvatarSize.small,
+                      initials: d.clientName[0],
+                    ),
                     const SizedBox(width: AppTheme.spacingMd),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(d.clientName, style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600)),
-                        Text('${d.service} • ${d.date}', style: AppTextStyles.caption),
+                        Text(
+                          d.clientName,
+                          style: AppTextStyles.body.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          '${d.service} • ${d.date}',
+                          style: AppTextStyles.caption,
+                        ),
                       ],
                     ),
                   ],
                 ),
-                Text('R\$ ${d.amount.toStringAsFixed(2)}', style: AppTextStyles.body.copyWith(color: AppColors.statusCancelled, fontWeight: FontWeight.w700)),
+                Text(
+                  'R\$ ${d.amount.toStringAsFixed(2)}',
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.statusCancelled,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ],
             ),
           );
@@ -211,15 +226,21 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       height: BottomSheetHeight.flexible,
       child: Column(
         children: [
-          const Text('Selecione uma data para visualizar os agendamentos.', style: TextStyle(color: AppColors.textSecondary)),
+          const Text(
+            'Selecione uma data para visualizar os agendamentos.',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
           const SizedBox(height: AppTheme.spacingMd),
-          CalendarDatePicker(
-            initialDate: DateTime.now(),
-            firstDate: DateTime.now().subtract(const Duration(days: 30)),
-            lastDate: DateTime.now().add(const Duration(days: 365)),
-            onDateChanged: (date) {
-              Navigator.pop(context);
-              _showAppointmentsForDateSheet(date);
+          AppDatePicker(
+            initialSelectedDate: DateTime.now(),
+            minDate: DateTime.now().subtract(const Duration(days: 30)),
+            maxDate: DateTime.now().add(const Duration(days: 365)),
+            selectionMode: DateRangePickerSelectionMode.single,
+            onSelectionChanged: (args) {
+              if (args.value is DateTime) {
+                Navigator.pop(context);
+                _showAppointmentsForDateSheet(args.value as DateTime);
+              }
             },
           ),
         ],
@@ -231,11 +252,15 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     // Show mock data for selected date
     showAppBottomSheet(
       context: context,
-      title: 'Agenda: ${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}',
+      title:
+          'Agenda: ${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}',
       height: BottomSheetHeight.flexible,
       child: Column(
         children: [
-          const AppBadge(label: '3 Agendamentos', variant: BadgeVariant.pending),
+          const AppBadge(
+            label: '3 Agendamentos',
+            variant: BadgeVariant.pending,
+          ),
           const SizedBox(height: AppTheme.spacingLg),
           ...List.generate(3, (i) {
             return Padding(

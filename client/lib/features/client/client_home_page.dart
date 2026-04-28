@@ -1,15 +1,16 @@
+import 'package:app/core/theme/app_colors.dart';
+import 'package:app/core/theme/app_theme.dart';
+import 'package:app/widgets/app_avatar.dart';
+import 'package:app/widgets/app_badge.dart';
+import 'package:app/widgets/app_bottom_sheet.dart';
+import 'package:app/widgets/booking_form.dart';
+import 'package:app/widgets/page_header.dart';
+import 'package:app/widgets/section_header.dart';
+import 'package:app/widgets/debt_banner.dart';
+import 'package:app/widgets/appointment_card.dart';
+import 'package:app/widgets/user_edit_form.dart';
+import 'package:app/widgets/app_empty_state.dart';
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_theme.dart';
-import '../../widgets/app_avatar.dart';
-import '../../widgets/app_badge.dart';
-import '../../widgets/app_bottom_sheet.dart';
-import '../../widgets/booking_form.dart';
-import '../../widgets/page_header.dart';
-import '../../widgets/section_header.dart';
-import '../../widgets/debt_banner.dart';
-import '../../widgets/appointment_card.dart';
-import '../../widgets/user_edit_form.dart';
 
 // ── Mock Data ────────────────────────────────────────────────────────────────
 class _Appointment {
@@ -65,20 +66,9 @@ class _ClientHomePageState extends State<ClientHomePage> {
       context: context,
       title: 'Histórico',
       height: BottomSheetHeight.flexible,
-      child: const Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: AppTheme.spacing2Xl),
-          child: Column(
-            children: [
-              Icon(Icons.history, size: 48, color: AppColors.textTertiary),
-              SizedBox(height: AppTheme.spacingSm),
-              Text(
-                'Nenhum agendamento no histórico',
-                style: TextStyle(color: AppColors.textTertiary, fontSize: 14),
-              ),
-            ],
-          ),
-        ),
+      child: const AppEmptyState(
+        message: 'Nenhum agendamento no histórico',
+        icon: Icons.history,
       ),
     );
   }

@@ -6,8 +6,12 @@ import 'features/admin/admin_dashboard_page.dart';
 
 import 'core/services/api_client.dart';
 
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('pt_BR', null);
   ApiClient.initInterceptors();
   runApp(const BookingApp());
 }
@@ -26,6 +30,14 @@ class BookingApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       scaffoldMessengerKey: scaffoldMessengerKey,
       navigatorKey: navigatorKey,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('pt', 'BR'),
+      ],
       initialRoute: '/',
       routes: {
         '/': (_) => const LoginPage(),

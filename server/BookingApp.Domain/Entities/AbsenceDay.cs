@@ -4,12 +4,17 @@ namespace BookingApp.Domain.Entities;
 
 public sealed class AbsenceDay : AggregateRoot
 {
-	public DateTime Date { get; private set; }
+	public DateTime StartDate { get; private set; }
+	public DateTime EndDate { get; private set; }
 
 	private AbsenceDay() { } // EF Core
 
-	public AbsenceDay(DateTime date)
+	public AbsenceDay(DateTime startDate, DateTime endDate)
 	{
-		Date = date.Date; // Garante que a hora seja zerada
+		if (endDate < startDate)
+			throw new InvalidOperationException("A data final deve ser igual ou posterior a data inicial.");
+
+		StartDate = startDate;
+		EndDate = endDate;
 	}
 }

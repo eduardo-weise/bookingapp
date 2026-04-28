@@ -10,11 +10,14 @@ internal sealed class AbsenceDayConfiguration : IEntityTypeConfiguration<Absence
 	{
 		builder.HasKey(ad => ad.Id);
 
-		builder.HasIndex(ad => ad.Date)
-			   .IsUnique();
+		builder.HasIndex(ad => new { ad.StartDate, ad.EndDate });
 
-		builder.Property(ad => ad.Date)
-			   .HasColumnType("date") // Ensures it tracks only the day
-			   .IsRequired();
+		builder.Property(ad => ad.StartDate)
+			.HasColumnType("timestamp without time zone")
+			.IsRequired();
+
+		builder.Property(ad => ad.EndDate)
+			.HasColumnType("timestamp without time zone")
+			.IsRequired();
 	}
 }

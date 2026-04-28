@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:app/widgets/app_date_picker.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_text_styles.dart';
 import '../core/theme/app_theme.dart';
@@ -51,13 +52,16 @@ class BookingFlow {
             style: TextStyle(color: AppColors.textSecondary),
           ),
           const SizedBox(height: AppTheme.spacingMd),
-          CalendarDatePicker(
-            initialDate: DateTime.now().add(const Duration(days: 1)),
-            firstDate: DateTime.now(),
-            lastDate: DateTime.now().add(const Duration(days: 90)),
-            onDateChanged: (date) {
-              Navigator.of(context).pop();
-              _showTimesSheet(context, service, date);
+          AppDatePicker(
+            initialSelectedDate: DateTime.now().add(const Duration(days: 1)),
+            minDate: DateTime.now(),
+            maxDate: DateTime.now().add(const Duration(days: 90)),
+            selectionMode: DateRangePickerSelectionMode.single,
+            onSelectionChanged: (args) {
+              if (args.value is DateTime) {
+                Navigator.of(context).pop();
+                _showTimesSheet(context, service, args.value as DateTime);
+              }
             },
           ),
         ],
