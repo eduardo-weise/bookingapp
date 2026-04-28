@@ -1,3 +1,4 @@
+using BookingApp.API.Extentions;
 using BookingApp.Domain.Entities;
 using BookingApp.Infrastructure.Data;
 using FastEndpoints;
@@ -33,8 +34,8 @@ public sealed class CreateAbsenceEndpoint(ApplicationDbContext dbContext)
 
 	public override async Task HandleAsync(CreateAbsenceRequest req, CancellationToken ct)
 	{
-		var start = req.StartDate;
-		var end = req.EndDate;
+		var start = req.StartDate.EnsureUtc();
+		var end = req.EndDate.EnsureUtc();
 
 		if (end < start)
 		{

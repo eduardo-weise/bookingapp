@@ -1,3 +1,4 @@
+using BookingApp.API.Extentions;
 using BookingApp.Domain.Entities;
 using BookingApp.Domain.Exceptions;
 using BookingApp.Infrastructure.Data;
@@ -31,7 +32,7 @@ public sealed class GetAvailableSlotsEndpoint(ApplicationDbContext dbContext)
 
 	public override async Task HandleAsync(GetAvailableSlotsRequest req, CancellationToken ct)
 	{
-		var targetDate = req.Date.Date;
+		var targetDate = req.Date.EnsureUtcDate();
 		var targetDayEnd = targetDate.AddDays(1);
 
 		var absences = await dbContext.AbsenceDays

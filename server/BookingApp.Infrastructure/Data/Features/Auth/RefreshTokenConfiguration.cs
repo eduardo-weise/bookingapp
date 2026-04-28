@@ -14,5 +14,16 @@ internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refre
 
 		builder.Property(rt => rt.TokenHash)
 			   .IsRequired();
+
+		builder.Property(rt => rt.ExpiresAt)
+			   .HasColumnType("timestamp with time zone")
+			   .IsRequired();
+
+		builder.Property(rt => rt.CreatedAt)
+			   .HasColumnType("timestamp with time zone")
+			   .IsRequired();
+
+		builder.Property(rt => rt.RevokedAt)
+			   .HasColumnType("timestamp with time zone");
 	}
 }

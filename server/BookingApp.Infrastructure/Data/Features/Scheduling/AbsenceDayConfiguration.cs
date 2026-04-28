@@ -13,11 +13,11 @@ internal sealed class AbsenceDayConfiguration : IEntityTypeConfiguration<Absence
 		builder.HasIndex(ad => new { ad.StartDate, ad.EndDate });
 
 		builder.Property(ad => ad.StartDate)
-			.HasColumnType("timestamp without time zone")
+			.HasColumnType("timestamp with time zone")
 			.IsRequired();
 
 		builder.Property(ad => ad.EndDate)
-			.HasColumnType("timestamp without time zone")
+			.HasColumnType("timestamp with time zone")
 			.IsRequired();
 	}
 }

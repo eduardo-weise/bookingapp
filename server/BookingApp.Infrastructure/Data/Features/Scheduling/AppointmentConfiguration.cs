@@ -12,6 +12,14 @@ internal sealed class AppointmentConfiguration : IEntityTypeConfiguration<Appoin
 
 		builder.HasIndex(a => new { a.ClientId, a.StartTime });
 
+		builder.Property(a => a.StartTime)
+			   .HasColumnType("timestamp with time zone")
+			   .IsRequired();
+
+		builder.Property(a => a.EndTime)
+			   .HasColumnType("timestamp with time zone")
+			   .IsRequired();
+
 		builder.Property(a => a.Status)
 			   .HasConversion<string>()
 			   .IsRequired();

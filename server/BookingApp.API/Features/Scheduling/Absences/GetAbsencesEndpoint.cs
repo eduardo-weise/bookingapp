@@ -26,7 +26,7 @@ public sealed class GetAbsencesEndpoint(ApplicationDbContext dbContext)
 
 	public override async Task HandleAsync(GetAbsencesRequest req, CancellationToken ct)
 	{
-		var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Unspecified);
+		var today = DateTime.UtcNow.Date;
 
 		var query = dbContext.AbsenceDays
 			.AsNoTracking()

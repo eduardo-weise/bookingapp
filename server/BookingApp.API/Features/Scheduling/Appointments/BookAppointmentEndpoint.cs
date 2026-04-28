@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using BookingApp.API.Extentions;
 using BookingApp.Domain.Entities;
 using BookingApp.Domain.Exceptions;
 using BookingApp.Infrastructure.Data;
@@ -50,12 +51,12 @@ public sealed class BookAppointmentEndpoint(ApplicationDbContext dbContext)
 			.SingleOrDefaultAsync(c => c.ClientId == clientId && c.ServiceId == req.ServiceId, ct);
 
 		var duration = clientDuration?.Duration ?? service.DefaultDuration;
-
-		var endTime = req.StartTime.Add(duration);
+		var startTime = req.StartTime.EnsureUtc();
+		var endTime = startTime.Add(duration);
 
 		var hasAbsenceConflict = await dbContext.AbsenceDays
 			.AsNoTracking()
-			.AnyAsync(a => a.StartDate < endTime && a.EndDate > req.StartTime, ct);
+			.AnyAsync(a => a.StartDate < endTime && a.EndDate > startTime, ct);
 
 		if (hasAbsenceConflict)
 			throw new ConflictException("Não é possível agendar em um dia de ausência programada.");
@@ -63,12 +64,12 @@ public sealed class BookAppointmentEndpoint(ApplicationDbContext dbContext)
 		var hasOverlap = await dbContext.Appointments
 			.AsNoTracking()
 			.AnyAsync(a => a.Status == AppointmentStatus.Scheduled &&
-						   a.StartTime < endTime && a.EndTime > req.StartTime, ct);
+						   a.StartTime < endTime && a.EndTime > startTime, ct);
 
 		if (hasOverlap)
 			throw new ConflictException("Horário não disponível.");
 
-		var appointment = new Appointment(clientId, req.ServiceId, req.StartTime, endTime);
+		var appointment = new Appointment(clientId, req.ServiceId, startTime, endTime);
 
 		await dbContext.Appointments.AddAsync(appointment, ct);
 		await dbContext.SaveChangesAsync(ct);

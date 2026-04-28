@@ -12,7 +12,9 @@ import 'package:app/widgets/booking_form.dart';
 import 'package:app/widgets/page_header.dart';
 import 'package:app/widgets/section_header.dart';
 import 'package:app/widgets/appointment_card.dart';
+import 'package:app/widgets/app_empty_state.dart';
 import 'admin_profile_form.dart';
+import 'services/admin_appointments_service.dart';
 
 // ── Mock Data ────────────────────────────────────────────────────────────────
 class _Debt {
@@ -80,6 +82,8 @@ class AdminDashboardPage extends StatefulWidget {
 }
 
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
+  final _appointmentsService = AdminAppointmentsService();
+
   // ── Profile / Edit Sheet ──
   void _showEditProfileSheet() {
     showAppBottomSheet(
@@ -233,7 +237,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           const SizedBox(height: AppTheme.spacingMd),
           AppDatePicker(
             initialSelectedDate: DateTime.now(),
-            minDate: DateTime.now().subtract(const Duration(days: 30)),
+            minDate: DateTime.now(),
             maxDate: DateTime.now().add(const Duration(days: 365)),
             selectionMode: DateRangePickerSelectionMode.single,
             onSelectionChanged: (args) {
@@ -248,33 +252,71 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
+  String _formatHour(DateTime date) {
+    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
+  BadgeVariant _statusToBadge(String status) {
+    final normalized = status.toLowerCase();
+    if (normalized == 'scheduled' || normalized == 'rescheduled') {
+      return BadgeVariant.confirmed;
+    }
+    return BadgeVariant.pending;
+  }
+
   void _showAppointmentsForDateSheet(DateTime date) {
-    // Show mock data for selected date
     showAppBottomSheet(
       context: context,
-      title:
-          'Agenda: ${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}',
+      title: 'Agenda: ${_formatDate(date)}',
       height: BottomSheetHeight.flexible,
-      child: Column(
-        children: [
-          const AppBadge(
-            label: '3 Agendamentos',
-            variant: BadgeVariant.pending,
-          ),
-          const SizedBox(height: AppTheme.spacingLg),
-          ...List.generate(3, (i) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
-              child: AppointmentCard(
-                service: 'Corte de Cabelo',
-                subtitle: 'Cliente ${(i + 1)}',
-                time: '${10 + i}:00',
-                status: i == 0 ? BadgeVariant.confirmed : BadgeVariant.pending,
-                variant: AppointmentCardVariant.compact,
-              ),
+      child: FutureBuilder<List<AdminAppointmentModel>>(
+        future: _appointmentsService.getAppointmentsByDate(date),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            final message = snapshot.error
+                    ?.toString()
+                    .replaceAll('Exception: ', '') ??
+                'Erro ao buscar agendamentos.';
+            return AppEmptyState(message: message);
+          }
+
+          final appointments = snapshot.data ?? [];
+          if (appointments.isEmpty) {
+            return const AppEmptyState(
+              message: 'Nenhum agendamento para a data selecionada.',
             );
-          }),
-        ],
+          }
+
+          return Column(
+            children: [
+              AppBadge(
+                label: '${appointments.length} Agendamentos',
+                variant: BadgeVariant.pending,
+              ),
+              const SizedBox(height: AppTheme.spacingLg),
+              ...appointments.map(
+                (a) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
+                  child: AppointmentCard(
+                    service: a.serviceName,
+                    subtitle: a.clientName,
+                    time: _formatHour(a.startTime),
+                    status: _statusToBadge(a.status),
+                    variant: AppointmentCardVariant.compact,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
