@@ -1,4 +1,5 @@
 import 'package:app/core/services/api_client.dart';
+import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
 
 class AbsenceDayModel {
@@ -30,8 +31,19 @@ class AbsenceDayModel {
             endDate.minute != 0);
   }
 
+  bool get isSingleDay {
+    return startDate.year == endDate.year &&
+        startDate.month == endDate.month &&
+        startDate.day == endDate.day;
+  }
+
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
+  String _formatDateWithWeekday(DateTime date) {
+    final weekday = DateFormat('EEE', 'pt_BR').format(date).substring(0, 3);
+    return '$weekday, ${_formatDate(date)}';
   }
 
   String _formatTime(DateTime date) {
@@ -39,17 +51,18 @@ class AbsenceDayModel {
   }
 
   String get formattedDate {
+    // Single day with time: "seg, 29/04/2026 (08:00 - 16:55)"
     if (isSingleDayWithTime) {
-      return '${_formatDate(startDate)} (${_formatTime(startDate)} - ${_formatTime(endDate)})';
+      return '${_formatDateWithWeekday(startDate)} (${_formatTime(startDate)} - ${_formatTime(endDate)})';
     }
 
-    if (startDate.year == endDate.year &&
-        startDate.month == endDate.month &&
-        startDate.day == endDate.day) {
-      return _formatDate(startDate);
+    // Single day without time: "seg, 29/04/2026"
+    if (isSingleDay) {
+      return _formatDateWithWeekday(startDate);
     }
 
-    return '${_formatDate(startDate)} - ${_formatDate(endDate)}';
+    // Period: "seg, 18/05/2026 - sex, 20/05/2026"
+    return '${_formatDateWithWeekday(startDate)} - ${_formatDateWithWeekday(endDate)}';
   }
 }
 

@@ -30,6 +30,7 @@ class AdminProfileForm extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppTheme.spacingMd),
+
         const Center(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: AppTheme.spacingLg),
@@ -41,7 +42,7 @@ class AdminProfileForm extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppTheme.spacingXl),
-
+        
         AppButton(
           label: 'Férias e Ausências',
           variant: AppButtonVariant.secondary,
@@ -52,16 +53,10 @@ class AdminProfileForm extends StatelessWidget {
             AdminAbsencesFlow.start(currentContext); // Open absences flow
           },
         ),
-        
-        const SizedBox(height: AppTheme.spacingXl),
-        AppButton(
-          label: 'Salvar',
-          fullWidth: true,
-          onPressed: onSave,
-        ),
         const SizedBox(height: AppTheme.spacingMd),
+
         AppButton(
-          label: 'Sair da Conta (Logoff)',
+          label: 'Sair da Conta',
           fullWidth: true,
           variant: AppButtonVariant.ghost,
           onPressed: () async {

@@ -81,7 +81,15 @@ class _CreateAbsenceSheetState extends State<CreateAbsenceSheet> {
     }
   }
 
-  String _formatDateString(DateTime date) {
+  String _formatDateString(DateTime date, {bool includeYear = false}) {
+    if (includeYear) {
+      final format = DateFormat("EEE, d 'de' MMM 'de' yyyy", 'pt_BR');
+      String formatted = format.format(date).toLowerCase();
+      if (!formatted.contains('.')) {
+        formatted = formatted.replaceFirst(',', '.,'); // seg, -> seg.,
+      }
+      return formatted;
+    }
     final format = DateFormat("EEE, d 'de' MMM", 'pt_BR');
     String formatted = format.format(date).toLowerCase();
     if (!formatted.contains('.')) {
@@ -91,10 +99,18 @@ class _CreateAbsenceSheetState extends State<CreateAbsenceSheet> {
     return formatted;
   }
 
+  String _formatSingleDayDate(DateTime date) {
+    final weekday = DateFormat('EEE', 'pt_BR').format(date).substring(0, 3);
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year;
+    return '$weekday, $day/$month/$year';
+  }
+
   String get _displayValue {
     if (_startDate == null) return 'Selecionar';
     final d1 = _isSingleDay
-        ? '${_startDate!.day.toString().padLeft(2, '0')}/${_startDate!.month.toString().padLeft(2, '0')}/${_startDate!.year}'
+        ? _formatSingleDayDate(_startDate!)
         : _formatDateString(_startDate!);
     
     if (_isSingleDay) {
@@ -106,7 +122,8 @@ class _CreateAbsenceSheetState extends State<CreateAbsenceSheet> {
       return '$d1 ($sh:$sm - $eh:$em)';
     } else {
       if (_endDate == null) return d1;
-      final d2 = _formatDateString(_endDate!);
+      // Include year in end date to show period context
+      final d2 = _formatDateString(_endDate!, includeYear: true);
       return '$d1 — $d2';
     }
   }
