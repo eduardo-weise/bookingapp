@@ -1,4 +1,5 @@
 using BookingApp.API.Extentions;
+using BookingApp.API.Features.Scheduling.Appointments;
 using BookingApp.Domain.Entities;
 using BookingApp.Domain.Exceptions;
 using BookingApp.Infrastructure.Data;
@@ -63,9 +64,6 @@ public sealed class GetAvailableSlotsEndpoint(ApplicationDbContext dbContext)
 
 		var durationMinutes = duration.TotalMinutes;
 
-		var startBusinessHours = new TimeSpan(9, 0, 0);
-		var endBusinessHours = new TimeSpan(18, 0, 0);
-
 		var existingAppointments = await dbContext.Appointments
 			.AsNoTracking()
 			.Where(a => a.Status == AppointmentStatus.Scheduled && a.StartTime.Date == targetDate)
@@ -73,9 +71,8 @@ public sealed class GetAvailableSlotsEndpoint(ApplicationDbContext dbContext)
 			.ToListAsync(ct);
 
 		var availableSlots = new List<TimeSpan>();
-		var currentSlot = startBusinessHours;
 
-		while (currentSlot.Add(TimeSpan.FromMinutes(durationMinutes)) <= endBusinessHours)
+		foreach (var currentSlot in SchedulingWindows.EnumerateSlotStarts(durationMinutes))
 		{
 			var slotStartTime = targetDate.Add(currentSlot);
 			var slotEndTime = slotStartTime.AddMinutes(durationMinutes);
@@ -87,8 +84,6 @@ public sealed class GetAvailableSlotsEndpoint(ApplicationDbContext dbContext)
 			{
 				availableSlots.Add(currentSlot);
 			}
-
-			currentSlot = currentSlot.Add(TimeSpan.FromMinutes(30));
 		}
 
 		await Send.OkAsync(availableSlots, cancellation: ct);

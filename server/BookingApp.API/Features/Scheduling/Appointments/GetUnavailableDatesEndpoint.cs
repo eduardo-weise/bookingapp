@@ -1,4 +1,5 @@
 using BookingApp.API.Extentions;
+using BookingApp.API.Features.Scheduling.Appointments;
 using BookingApp.Domain.Entities;
 using BookingApp.Domain.Exceptions;
 using BookingApp.Infrastructure.Data;
@@ -30,6 +31,9 @@ public sealed class GetUnavailableDatesValidator : Validator<GetUnavailableDates
 public sealed class GetUnavailableDatesEndpoint(ApplicationDbContext dbContext)
 	: Endpoint<GetUnavailableDatesRequest, List<DateTime>>
 {
+	private sealed record AppointmentWindow(DateTime StartTime, DateTime EndTime);
+	private sealed record AbsenceWindow(DateTime StartDate, DateTime EndDate);
+
 	public override void Configure()
 	{
 		Get("/appointments/unavailable-dates");
@@ -66,8 +70,6 @@ public sealed class GetUnavailableDatesEndpoint(ApplicationDbContext dbContext)
 		}
 
 		var durationMinutes = duration.TotalMinutes;
-		var startBusinessHours = new TimeSpan(9, 0, 0);
-		var endBusinessHours = new TimeSpan(18, 0, 0);
 
 		var absences = await dbContext.AbsenceDays
 			.AsNoTracking()
@@ -81,51 +83,54 @@ public sealed class GetUnavailableDatesEndpoint(ApplicationDbContext dbContext)
 				a.StartTime >= startDate &&
 				a.StartTime < endDateExclusive)
 			.OrderBy(a => a.StartTime)
-			.Select(a => new { a.StartTime, a.EndTime })
+			.Select(a => new AppointmentWindow(a.StartTime, a.EndTime))
 			.ToListAsync(ct);
 
 		var unavailableDates = new List<DateTime>();
 
 		for (var currentDate = startDate; currentDate <= endDate; currentDate = currentDate.AddDays(1))
 		{
-			var hasAvailableSlot = false;
-
 			var dayAppointments = existingAppointments
 				.Where(a => a.StartTime.Date == currentDate)
 				.ToList();
 
 			var dayAbsences = absences
 				.Where(a => a.StartDate < currentDate.AddDays(1) && a.EndDate > currentDate)
+				.Select(a => new AbsenceWindow(a.StartDate, a.EndDate))
 				.ToList();
 
-			var currentSlot = startBusinessHours;
-
-			while (currentSlot.Add(TimeSpan.FromMinutes(durationMinutes)) <= endBusinessHours)
-			{
-				var slotStartTime = currentDate.Add(currentSlot);
-				var slotEndTime = slotStartTime.AddMinutes(durationMinutes);
-
-				var hasAppointmentOverlap = dayAppointments.Any(a =>
-					a.StartTime < slotEndTime && a.EndTime > slotStartTime);
-
-				var hasAbsenceOverlap = dayAbsences.Any(a =>
-					a.StartDate < slotEndTime && a.EndDate > slotStartTime);
-
-				if (!hasAppointmentOverlap && !hasAbsenceOverlap)
-				{
-					hasAvailableSlot = true;
-					break;
-				}
-
-				currentSlot = currentSlot.Add(TimeSpan.FromMinutes(30));
-			}
-
-			if (!hasAvailableSlot)
+			if (!HasAvailableSlot(currentDate, durationMinutes, dayAppointments, dayAbsences))
 			{
 				unavailableDates.Add(currentDate);
 			}
 		}
 
 		await Send.OkAsync(unavailableDates, cancellation: ct);
+	}
+
+	private static bool HasAvailableSlot(
+		DateTime currentDate,
+		double durationMinutes,
+		List<AppointmentWindow> dayAppointments,
+		List<AbsenceWindow> dayAbsences)
+	{
+		foreach (var currentSlot in SchedulingWindows.EnumerateSlotStarts(durationMinutes))
+		{
+			var slotStartTime = currentDate.Add(currentSlot);
+			var slotEndTime = slotStartTime.AddMinutes(durationMinutes);
+
+			var hasAppointmentOverlap = dayAppointments.Any(a =>
+				a.StartTime < slotEndTime && a.EndTime > slotStartTime);
+
+			var hasAbsenceOverlap = dayAbsences.Any(a =>
+				a.StartDate < slotEndTime && a.EndDate > slotStartTime);
+
+			if (!hasAppointmentOverlap && !hasAbsenceOverlap)
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 }
