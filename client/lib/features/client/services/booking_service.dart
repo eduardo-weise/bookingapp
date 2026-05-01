@@ -43,6 +43,35 @@ class BookingService {
     }
   }
 
+  /// Computes days in [startDate..endDate] that have no available slots.
+  /// This captures days blocked by absences/vacations or fully booked days.
+  Future<List<DateTime>> getUnavailableDates({
+    required DateTime startDate,
+    required DateTime endDate,
+    required String serviceId,
+    String? clientId,
+  }) async {
+    try {
+      final response = await _client.get(
+        '/appointments/unavailable-dates',
+        queryParameters: {
+          'StartDate': startDate.toIso8601String(),
+          'EndDate': endDate.toIso8601String(),
+          'ServiceId': serviceId,
+          'ClientId': clientId,
+        },
+      );
+
+      final list = response.data as List<dynamic>;
+      return list
+          .map((raw) => DateTime.parse(raw as String))
+          .map((date) => DateTime(date.year, date.month, date.day))
+          .toList();
+    } on DioException catch (e) {
+      throw Exception(_handleError(e));
+    }
+  }
+
   /// Books an appointment. Combines [date] and [timeSlot] ("HH:mm") into
   /// a full ISO 8601 DateTime and sends [POST /appointments].
   Future<void> bookAppointment({

@@ -125,37 +125,20 @@ class BookingFlow {
           selectedTargetClient: selectedTargetClient,
         );
       },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (selectedTargetClient != null) ...[
-            _SelectedClientBanner(client: selectedTargetClient),
-            const SizedBox(height: AppTheme.spacingMd),
-          ],
-          const Text(
-            'Selecione uma data para o agendamento.',
-            style: TextStyle(color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: AppTheme.spacingMd),
-          AppDatePicker(
-            initialSelectedDate: DateTime.now().add(const Duration(days: 1)),
-            minDate: DateTime.now(),
-            maxDate: DateTime.now().add(const Duration(days: 90)),
-            selectionMode: DateRangePickerSelectionMode.single,
-            onSelectionChanged: (args) {
-              if (args.value is DateTime) {
-                Navigator.of(context).pop();
-                _showTimesSheet(
-                  context,
-                  service,
-                  args.value as DateTime,
-                  loadTargetClients: loadTargetClients,
-                  selectedTargetClient: selectedTargetClient,
-                );
-              }
-            },
-          ),
-        ],
+      child: _DatePickerSheetContent(
+        bookingService: _service,
+        service: service,
+        selectedTargetClient: selectedTargetClient,
+        onDateSelected: (selectedDate) {
+          Navigator.of(context).pop();
+          _showTimesSheet(
+            context,
+            service,
+            selectedDate,
+            loadTargetClients: loadTargetClients,
+            selectedTargetClient: selectedTargetClient,
+          );
+        },
       ),
     );
   }
@@ -192,6 +175,152 @@ class BookingFlow {
         selectedTargetClient: selectedTargetClient,
         onConfirmed: () => Navigator.of(context).pop(),
       ),
+    );
+  }
+}
+
+class _DatePickerSheetContent extends StatefulWidget {
+  final BookingService bookingService;
+  final ServiceModel service;
+  final BookingTargetClient? selectedTargetClient;
+  final ValueChanged<DateTime> onDateSelected;
+
+  const _DatePickerSheetContent({
+    required this.bookingService,
+    required this.service,
+    required this.selectedTargetClient,
+    required this.onDateSelected,
+  });
+
+  @override
+  State<_DatePickerSheetContent> createState() => _DatePickerSheetContentState();
+}
+
+class _DatePickerSheetContentState extends State<_DatePickerSheetContent> {
+  late final DateTime _minDate;
+  late final DateTime _maxDate;
+  late final DateTime _initialVisibleDate;
+
+  bool _isLoadingUnavailableDates = true;
+  final Set<String> _loadedMonths = <String>{};
+  final Set<String> _loadingMonths = <String>{};
+  final Set<DateTime> _blackoutDatesSet = <DateTime>{};
+
+  List<DateTime> get _blackoutDates => _blackoutDatesSet.toList();
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _minDate = DateTime(now.year, now.month, now.day);
+    _maxDate = _minDate.add(const Duration(days: 90));
+    _initialVisibleDate = _minDate.add(const Duration(days: 1));
+    _loadUnavailableDatesForVisibleDate(_initialVisibleDate);
+  }
+
+  String _monthKey(DateTime date) =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}';
+
+  DateTime _monthStart(DateTime date) => DateTime(date.year, date.month, 1);
+
+  DateTime _monthEnd(DateTime date) => DateTime(date.year, date.month + 1, 0);
+
+  DateTime _maxDateTime(DateTime left, DateTime right) =>
+      left.isAfter(right) ? left : right;
+
+  DateTime _minDateTime(DateTime left, DateTime right) =>
+      left.isBefore(right) ? left : right;
+
+  Future<void> _loadUnavailableDatesForVisibleDate(DateTime visibleDate) async {
+    final monthKey = _monthKey(visibleDate);
+    if (_loadedMonths.contains(monthKey) || _loadingMonths.contains(monthKey)) {
+      return;
+    }
+
+    final start = _maxDateTime(_monthStart(visibleDate), _minDate);
+    final end = _minDateTime(_monthEnd(visibleDate), _maxDate);
+
+    _loadingMonths.add(monthKey);
+
+    if (mounted && _loadedMonths.isEmpty) {
+      setState(() {
+        _isLoadingUnavailableDates = true;
+      });
+    }
+
+    try {
+      final blocked = await widget.bookingService.getUnavailableDates(
+        startDate: start,
+        endDate: end,
+        serviceId: widget.service.id,
+        clientId: widget.selectedTargetClient?.id,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _blackoutDatesSet.addAll(
+          blocked.map((date) => DateTime(date.year, date.month, date.day)),
+        );
+        _loadedMonths.add(monthKey);
+        _isLoadingUnavailableDates = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      final message = e.toString().replaceAll('Exception: ', '');
+      AppSnackBar.showError(context, message);
+
+      setState(() {
+        _isLoadingUnavailableDates = false;
+      });
+    } finally {
+      _loadingMonths.remove(monthKey);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (widget.selectedTargetClient != null) ...[
+          _SelectedClientBanner(client: widget.selectedTargetClient!),
+          const SizedBox(height: AppTheme.spacingMd),
+        ],
+        const Text(
+          'Selecione uma data para o agendamento.',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: AppTheme.spacingXs),
+        const Text(
+          'Dias marcados em vermelho estão indisponíveis.',
+          style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
+        ),
+        const SizedBox(height: AppTheme.spacingMd),
+        if (_isLoadingUnavailableDates)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppTheme.spacingXl),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else
+          AppDatePicker(
+            initialSelectedDate: _initialVisibleDate,
+            minDate: _minDate,
+            maxDate: _maxDate,
+            blackoutDates: _blackoutDates,
+            selectionMode: DateRangePickerSelectionMode.single,
+            onSelectionChanged: (args) {
+              if (args.value is DateTime) {
+                widget.onDateSelected(args.value as DateTime);
+              }
+            },
+            onViewChanged: (args) {
+              final visibleStart = args.visibleDateRange.startDate;
+              if (visibleStart == null) return;
+              _loadUnavailableDatesForVisibleDate(visibleStart);
+            },
+          ),
+      ],
     );
   }
 }

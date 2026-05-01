@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
-export 'package:syncfusion_flutter_datepicker/datepicker.dart' show DateRangePickerSelectionMode, PickerDateRange, DateRangePickerSelectionChangedArgs;
+export 'package:syncfusion_flutter_datepicker/datepicker.dart' show DateRangePickerSelectionMode, PickerDateRange, DateRangePickerSelectionChangedArgs, DateRangePickerViewChangedArgs;
 import '../core/theme/app_colors.dart';
 
 class AppDatePicker extends StatelessWidget {
@@ -9,7 +9,9 @@ class AppDatePicker extends StatelessWidget {
   final PickerDateRange? initialSelectedRange;
   final DateTime? minDate;
   final DateTime? maxDate;
+  final List<DateTime>? blackoutDates;
   final void Function(DateRangePickerSelectionChangedArgs)? onSelectionChanged;
+  final void Function(DateRangePickerViewChangedArgs)? onViewChanged;
 
   const AppDatePicker({
     super.key,
@@ -18,7 +20,9 @@ class AppDatePicker extends StatelessWidget {
     this.initialSelectedRange,
     this.minDate,
     this.maxDate,
+    this.blackoutDates,
     this.onSelectionChanged,
+    this.onViewChanged,
   });
 
   @override
@@ -43,9 +47,10 @@ class AppDatePicker extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        monthViewSettings: const DateRangePickerMonthViewSettings(
+        monthViewSettings: DateRangePickerMonthViewSettings(
           dayFormat: 'E',
           viewHeaderHeight: 40,
+          blackoutDates: blackoutDates,
           viewHeaderStyle: DateRangePickerViewHeaderStyle(
             textStyle: TextStyle(
               color: AppColors.textSecondary,
@@ -57,6 +62,16 @@ class AppDatePicker extends StatelessWidget {
         monthCellStyle: const DateRangePickerMonthCellStyle(
           textStyle: TextStyle(color: AppColors.textPrimary, fontSize: 14),
           disabledDatesTextStyle: TextStyle(color: AppColors.textTertiary, fontSize: 14),
+          blackoutDateTextStyle: TextStyle(
+            color: AppColors.statusCancelled,
+            fontSize: 14,
+            decoration: TextDecoration.lineThrough,
+            decorationColor: AppColors.statusCancelled,
+          ),
+          blackoutDatesDecoration: BoxDecoration(
+            color: AppColors.cancelledBg,
+            shape: BoxShape.circle,
+          ),
           todayTextStyle: TextStyle(color: AppColors.brandPrimary, fontWeight: FontWeight.bold),
         ),
         yearCellStyle: const DateRangePickerYearCellStyle(
@@ -72,6 +87,7 @@ class AppDatePicker extends StatelessWidget {
         selectionColor: AppColors.brandPrimary,
         selectionShape: DateRangePickerSelectionShape.circle,
         onSelectionChanged: onSelectionChanged,
+        onViewChanged: onViewChanged,
       ),
     );
   }
