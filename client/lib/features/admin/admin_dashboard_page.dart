@@ -32,21 +32,6 @@ class _Debt {
   });
 }
 
-class _TodayAppointment {
-  final String clientName;
-  final String service;
-  final DateTime date;
-  final String time;
-  final BadgeVariant status;
-  const _TodayAppointment({
-    required this.clientName,
-    required this.service,
-    required this.date,
-    required this.time,
-    required this.status,
-  });
-}
-
 const _debts = [
   _Debt(
     clientName: 'Maria Silva',
@@ -62,23 +47,6 @@ const _debts = [
   ),
 ];
 
-final _todayAppointments = [
-  _TodayAppointment(
-    clientName: 'Maria Silva',
-    service: 'Corte de Cabelo',
-    date: DateTime(2026, 4, 20),
-    time: '14:00',
-    status: BadgeVariant.confirmed,
-  ),
-  _TodayAppointment(
-    clientName: 'João Santos',
-    service: 'Manicure',
-    date: DateTime(2026, 4, 20),
-    time: '15:30',
-    status: BadgeVariant.pending,
-  ),
-];
-
 // ── Admin Dashboard ──────────────────────────────────────────────────────────
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
@@ -90,6 +58,13 @@ class AdminDashboardPage extends StatefulWidget {
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
   final _clientsService = AdminClientsService();
   final _appointmentsService = AdminAppointmentsService();
+  late Future<List<AdminAppointmentModel>> _todayAppointmentsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _todayAppointmentsFuture = _appointmentsService.getAppointmentsByDate(DateTime.now());
+  }
 
   // ── Profile / Edit Sheet ──
   void _showEditProfileSheet() {
@@ -264,7 +239,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             onSelectionChanged: (args) {
               if (args.value is DateTime) {
                 Navigator.pop(context);
-                _showAppointmentsForDateSheet(args.value as DateTime);
+                _showAppointmentsForDateSheet(
+                  args.value as DateTime,
+                  onBack: _showFutureAppointmentsDatePickerSheet,
+                );
               }
             },
           ),
@@ -282,6 +260,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 
   String _formatCardDate(DateTime date) => DateFormat('dd MMM', 'pt_BR').format(date);
+
+  String _formatTodayBadge(DateTime date) =>
+      'Hoje, ${DateFormat("dd 'de' MMMM", 'pt_BR').format(date)}';
 
   String _statusLabel(BadgeVariant status) {
     switch (status) {
@@ -302,11 +283,15 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     return BadgeVariant.pending;
   }
 
-  void _showAppointmentsForDateSheet(DateTime date) {
+  void _showAppointmentsForDateSheet(
+    DateTime date, {
+    VoidCallback? onBack,
+  }) {
     showAppBottomSheet(
       context: context,
       title: 'Agenda: ${_formatDate(date)}',
       height: BottomSheetHeight.flexible,
+      onBack: onBack,
       child: FutureBuilder<List<AdminAppointmentModel>>(
         future: _appointmentsService.getAppointmentsByDate(date),
         builder: (context, snapshot) {
@@ -518,33 +503,67 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppTheme.spacingLg,
                 ),
-                child: const AppBadge(
-                  label: 'Hoje, 20 de Abril',
+                child: AppBadge(
+                  label: _formatTodayBadge(DateTime.now()),
                   variant: BadgeVariant.confirmed,
                 ),
               ),
               const SizedBox(height: AppTheme.spacingMd),
 
-              // ── Today's Appointments (shared AppointmentCard) ──
-              ...List.generate(_todayAppointments.length, (i) {
-                final a = _todayAppointments[i];
-                return Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    AppTheme.spacingLg,
-                    0,
-                    AppTheme.spacingLg,
-                    i < _todayAppointments.length - 1 ? AppTheme.spacingSm : 0,
-                  ),
-                  child: AppointmentCard(
-                    service: '${a.clientName} • ${a.service}',
-                    subtitle: _statusLabel(a.status),
-                    date: _formatCardDate(a.date),
-                    time: a.time,
-                    status: a.status,
-                    variant: AppointmentCardVariant.full,
-                  ),
-                );
-              }),
+              FutureBuilder<List<AdminAppointmentModel>>(
+                future: _todayAppointmentsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: AppTheme.spacingXl),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
+                  if (snapshot.hasError) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: AppTheme.spacingLg),
+                      child: AppEmptyState(
+                        message: 'Não foi possível carregar os agendamentos de hoje.',
+                        icon: Icons.event_busy,
+                      ),
+                    );
+                  }
+
+                  final todayAppointments = snapshot.data ?? [];
+                  if (todayAppointments.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: AppTheme.spacingLg),
+                      child: AppEmptyState(
+                        message: 'Nenhum agendamento para hoje.',
+                        icon: Icons.event_available,
+                      ),
+                    );
+                  }
+
+                  return Column(
+                    children: List.generate(todayAppointments.length, (i) {
+                      final appointment = todayAppointments[i];
+                      return Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          AppTheme.spacingLg,
+                          0,
+                          AppTheme.spacingLg,
+                          i < todayAppointments.length - 1 ? AppTheme.spacingSm : 0,
+                        ),
+                        child: AppointmentCard(
+                          service: '${appointment.clientName} • ${appointment.serviceName}',
+                          subtitle: _statusLabel(_statusToBadge(appointment.status)),
+                          date: _formatCardDate(appointment.startTime),
+                          time: _formatHour(appointment.startTime),
+                          status: _statusToBadge(appointment.status),
+                          variant: AppointmentCardVariant.full,
+                        ),
+                      );
+                    }),
+                  );
+                },
+              ),
 
               const SizedBox(height: AppTheme.spacingXl),
             ],
