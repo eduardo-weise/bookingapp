@@ -309,6 +309,10 @@ class _DatePickerSheetContentState extends State<_DatePickerSheetContent> {
             maxDate: _maxDate,
             blackoutDates: _blackoutDates,
             selectionMode: DateRangePickerSelectionMode.single,
+            selectableDayPredicate: (date) {
+              return date.weekday != DateTime.sunday &&
+                  date.weekday != DateTime.monday;
+            },
             onSelectionChanged: (args) {
               if (args.value is DateTime) {
                 widget.onDateSelected(args.value as DateTime);

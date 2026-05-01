@@ -12,6 +12,7 @@ class AppDatePicker extends StatelessWidget {
   final List<DateTime>? blackoutDates;
   final void Function(DateRangePickerSelectionChangedArgs)? onSelectionChanged;
   final void Function(DateRangePickerViewChangedArgs)? onViewChanged;
+  final bool Function(DateTime date)? selectableDayPredicate;
 
   const AppDatePicker({
     super.key,
@@ -23,6 +24,7 @@ class AppDatePicker extends StatelessWidget {
     this.blackoutDates,
     this.onSelectionChanged,
     this.onViewChanged,
+    this.selectableDayPredicate,
   });
 
   @override
@@ -88,6 +90,7 @@ class AppDatePicker extends StatelessWidget {
         selectionShape: DateRangePickerSelectionShape.circle,
         onSelectionChanged: onSelectionChanged,
         onViewChanged: onViewChanged,
+        selectableDayPredicate: selectableDayPredicate,
       ),
     );
   }
