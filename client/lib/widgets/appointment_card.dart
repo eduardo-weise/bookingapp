@@ -40,14 +40,24 @@ class AppointmentCard extends StatelessWidget {
     this.onTap,
   });
 
-  String get _statusLabel =>
-      status == BadgeVariant.confirmed ? 'Confirmado' : 'Pendente';
+  Color get _statusColor {
+    switch (status) {
+      case BadgeVariant.confirmed:
+        return AppColors.statusConfirmed;
+      case BadgeVariant.pending:
+        return AppColors.statusPending;
+      case BadgeVariant.cancelled:
+        return AppColors.statusCancelled;
+    }
+  }
+
+  Color get _statusBackground => _statusColor.withValues(alpha: 0.12);
 
   @override
   Widget build(BuildContext context) {
     return variant == AppointmentCardVariant.full
         ? _buildFull()
-        : _buildCompact();
+      : _buildFull();
   }
 
   // ── Full variant (Client) ─────────────────────────────────────────────────
@@ -94,7 +104,7 @@ class AppointmentCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.statusConfirmed.withValues(alpha: 0.12),
+                        color: _statusBackground,
                         borderRadius: BorderRadius.circular(100),
                       ),
                       child: Row(
@@ -103,32 +113,32 @@ class AppointmentCard extends StatelessWidget {
                           const Icon(
                             Icons.calendar_month_outlined,
                             size: 14,
-                            color: AppColors.statusConfirmed,
+                            color: AppColors.textPrimary,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             date ?? '',
                             style: AppTextStyles.caption.copyWith(
-                              color: AppColors.statusConfirmed,
+                              color: _statusColor,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           const SizedBox(width: 8),
-                          const Text(
+                          Text(
                             '•',
-                            style: TextStyle(color: AppColors.statusConfirmed),
+                            style: TextStyle(color: _statusColor),
                           ),
                           const SizedBox(width: 8),
                           const Icon(
                             Icons.access_time,
                             size: 14,
-                            color: AppColors.statusConfirmed,
+                            color: AppColors.textPrimary,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             time,
                             style: AppTextStyles.caption.copyWith(
-                              color: AppColors.statusConfirmed,
+                              color: _statusColor,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -161,103 +171,6 @@ class AppointmentCard extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Compact variant (Admin) ───────────────────────────────────────────────
-  Widget _buildCompact() {
-    return AppCard(
-      onTap: onTap,
-      padding: const EdgeInsets.all(AppTheme.spacingMd),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 4,
-            height: 48,
-            decoration: BoxDecoration(
-              color: status == BadgeVariant.confirmed
-                  ? AppColors.statusConfirmed
-                  : AppColors.statusPending,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(width: AppTheme.spacingSm + 4),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            subtitle, // For admin this is clientName
-                            style: AppTextStyles.heading3.copyWith(
-                              fontSize: 15,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            service,
-                            style: AppTextStyles.caption.copyWith(
-                              color: AppColors.textTertiary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: AppTheme.spacingSm),
-                    AppBadge(label: _statusLabel, variant: status),
-                  ],
-                ),
-                const SizedBox(height: AppTheme.spacingSm),
-                Text(
-                  time,
-                  style: AppTextStyles.label.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: AppTheme.spacingMd),
-                Row(
-                  children: [
-                    Expanded(
-                      child: AppButton(
-                        label: 'Reagendar',
-                        variant: AppButtonVariant.secondary,
-                        small: true,
-                        onPressed: () {},
-                      ),
-                    ),
-                    const SizedBox(width: AppTheme.spacingXs),
-                    Expanded(
-                      child: AppButton(
-                        label: 'No-show',
-                        variant: AppButtonVariant.secondary,
-                        small: true,
-                        onPressed: () {},
-                      ),
-                    ),
-                    const SizedBox(width: AppTheme.spacingXs),
-                    Expanded(
-                      child: AppButton(
-                        label: 'Cancelar',
-                        variant: AppButtonVariant.danger,
-                        small: true,
-                        onPressed: () {},
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
           ),
         ],
       ),

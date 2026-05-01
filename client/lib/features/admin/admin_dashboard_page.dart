@@ -13,6 +13,7 @@ import 'package:app/widgets/page_header.dart';
 import 'package:app/widgets/section_header.dart';
 import 'package:app/widgets/appointment_card.dart';
 import 'package:app/widgets/app_empty_state.dart';
+import 'package:intl/intl.dart';
 import 'admin_profile_form.dart';
 import 'services/admin_clients_service.dart';
 import 'services/admin_appointments_service.dart';
@@ -34,11 +35,13 @@ class _Debt {
 class _TodayAppointment {
   final String clientName;
   final String service;
+  final DateTime date;
   final String time;
   final BadgeVariant status;
   const _TodayAppointment({
     required this.clientName,
     required this.service,
+    required this.date,
     required this.time,
     required this.status,
   });
@@ -59,16 +62,18 @@ const _debts = [
   ),
 ];
 
-const _todayAppointments = [
+final _todayAppointments = [
   _TodayAppointment(
     clientName: 'Maria Silva',
     service: 'Corte de Cabelo',
+    date: DateTime(2026, 4, 20),
     time: '14:00',
     status: BadgeVariant.confirmed,
   ),
   _TodayAppointment(
     clientName: 'João Santos',
     service: 'Manicure',
+    date: DateTime(2026, 4, 20),
     time: '15:30',
     status: BadgeVariant.pending,
   ),
@@ -276,6 +281,19 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
+  String _formatCardDate(DateTime date) => DateFormat('dd MMM', 'pt_BR').format(date);
+
+  String _statusLabel(BadgeVariant status) {
+    switch (status) {
+      case BadgeVariant.confirmed:
+        return 'Confirmado';
+      case BadgeVariant.cancelled:
+        return 'Cancelado';
+      case BadgeVariant.pending:
+        return 'Pendente';
+    }
+  }
+
   BadgeVariant _statusToBadge(String status) {
     final normalized = status.toLowerCase();
     if (normalized == 'scheduled' || normalized == 'rescheduled') {
@@ -322,11 +340,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 (a) => Padding(
                   padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
                   child: AppointmentCard(
-                    service: a.serviceName,
-                    subtitle: a.clientName,
+                    service: '${a.clientName} • ${a.serviceName}',
+                    subtitle: _statusLabel(_statusToBadge(a.status)),
+                    date: _formatCardDate(a.startTime),
                     time: _formatHour(a.startTime),
                     status: _statusToBadge(a.status),
-                    variant: AppointmentCardVariant.compact,
+                    variant: AppointmentCardVariant.full,
                   ),
                 ),
               ),
@@ -517,11 +536,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     i < _todayAppointments.length - 1 ? AppTheme.spacingSm : 0,
                   ),
                   child: AppointmentCard(
-                    service: a.service,
-                    subtitle: a.clientName,
+                    service: '${a.clientName} • ${a.service}',
+                    subtitle: _statusLabel(a.status),
+                    date: _formatCardDate(a.date),
                     time: a.time,
                     status: a.status,
-                    variant: AppointmentCardVariant.compact,
+                    variant: AppointmentCardVariant.full,
                   ),
                 );
               }),
