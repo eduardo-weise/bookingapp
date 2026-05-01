@@ -14,7 +14,8 @@ public sealed class CancelAppointmentEndpoint(ApplicationDbContext dbContext)
 	public override void Configure()
 	{
 		Post("/appointments/{id:guid}/cancel");
-		Tags("Scheduling");
+		Policies("All");
+		Tags("Application");
 		Options(x => x.WithName("CancelAppointment"));
 	}
 

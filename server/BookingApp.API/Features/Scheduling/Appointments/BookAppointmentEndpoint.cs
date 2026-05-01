@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookingApp.API.Features.Scheduling.BookAppointment;
 
-public sealed record BookAppointmentRequest(Guid ServiceId, DateTime StartTime);
+public sealed record BookAppointmentRequest(Guid ServiceId, DateTime StartTime, Guid? ClientId = null);
 
 public sealed class BookAppointmentValidator : Validator<BookAppointmentRequest>
 {
@@ -26,18 +26,40 @@ public sealed class BookAppointmentEndpoint(ApplicationDbContext dbContext)
 	public override void Configure()
 	{
 		Post("/appointments");
-		Tags("Scheduling");
+		Policies("All");
+		Tags("Application");
 		Options(x => x.WithName("BookAppointment"));
 	}
 
 	public override async Task HandleAsync(BookAppointmentRequest req, CancellationToken ct)
 	{
 		var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-		if (!Guid.TryParse(userIdString, out var clientId))
+		if (!Guid.TryParse(userIdString, out var authenticatedUserId))
 		{
 			await Send.UnauthorizedAsync(ct);
 			return;
 		}
+
+		var isAdminOrManager = User.IsInRole("Admin") || User.IsInRole("Manager");
+		var targetClientId = authenticatedUserId;
+
+		if (req.ClientId.HasValue)
+		{
+			if (!isAdminOrManager)
+			{
+				await Send.ForbiddenAsync(ct);
+				return;
+			}
+
+			targetClientId = req.ClientId.Value;
+		}
+
+		var clientExists = await dbContext.Users
+			.AsNoTracking()
+			.AnyAsync(u => u.Id == targetClientId && u.Role == "Client" && !u.IsDeleted, ct);
+
+		if (!clientExists)
+			throw new NotFoundException("Cliente não encontrado.");
 
 		var service = await dbContext.Services
 			.AsNoTracking()
@@ -48,7 +70,7 @@ public sealed class BookAppointmentEndpoint(ApplicationDbContext dbContext)
 
 		var clientDuration = await dbContext.ClientServiceDurations
 			.AsNoTracking()
-			.SingleOrDefaultAsync(c => c.ClientId == clientId && c.ServiceId == req.ServiceId, ct);
+			.SingleOrDefaultAsync(c => c.ClientId == targetClientId && c.ServiceId == req.ServiceId, ct);
 
 		var duration = clientDuration?.Duration ?? service.DefaultDuration;
 		var startTime = req.StartTime.EnsureUtc();
@@ -69,7 +91,7 @@ public sealed class BookAppointmentEndpoint(ApplicationDbContext dbContext)
 		if (hasOverlap)
 			throw new ConflictException("Horário não disponível.");
 
-		var appointment = new Appointment(clientId, req.ServiceId, startTime, endTime);
+		var appointment = new Appointment(targetClientId, req.ServiceId, startTime, endTime);
 
 		await dbContext.Appointments.AddAsync(appointment, ct);
 		await dbContext.SaveChangesAsync(ct);

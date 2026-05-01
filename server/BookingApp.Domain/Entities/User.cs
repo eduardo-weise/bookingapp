@@ -12,7 +12,7 @@ public sealed class User : AggregateRoot
 	public bool IsMfaEnabled { get; private set; }
 	public string? MfaSecret { get; private set; }
 	public bool IsDeleted { get; private set; }
-	public string Role { get; private set; } // Admin, Manager, Client
+	public string Role { get; private set; }
 
 	// Password Recovery
 	public string? ResetPasswordToken { get; private set; }

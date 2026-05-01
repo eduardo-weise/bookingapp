@@ -12,6 +12,7 @@ public sealed class SoftDeleteUserEndpoint(ApplicationDbContext dbContext)
 	public override void Configure()
 	{
 		Delete("/users");
+		Policies("AdminOrManager");
 		Tags("Users");
 		Options(x => x.WithName("SoftDeleteUser"));
 	}

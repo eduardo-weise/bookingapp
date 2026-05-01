@@ -18,18 +18,18 @@ public class TokenService : RefreshTokenService<TokenRequest, CustomTokenRespons
 	{
 		_scopeFactory = scopeFactory;
 
-		Setup(o =>
+		Setup(refreshServiceOptions =>
 		{
-			o.TokenSigningKey = authConfig.Value.SecretKey;
-			o.Issuer = authConfig.Value.Issuer;
-			o.Audience = authConfig.Value.Audience;
-			o.AccessTokenValidity = authConfig.Value.AccessTokenExpirationMinutes;
-			o.RefreshTokenValidity = authConfig.Value.RefreshTokenExpirationDays;
+			refreshServiceOptions.TokenSigningKey = authConfig.Value.SecretKey;
+			refreshServiceOptions.Issuer = authConfig.Value.Issuer;
+			refreshServiceOptions.Audience = authConfig.Value.Audience;
+			refreshServiceOptions.AccessTokenValidity = authConfig.Value.AccessTokenExpirationMinutes;
+			refreshServiceOptions.RefreshTokenValidity = authConfig.Value.RefreshTokenExpirationDays;
 
-			o.Endpoint("/auth/refresh", ep =>
+			refreshServiceOptions.Endpoint("/auth/refresh", endpointDefinition =>
 			{
-				ep.AllowAnonymous();
-				ep.Tags("Auth");
+				endpointDefinition.AllowAnonymous();
+				endpointDefinition.Tags("Auth");
 			});
 		});
 	}
@@ -109,7 +109,7 @@ public class TokenService : RefreshTokenService<TokenRequest, CustomTokenRespons
 
 				if (!string.IsNullOrEmpty(userRole))
 				{
-					privileges.Roles.Add(userRole);
+					privileges.Claims.Add(new(ClaimTypes.Role, userRole));
 				}
 			});
 		}

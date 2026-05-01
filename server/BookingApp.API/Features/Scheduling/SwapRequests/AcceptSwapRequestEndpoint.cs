@@ -14,7 +14,8 @@ public sealed class AcceptSwapRequestEndpoint(ApplicationDbContext dbContext)
 	public override void Configure()
 	{
 		Post("/appointments/swaps/{id:guid}/accept");
-		Tags("Scheduling");
+		Policies("All");
+		Tags("SwapRequest");
 		Options(x => x.WithName("AcceptSwapRequest"));
 	}
 

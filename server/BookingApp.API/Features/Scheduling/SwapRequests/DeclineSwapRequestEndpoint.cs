@@ -14,7 +14,8 @@ public sealed class DeclineSwapRequestEndpoint(ApplicationDbContext dbContext)
 	public override void Configure()
 	{
 		Post("/appointments/swaps/{id:guid}/decline");
-		Tags("Scheduling");
+		Policies("All");
+		Tags("SwapRequest");
 		Options(x => x.WithName("DeclineSwapRequest"));
 	}
 

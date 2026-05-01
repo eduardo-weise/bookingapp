@@ -1,23 +1,81 @@
 using System.Security.Claims;
+using System.Text;
 using BookingApp.Infrastructure.Settings.Authentication;
 using FastEndpoints.Security;
+using Microsoft.IdentityModel.Tokens;
 
 namespace BookingApp.API.Extentions;
 
 public static class AuthExtensions
 {
-	public static IServiceCollection AddAuth(this IServiceCollection services, IConfiguration configuration)
+	extension(IServiceCollection services)
 	{
-		services.Configure<JwtOptions>(configuration.GetSection("JwtOptions"));
+		public IServiceCollection AddAuth(IConfiguration configuration)
+		{
+			services.Configure<JwtOptions>(configuration.GetSection("JwtOptions"));
 
-		services
-			.AddAuthenticationJwtBearer(o => o.SigningKey = configuration["JwtOptions:SecretKey"])
-			.AddAuthorization()
+			var secretKey = configuration["JwtOptions:SecretKey"]!;
+			var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+
+			services
+			.AddAuthenticationJwtBearer(
+				signingOptions =>
+				{
+					signingOptions.SigningKey = secretKey;
+				},
+				bearerOptions =>
+				{
+					bearerOptions.TokenValidationParameters = new TokenValidationParameters
+					{
+						ValidateIssuer = true,
+						ValidateAudience = true,
+						ValidateLifetime = true,
+						ValidateIssuerSigningKey = true,
+						ValidIssuer = configuration["JwtOptions:Issuer"],
+						ValidAudience = configuration["JwtOptions:Audience"],
+						IssuerSigningKey = signingKey,
+						ClockSkew = TimeSpan.Zero,
+						RoleClaimType = ClaimTypes.Role,
+						NameClaimType = ClaimTypes.NameIdentifier,
+						ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
+						ValidTypes = ["JWT"],
+						AuthenticationType = "Bearer"
+					};
+
+					//jwtBearerOptions.Events = new JwtBearerEvents
+					//{
+					//	OnTokenValidated = context =>
+					//	{
+					//		var claims = context.Principal?.Claims.ToList() ?? [];
+					//		System.Diagnostics.Debug.WriteLine($"=== JWT VALIDADO ===");
+					//		System.Diagnostics.Debug.WriteLine($"Total de claims: {claims.Count}");
+					//		claims.ForEach(c => System.Diagnostics.Debug.WriteLine($"  • {c.Type} = {c.Value}"));
+
+					//		// Especificamente procure por claims de role
+					//		var roleClaims = claims.Where(c => c.Type.Contains("role", StringComparison.OrdinalIgnoreCase)).ToList();
+					//		System.Diagnostics.Debug.WriteLine($"Claims de role encontrados: {roleClaims.Count}");
+					//		roleClaims.ForEach(c => System.Diagnostics.Debug.WriteLine($"  ⚠️  {c.Type} = {c.Value}"));
+
+					//		return Task.CompletedTask;
+					//	},
+					//	OnAuthenticationFailed = context =>
+					//	{
+					//		System.Diagnostics.Debug.WriteLine($"❌ Auth Failed: {context.Exception?.Message}");
+					//		return Task.CompletedTask;
+					//	},
+					//	OnForbidden = context =>
+					//	{
+					//		System.Diagnostics.Debug.WriteLine($"❌ Forbidden - Autorização rejeitada");
+					//		return Task.CompletedTask;
+					//	}
+					//};
+				})
 			.AddAuthorizationBuilder()
-				.AddPolicy("AdminsOnly", x => x.RequireRole("Admin").RequireClaim(ClaimTypes.NameIdentifier))
-				.AddPolicy("AdminOrManager", x => x.RequireRole("Admin", "Manager").RequireClaim(ClaimTypes.NameIdentifier))
-				.AddPolicy("All", x => x.RequireRole("Admin", "Manager", "Client").RequireClaim(ClaimTypes.NameIdentifier));
+				.AddPolicy("AdminsOnly", x => x.RequireRole("Admin"))
+				.AddPolicy("AdminOrManager", x => x.RequireRole("Admin", "Manager"))
+				.AddPolicy("All", x => x.RequireAuthenticatedUser());
 
-		return services;
+			return services;
+		}
 	}
 }

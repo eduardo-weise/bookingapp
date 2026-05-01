@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookingApp.API.Features.Scheduling.GetAvailableSlots;
 
-public sealed record GetAvailableSlotsRequest(DateTime Date, Guid ServiceId);
+public sealed record GetAvailableSlotsRequest(DateTime Date, Guid ServiceId, Guid? ClientId = null);
 
 public sealed class GetAvailableSlotsValidator : Validator<GetAvailableSlotsRequest>
 {
@@ -25,8 +25,8 @@ public sealed class GetAvailableSlotsEndpoint(ApplicationDbContext dbContext)
 	public override void Configure()
 	{
 		Get("/appointments/available-slots");
-		AllowAnonymous();
-		Tags("Scheduling");
+		Policies("All");
+		Tags("Application");
 		Options(x => x.WithName("GetAvailableSlots"));
 	}
 
@@ -47,7 +47,21 @@ public sealed class GetAvailableSlotsEndpoint(ApplicationDbContext dbContext)
 		if (service is null)
 			throw new NotFoundException("Serviço não encontrado.");
 
-		var durationMinutes = service.DefaultDuration.TotalMinutes;
+		var duration = service.DefaultDuration;
+
+		if (req.ClientId.HasValue)
+		{
+			var clientDuration = await dbContext.ClientServiceDurations
+				.AsNoTracking()
+				.SingleOrDefaultAsync(c => c.ClientId == req.ClientId.Value && c.ServiceId == req.ServiceId, ct);
+
+			if (clientDuration is not null)
+			{
+				duration = clientDuration.Duration;
+			}
+		}
+
+		var durationMinutes = duration.TotalMinutes;
 
 		var startBusinessHours = new TimeSpan(9, 0, 0);
 		var endBusinessHours = new TimeSpan(18, 0, 0);

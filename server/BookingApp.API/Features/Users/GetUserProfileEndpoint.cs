@@ -14,6 +14,7 @@ public sealed class GetUserProfileEndpoint(ApplicationDbContext dbContext)
 	public override void Configure()
 	{
 		Get("/users");
+		Policies("All");
 		Tags("Users");
 		Options(x => x.WithName("GetUserProfile"));
 	}

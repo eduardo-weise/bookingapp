@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookingApp.API.Features.Scheduling.GetAppointmentHistory;
 
-public sealed record AppointmentDto(Guid Id, Guid ServiceId, DateTime StartTime, DateTime EndTime, AppointmentStatus Status);
+public sealed record AppointmentDto(Guid Id, string ServiceName, DateTime StartTime, DateTime EndTime, string Status);
 
 public sealed class GetAppointmentHistoryEndpoint(ApplicationDbContext dbContext)
 	: EndpointWithoutRequest<List<AppointmentDto>>
@@ -14,7 +14,8 @@ public sealed class GetAppointmentHistoryEndpoint(ApplicationDbContext dbContext
 	public override void Configure()
 	{
 		Get("/appointments/history");
-		Tags("Scheduling");
+		Policies("All");
+		Tags("Application");
 		Options(x => x.WithName("GetAppointmentHistory"));
 	}
 
@@ -31,9 +32,26 @@ public sealed class GetAppointmentHistoryEndpoint(ApplicationDbContext dbContext
 			.AsNoTracking()
 			.Where(a => a.ClientId == clientId)
 			.OrderByDescending(a => a.StartTime)
-			.Select(a => new AppointmentDto(a.Id, a.ServiceId, a.StartTime, a.EndTime, a.Status))
+			.Select(a => new { a.Id, a.ServiceId, a.StartTime, a.EndTime, a.Status })
 			.ToListAsync(ct);
 
-		await Send.OkAsync(appointments, cancellation: ct);
+		var serviceIds = appointments.Select(a => a.ServiceId).Distinct().ToList();
+
+		var servicesById = await dbContext.Services
+			.AsNoTracking()
+			.Where(s => serviceIds.Contains(s.Id))
+			.ToDictionaryAsync(s => s.Id, s => s.Name, ct);
+
+		var response = appointments
+			.Select(a => new AppointmentDto(
+				a.Id,
+				servicesById.GetValueOrDefault(a.ServiceId, "Serviço removido"),
+				a.StartTime,
+				a.EndTime,
+				a.Status.ToString()
+			))
+			.ToList();
+
+		await Send.OkAsync(response, cancellation: ct);
 	}
 }

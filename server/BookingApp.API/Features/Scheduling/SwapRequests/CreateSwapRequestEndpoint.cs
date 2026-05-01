@@ -15,7 +15,8 @@ public sealed class CreateSwapRequestEndpoint(ApplicationDbContext dbContext)
 	public override void Configure()
 	{
 		Post("/appointments/swaps");
-		Tags("Scheduling");
+		Policies("All");
+		Tags("SwapRequest");
 		Options(x => x.WithName("CreateSwapRequest"));
 	}
 

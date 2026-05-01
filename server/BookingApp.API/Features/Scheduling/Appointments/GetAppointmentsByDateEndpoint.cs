@@ -26,7 +26,7 @@ public sealed class GetAppointmentsByDateEndpoint(ApplicationDbContext dbContext
 	{
 		Get("/appointments/by-date");
 		Policies("AdminOrManager");
-		Tags("Scheduling");
+		Tags("Application");
 		Options(x => x.WithName("GetAppointmentsByDate"));
 	}
 
@@ -73,20 +73,7 @@ public sealed class GetAppointmentsByDateEndpoint(ApplicationDbContext dbContext
 				usersById.TryGetValue(a.ClientId, out var user);
 				servicesById.TryGetValue(a.ServiceId, out var service);
 
-				string clientName;
-				if (user is null)
-				{
-					clientName = "Cliente removido";
-				}
-				else if (string.IsNullOrWhiteSpace(user.Name))
-				{
-					clientName = user.Email;
-				}
-				else
-				{
-					clientName = user.Name!;
-				}
-
+				var clientName = user?.Name ?? "Cliente removido";
 				var serviceName = service?.Name ?? "Serviço removido";
 
 				return new AppointmentByDateDto(
