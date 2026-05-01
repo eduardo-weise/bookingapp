@@ -227,12 +227,13 @@ class _ServicesSheetContentState extends State<_ServicesSheetContent> {
       final services = await widget.bookingService.getServices();
       if (mounted) setState(() { _services = services; _isLoading = false; });
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString().replaceAll('Exception: ', '');
-          _isLoading = false;
-        });
-      }
+      if (!mounted) return;
+      final message = e.toString().replaceAll('Exception: ', '');
+      AppSnackBar.showError(context, message);
+      setState(() {
+        _error = message;
+        _isLoading = false;
+      });
     }
   }
 
@@ -249,7 +250,16 @@ class _ServicesSheetContentState extends State<_ServicesSheetContent> {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingXl),
         child: Center(
-          child: Text(_error!, style: const TextStyle(color: AppColors.statusCancelled)),
+          child: AppButton(
+            label: 'Tentar novamente',
+            onPressed: () {
+              setState(() {
+                _isLoading = true;
+                _error = null;
+              });
+              _load();
+            },
+          ),
         ),
       );
     }
@@ -368,12 +378,13 @@ class _TargetClientsSheetContentState extends State<_TargetClientsSheetContent> 
         });
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString().replaceAll('Exception: ', '');
-          _isLoading = false;
-        });
-      }
+      if (!mounted) return;
+      final message = e.toString().replaceAll('Exception: ', '');
+      AppSnackBar.showError(context, message);
+      setState(() {
+        _error = message;
+        _isLoading = false;
+      });
     }
   }
 
@@ -390,7 +401,16 @@ class _TargetClientsSheetContentState extends State<_TargetClientsSheetContent> 
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingXl),
         child: Center(
-          child: Text(_error!, style: const TextStyle(color: AppColors.statusCancelled)),
+          child: AppButton(
+            label: 'Tentar novamente',
+            onPressed: () {
+              setState(() {
+                _isLoading = true;
+                _error = null;
+              });
+              _load();
+            },
+          ),
         ),
       );
     }
@@ -488,12 +508,13 @@ class _TimesSheetContentState extends State<_TimesSheetContent> {
       );
       if (mounted) setState(() { _slots = slots; _isLoadingSlots = false; });
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString().replaceAll('Exception: ', '');
-          _isLoadingSlots = false;
-        });
-      }
+      if (!mounted) return;
+      final message = e.toString().replaceAll('Exception: ', '');
+      AppSnackBar.showError(context, message);
+      setState(() {
+        _error = message;
+        _isLoadingSlots = false;
+      });
     }
   }
 
@@ -551,7 +572,17 @@ class _TimesSheetContentState extends State<_TimesSheetContent> {
         else if (_error != null)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingLg),
-            child: Text(_error!, style: const TextStyle(color: AppColors.statusCancelled)),
+            child: AppButton(
+              label: 'Tentar novamente',
+              fullWidth: true,
+              onPressed: () {
+                setState(() {
+                  _isLoadingSlots = true;
+                  _error = null;
+                });
+                _loadSlots();
+              },
+            ),
           )
         else if ((_slots ?? []).isEmpty)
           const Padding(

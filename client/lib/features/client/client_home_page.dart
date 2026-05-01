@@ -13,6 +13,7 @@ import 'package:app/widgets/debt_banner.dart';
 import 'package:app/widgets/appointment_card.dart';
 import 'package:app/widgets/user_edit_form.dart';
 import 'package:app/widgets/app_empty_state.dart';
+import 'package:app/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -31,7 +32,22 @@ class _ClientHomePageState extends State<ClientHomePage> {
   @override
   void initState() {
     super.initState();
-    _appointmentsFuture = _appointmentsService.getAppointmentHistory();
+    _appointmentsFuture = _loadAppointments();
+  }
+
+  Future<List<ClientAppointmentModel>> _loadAppointments() async {
+    try {
+      return await _appointmentsService.getAppointmentHistory();
+    } catch (e) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        AppSnackBar.showError(
+          context,
+          e.toString().replaceAll('Exception: ', ''),
+        );
+      });
+      rethrow;
+    }
   }
 
   // ── Booking Sheet ──
@@ -56,13 +72,11 @@ class _ClientHomePageState extends State<ClientHomePage> {
           }
 
           if (snapshot.hasError) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingXl),
-              child: Center(
-                child: Text(
-                  snapshot.error.toString().replaceAll('Exception: ', ''),
-                  style: const TextStyle(color: AppColors.statusCancelled),
-                ),
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppTheme.spacingXl),
+              child: AppEmptyState(
+                message: 'Não foi possível carregar o histórico.',
+                icon: Icons.history_toggle_off,
               ),
             );
           }
@@ -217,11 +231,11 @@ class _ClientHomePageState extends State<ClientHomePage> {
                       child: Center(child: CircularProgressIndicator()),
                     )
                   else if (snapshot.hasError)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingLg),
-                      child: Text(
-                        snapshot.error.toString().replaceAll('Exception: ', ''),
-                        style: const TextStyle(color: AppColors.statusCancelled),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: AppTheme.spacingLg),
+                      child: AppEmptyState(
+                        message: 'Não foi possível carregar os agendamentos.',
+                        icon: Icons.event_busy,
                       ),
                     )
                   else if (upcomingAppointments.isEmpty)
