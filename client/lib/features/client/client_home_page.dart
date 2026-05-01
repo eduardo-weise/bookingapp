@@ -2,6 +2,7 @@ import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_text_styles.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/client/services/client_appointments_service.dart';
+import 'package:app/features/client/services/client_debt_service.dart';
 import 'package:app/widgets/app_avatar.dart';
 import 'package:app/widgets/app_badge.dart';
 import 'package:app/widgets/app_bottom_sheet.dart';
@@ -28,8 +29,10 @@ class ClientHomePage extends StatefulWidget {
 
 class _ClientHomePageState extends State<ClientHomePage> {
   final _appointmentsService = ClientAppointmentsService();
+  final _debtService = ClientDebtService();
   final GlobalKey<_UpcomingAppointmentsSectionState> _upcomingSectionKey =
       GlobalKey<_UpcomingAppointmentsSectionState>();
+  late final Future<List<ClientDebtModel>> _debtsFuture;
 
   Future<List<ClientAppointmentModel>> _loadAppointments() async {
     try {
@@ -44,6 +47,27 @@ class _ClientHomePageState extends State<ClientHomePage> {
       });
       rethrow;
     }
+  }
+
+  Future<List<ClientDebtModel>> _loadDebts() async {
+    try {
+      final debts = await _debtService.getDebts();
+      debugPrint('✅ Débitos carregados: ${debts.length} débito(s)');
+      for (var debt in debts) {
+        debugPrint('  - Débito: R\$ ${debt.amount}, Status: ${debt.status}');
+      }
+      return debts;
+    } catch (e) {
+      // Silently handle error - debts are optional
+      debugPrint('❌ Erro ao carregar débitos: $e');
+      return [];
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _debtsFuture = _loadDebts();
   }
 
   // ── Booking Sheet ──
@@ -229,13 +253,31 @@ class _ClientHomePageState extends State<ClientHomePage> {
                   ),
                 ),
               ),
-              DebtBanner(
-                amount: 'R\$ 150,00',
-                description: 'Referente ao serviço de 10 Mar 2026',
-                onButtonPressed: () =>
-                    Navigator.pushNamed(context, '/client/finances'),
+              FutureBuilder<List<ClientDebtModel>>(
+                future: _debtsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                    final debt = snapshot.data!.first;
+                    final formattedAmount = NumberFormat.currency(
+                      locale: 'pt_BR',
+                      symbol: 'R\$',
+                    ).format(debt.amount);
+                    
+                    return Column(
+                      children: [
+                        DebtBanner(
+                          amount: formattedAmount,
+                          description: 'Débito pendente criado em ${DateFormat('dd MMM yyyy', 'pt_BR').format(debt.createdAt)}',
+                          onButtonPressed: () =>
+                              Navigator.pushNamed(context, '/client/finances'),
+                        ),
+                        const SizedBox(height: AppTheme.spacingLg),
+                      ],
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
               ),
-              const SizedBox(height: AppTheme.spacingLg),
               _UpcomingAppointmentsSection(
                 key: _upcomingSectionKey,
                 loadAppointments: _loadAppointments,

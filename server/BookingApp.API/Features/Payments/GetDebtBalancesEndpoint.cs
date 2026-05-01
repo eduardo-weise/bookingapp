@@ -16,7 +16,7 @@ public sealed class GetDebtBalancesEndpoint(ApplicationDbContext dbContext)
 		Get("/payments/debts");
 		Tags("Payments");
 		Options(x => x.WithName("GetDebtBalances"));
-		Policies("AdminOrManager");
+		Policies("All");
 	}
 
 	public override async Task HandleAsync(CancellationToken ct)
