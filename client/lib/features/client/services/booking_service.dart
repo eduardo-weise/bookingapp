@@ -24,6 +24,7 @@ class BookingService {
   Future<List<String>> getAvailableSlots({
     required DateTime date,
     required String serviceId,
+    String? clientId,
   }) async {
     try {
       final response = await _client.get(
@@ -31,6 +32,7 @@ class BookingService {
         queryParameters: {
           'Date': date.toIso8601String(),
           'ServiceId': serviceId,
+          'ClientId': clientId,
         },
       );
       final list = response.data as List<dynamic>;
@@ -47,6 +49,7 @@ class BookingService {
     required String serviceId,
     required DateTime date,
     required String timeSlot,
+    String? clientId,
   }) async {
     try {
       final parts = timeSlot.split(':');
@@ -63,6 +66,7 @@ class BookingService {
         data: {
           'serviceId': serviceId,
           'startTime': startTime.toIso8601String(),
+          'clientId': clientId,
         },
       );
     } on DioException catch (e) {

@@ -10,43 +10,128 @@ import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_card.dart';
 import '../widgets/app_snackbar.dart';
 
+class BookingTargetClient {
+  final String id;
+  final String displayName;
+  final String? subtitle;
+
+  const BookingTargetClient({
+    required this.id,
+    required this.displayName,
+    this.subtitle,
+  });
+}
+
 class BookingFlow {
   static final _service = BookingService();
 
-  static void start(BuildContext context) {
-    _showServicesSheet(context);
+  static void start(
+    BuildContext context, {
+    Future<List<BookingTargetClient>> Function()? loadTargetClients,
+    BookingTargetClient? selectedTargetClient,
+  }) {
+    if (selectedTargetClient == null && loadTargetClients != null) {
+      _showTargetClientsSheet(context, loadTargetClients);
+      return;
+    }
+
+    _showServicesSheet(
+      context,
+      loadTargetClients: loadTargetClients,
+      selectedTargetClient: selectedTargetClient,
+    );
+  }
+
+  static void _showTargetClientsSheet(
+    BuildContext context,
+    Future<List<BookingTargetClient>> Function() loadTargetClients,
+  ) {
+    showAppBottomSheet(
+      context: context,
+      title: 'Selecione o Cliente',
+      height: BottomSheetHeight.flexible,
+      child: _TargetClientsSheetContent(
+        loadClients: loadTargetClients,
+        onClientSelected: (client) {
+          Navigator.of(context).pop();
+          _showServicesSheet(
+            context,
+            loadTargetClients: loadTargetClients,
+            selectedTargetClient: client,
+          );
+        },
+      ),
+    );
   }
 
   // ── Step 1: Services ────────────────────────────────────────────────────────
 
-  static void _showServicesSheet(BuildContext context) {
+  static void _showServicesSheet(
+    BuildContext context, {
+    Future<List<BookingTargetClient>> Function()? loadTargetClients,
+    BookingTargetClient? selectedTargetClient,
+  }) {
     showAppBottomSheet(
       context: context,
       title: 'Selecione o Serviço',
       height: BottomSheetHeight.flexible,
-      child: _ServicesSheetContent(
-        bookingService: _service,
-        onServiceSelected: (service) {
-          Navigator.of(context).pop();
-          _showDatePickerSheet(context, service);
-        },
+      onBack: selectedTargetClient != null && loadTargetClients != null
+          ? () {
+              Navigator.of(context).pop();
+              _showTargetClientsSheet(context, loadTargetClients);
+            }
+          : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (selectedTargetClient != null) ...[
+            _SelectedClientBanner(client: selectedTargetClient),
+            const SizedBox(height: AppTheme.spacingMd),
+          ],
+          _ServicesSheetContent(
+            bookingService: _service,
+            onServiceSelected: (service) {
+              Navigator.of(context).pop();
+              _showDatePickerSheet(
+                context,
+                service,
+                loadTargetClients: loadTargetClients,
+                selectedTargetClient: selectedTargetClient,
+              );
+            },
+          ),
+        ],
       ),
     );
   }
 
   // ── Step 2: Date ─────────────────────────────────────────────────────────────
 
-  static void _showDatePickerSheet(BuildContext context, ServiceModel service) {
+  static void _showDatePickerSheet(
+    BuildContext context,
+    ServiceModel service, {
+    Future<List<BookingTargetClient>> Function()? loadTargetClients,
+    BookingTargetClient? selectedTargetClient,
+  }) {
     showAppBottomSheet(
       context: context,
       title: 'Data - ${service.name}',
       height: BottomSheetHeight.flexible,
       onBack: () {
         Navigator.of(context).pop();
-        _showServicesSheet(context);
+        _showServicesSheet(
+          context,
+          loadTargetClients: loadTargetClients,
+          selectedTargetClient: selectedTargetClient,
+        );
       },
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (selectedTargetClient != null) ...[
+            _SelectedClientBanner(client: selectedTargetClient),
+            const SizedBox(height: AppTheme.spacingMd),
+          ],
           const Text(
             'Selecione uma data para o agendamento.',
             style: TextStyle(color: AppColors.textSecondary),
@@ -60,7 +145,13 @@ class BookingFlow {
             onSelectionChanged: (args) {
               if (args.value is DateTime) {
                 Navigator.of(context).pop();
-                _showTimesSheet(context, service, args.value as DateTime);
+                _showTimesSheet(
+                  context,
+                  service,
+                  args.value as DateTime,
+                  loadTargetClients: loadTargetClients,
+                  selectedTargetClient: selectedTargetClient,
+                );
               }
             },
           ),
@@ -75,6 +166,10 @@ class BookingFlow {
     BuildContext context,
     ServiceModel service,
     DateTime date,
+    {
+    Future<List<BookingTargetClient>> Function()? loadTargetClients,
+    BookingTargetClient? selectedTargetClient,
+    }
   ) {
     showAppBottomSheet(
       context: context,
@@ -83,12 +178,18 @@ class BookingFlow {
       height: BottomSheetHeight.flexible,
       onBack: () {
         Navigator.of(context).pop();
-        _showDatePickerSheet(context, service);
+        _showDatePickerSheet(
+          context,
+          service,
+          loadTargetClients: loadTargetClients,
+          selectedTargetClient: selectedTargetClient,
+        );
       },
       child: _TimesSheetContent(
         bookingService: _service,
         service: service,
         date: date,
+        selectedTargetClient: selectedTargetClient,
         onConfirmed: () => Navigator.of(context).pop(),
       ),
     );
@@ -199,18 +300,165 @@ class _ServicesSheetContentState extends State<_ServicesSheetContent> {
   }
 }
 
+class _SelectedClientBanner extends StatelessWidget {
+  final BookingTargetClient client;
+
+  const _SelectedClientBanner({required this.client});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.all(AppTheme.spacingMd),
+      child: Row(
+        children: [
+          const Icon(Icons.person_outline_rounded, color: AppColors.textSecondary),
+          const SizedBox(width: AppTheme.spacingMd),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(client.displayName, style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600)),
+                if (client.subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    client.subtitle!,
+                    style: AppTextStyles.caption.copyWith(color: AppColors.textTertiary),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TargetClientsSheetContent extends StatefulWidget {
+  final Future<List<BookingTargetClient>> Function() loadClients;
+  final void Function(BookingTargetClient client) onClientSelected;
+
+  const _TargetClientsSheetContent({
+    required this.loadClients,
+    required this.onClientSelected,
+  });
+
+  @override
+  State<_TargetClientsSheetContent> createState() => _TargetClientsSheetContentState();
+}
+
+class _TargetClientsSheetContentState extends State<_TargetClientsSheetContent> {
+  List<BookingTargetClient>? _clients;
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final clients = await widget.loadClients();
+      if (mounted) {
+        setState(() {
+          _clients = clients;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString().replaceAll('Exception: ', '');
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: AppTheme.spacingXl),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_error != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingXl),
+        child: Center(
+          child: Text(_error!, style: const TextStyle(color: AppColors.statusCancelled)),
+        ),
+      );
+    }
+
+    final clients = _clients ?? [];
+    if (clients.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: AppTheme.spacingXl),
+        child: Center(
+          child: Text(
+            'Nenhum cliente cadastrado.',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: clients.map((client) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
+          child: AppCard(
+            onTap: () => widget.onClientSelected(client),
+            padding: const EdgeInsets.all(AppTheme.spacingMd),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(client.displayName, style: AppTextStyles.heading3),
+                      if (client.subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          client.subtitle!,
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
 // ── Times Sheet Content ───────────────────────────────────────────────────────
 
 class _TimesSheetContent extends StatefulWidget {
   final BookingService bookingService;
   final ServiceModel service;
   final DateTime date;
+  final BookingTargetClient? selectedTargetClient;
   final VoidCallback onConfirmed;
 
   const _TimesSheetContent({
     required this.bookingService,
     required this.service,
     required this.date,
+    required this.selectedTargetClient,
     required this.onConfirmed,
   });
 
@@ -236,6 +484,7 @@ class _TimesSheetContentState extends State<_TimesSheetContent> {
       final slots = await widget.bookingService.getAvailableSlots(
         date: widget.date,
         serviceId: widget.service.id,
+        clientId: widget.selectedTargetClient?.id,
       );
       if (mounted) setState(() { _slots = slots; _isLoadingSlots = false; });
     } catch (e) {
@@ -256,10 +505,16 @@ class _TimesSheetContentState extends State<_TimesSheetContent> {
         serviceId: widget.service.id,
         date: widget.date,
         timeSlot: _selectedTime!,
+        clientId: widget.selectedTargetClient?.id,
       );
       if (!mounted) return;
       widget.onConfirmed();
-      AppSnackBar.showSuccess(context, 'Agendamento confirmado com sucesso!');
+      AppSnackBar.showSuccess(
+        context,
+        widget.selectedTargetClient == null
+            ? 'Agendamento confirmado com sucesso!'
+            : 'Agendamento para ${widget.selectedTargetClient!.displayName} confirmado com sucesso!',
+      );
     } catch (e) {
       if (mounted) {
         AppSnackBar.showError(
@@ -277,6 +532,10 @@ class _TimesSheetContentState extends State<_TimesSheetContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (widget.selectedTargetClient != null) ...[
+          _SelectedClientBanner(client: widget.selectedTargetClient!),
+          const SizedBox(height: AppTheme.spacingLg),
+        ],
         Text('Serviço selecionado: ${widget.service.name}', style: AppTextStyles.body),
         const SizedBox(height: AppTheme.spacingLg),
         Text(

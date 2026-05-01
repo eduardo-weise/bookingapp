@@ -1,8 +1,11 @@
 import 'package:app/core/theme/app_colors.dart';
+import 'package:app/core/theme/app_text_styles.dart';
 import 'package:app/core/theme/app_theme.dart';
+import 'package:app/features/client/services/client_appointments_service.dart';
 import 'package:app/widgets/app_avatar.dart';
 import 'package:app/widgets/app_badge.dart';
 import 'package:app/widgets/app_bottom_sheet.dart';
+import 'package:app/widgets/app_card.dart';
 import 'package:app/widgets/booking_form.dart';
 import 'package:app/widgets/page_header.dart';
 import 'package:app/widgets/section_header.dart';
@@ -11,40 +14,7 @@ import 'package:app/widgets/appointment_card.dart';
 import 'package:app/widgets/user_edit_form.dart';
 import 'package:app/widgets/app_empty_state.dart';
 import 'package:flutter/material.dart';
-
-// ── Mock Data ────────────────────────────────────────────────────────────────
-class _Appointment {
-  final String service;
-  final String location;
-  final String date;
-  final String time;
-  final BadgeVariant status;
-
-  const _Appointment({
-    required this.service,
-    required this.location,
-    required this.date,
-    required this.time,
-    required this.status,
-  });
-}
-
-const _appointments = [
-  _Appointment(
-    service: 'Corte de Cabelo',
-    location: 'Barbearia Central',
-    date: '15 Abr',
-    time: '14:00',
-    status: BadgeVariant.confirmed,
-  ),
-  _Appointment(
-    service: 'Manicure',
-    location: 'Studio Bella',
-    date: '18 Abr',
-    time: '10:30',
-    status: BadgeVariant.pending,
-  ),
-];
+import 'package:intl/intl.dart';
 
 // ── Client Home Page ─────────────────────────────────────────────────────────
 class ClientHomePage extends StatefulWidget {
@@ -55,6 +25,15 @@ class ClientHomePage extends StatefulWidget {
 }
 
 class _ClientHomePageState extends State<ClientHomePage> {
+  final _appointmentsService = ClientAppointmentsService();
+  late Future<List<ClientAppointmentModel>> _appointmentsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _appointmentsFuture = _appointmentsService.getAppointmentHistory();
+  }
+
   // ── Booking Sheet ──
   void _showBookingSheet() {
     BookingFlow.start(context);
@@ -66,9 +45,72 @@ class _ClientHomePageState extends State<ClientHomePage> {
       context: context,
       title: 'Histórico',
       height: BottomSheetHeight.flexible,
-      child: const AppEmptyState(
-        message: 'Nenhum agendamento no histórico',
-        icon: Icons.history,
+      child: FutureBuilder<List<ClientAppointmentModel>>(
+        future: _appointmentsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppTheme.spacingXl),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          if (snapshot.hasError) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingXl),
+              child: Center(
+                child: Text(
+                  snapshot.error.toString().replaceAll('Exception: ', ''),
+                  style: const TextStyle(color: AppColors.statusCancelled),
+                ),
+              ),
+            );
+          }
+
+          final appointments = snapshot.data ?? [];
+          if (appointments.isEmpty) {
+            return const AppEmptyState(
+              message: 'Nenhum agendamento no histórico',
+              icon: Icons.history,
+            );
+          }
+
+          return Column(
+            children: appointments.map((appointment) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
+                child: AppCard(
+                  padding: const EdgeInsets.all(AppTheme.spacingMd),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(appointment.serviceName, style: AppTextStyles.heading3),
+                            const SizedBox(height: 2),
+                            Text(
+                              _formatHistoryDateTime(appointment.startTime),
+                              style: AppTextStyles.caption.copyWith(
+                                color: AppColors.textTertiary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      AppBadge(
+                        label: _statusLabel(appointment.status),
+                        variant: _statusVariant(appointment.status),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          );
+        },
       ),
     );
   }
@@ -87,71 +129,136 @@ class _ClientHomePageState extends State<ClientHomePage> {
     );
   }
 
+  String _formatCardDate(DateTime value) => DateFormat('dd MMM', 'pt_BR').format(value);
+
+  String _formatCardTime(DateTime value) => DateFormat('HH:mm', 'pt_BR').format(value);
+
+  String _formatHistoryDateTime(DateTime value) =>
+      DateFormat("dd 'de' MMMM, HH:mm", 'pt_BR').format(value);
+
+  BadgeVariant _statusVariant(String status) {
+    switch (status.toLowerCase()) {
+      case 'scheduled':
+      case 'rescheduled':
+      case 'completed':
+        return BadgeVariant.confirmed;
+      case 'canceled':
+        return BadgeVariant.cancelled;
+      default:
+        return BadgeVariant.pending;
+    }
+  }
+
+  String _statusLabel(String status) {
+    switch (status.toLowerCase()) {
+      case 'scheduled':
+        return 'Confirmado';
+      case 'rescheduled':
+        return 'Reagendado';
+      case 'canceled':
+        return 'Cancelado';
+      case 'completed':
+        return 'Concluído';
+      case 'noshow':
+        return 'No-show';
+      default:
+        return 'Pendente';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Header (shared widget) ──
-              const PageHeader(name: 'Olá, Maria', notificationCount: 1),
+        child: FutureBuilder<List<ClientAppointmentModel>>(
+          future: _appointmentsFuture,
+          builder: (context, snapshot) {
+            final appointments = snapshot.data ?? [];
+            final upcomingAppointments = appointments
+                .where(
+                  (appointment) =>
+                      appointment.startTime.isAfter(DateTime.now()) &&
+                      appointment.status.toLowerCase() != 'canceled',
+                )
+                .toList()
+              ..sort((left, right) => left.startTime.compareTo(right.startTime));
 
-              // ── Avatar ──
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: AppTheme.spacingLg,
-                ),
-                child: Center(
-                  child: AppAvatar(
-                    size: AvatarSize.large,
-                    initials: 'MS',
-                    showEditBadge: true,
-                    onEditTap: _showEditProfileSheet,
+            return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const PageHeader(name: 'Olá, Maria', notificationCount: 1),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppTheme.spacingLg,
+                    ),
+                    child: Center(
+                      child: AppAvatar(
+                        size: AvatarSize.large,
+                        initials: 'MS',
+                        showEditBadge: true,
+                        onEditTap: _showEditProfileSheet,
+                      ),
+                    ),
                   ),
-                ),
+                  DebtBanner(
+                    amount: 'R\$ 150,00',
+                    description: 'Referente ao serviço de 10 Mar 2026',
+                    onButtonPressed: () =>
+                        Navigator.pushNamed(context, '/client/finances'),
+                  ),
+                  const SizedBox(height: AppTheme.spacingLg),
+                  const SectionHeader(title: 'Próximos Agendamentos'),
+                  const SizedBox(height: AppTheme.spacingMd),
+                  if (snapshot.connectionState == ConnectionState.waiting)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: AppTheme.spacingXl),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (snapshot.hasError)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingLg),
+                      child: Text(
+                        snapshot.error.toString().replaceAll('Exception: ', ''),
+                        style: const TextStyle(color: AppColors.statusCancelled),
+                      ),
+                    )
+                  else if (upcomingAppointments.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: AppTheme.spacingLg),
+                      child: AppEmptyState(
+                        message: 'Nenhum agendamento futuro encontrado',
+                        icon: Icons.event_busy,
+                      ),
+                    )
+                  else
+                    ...List.generate(upcomingAppointments.length, (i) {
+                      final appointment = upcomingAppointments[i];
+                      return Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          AppTheme.spacingLg,
+                          0,
+                          AppTheme.spacingLg,
+                          i < upcomingAppointments.length - 1
+                              ? AppTheme.spacingMd
+                              : 0,
+                        ),
+                        child: AppointmentCard(
+                          service: appointment.serviceName,
+                          subtitle: _statusLabel(appointment.status),
+                          date: _formatCardDate(appointment.startTime),
+                          time: _formatCardTime(appointment.startTime),
+                          status: _statusVariant(appointment.status),
+                          variant: AppointmentCardVariant.full,
+                        ),
+                      );
+                    }),
+                  const SizedBox(height: AppTheme.spacingXl + 64),
+                ],
               ),
-
-              // ── Debt Banner (shared widget) ──
-              DebtBanner(
-                amount: 'R\$ 150,00',
-                description: 'Referente ao serviço de 10 Mar 2026',
-                onButtonPressed: () =>
-                    Navigator.pushNamed(context, '/client/finances'),
-              ),
-
-              const SizedBox(height: AppTheme.spacingLg),
-
-              // ── Section Header (shared widget) ──
-              const SectionHeader(title: 'Próximos Agendamentos'),
-              const SizedBox(height: AppTheme.spacingMd),
-
-              // ── Appointment Cards (shared widget) ──
-              ...List.generate(_appointments.length, (i) {
-                final a = _appointments[i];
-                return Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    AppTheme.spacingLg,
-                    0,
-                    AppTheme.spacingLg,
-                    i < _appointments.length - 1 ? AppTheme.spacingMd : 0,
-                  ),
-                  child: AppointmentCard(
-                    service: a.service,
-                    subtitle: a.location,
-                    date: a.date,
-                    time: a.time,
-                    status: a.status,
-                    variant: AppointmentCardVariant.full,
-                  ),
-                );
-              }),
-
-              const SizedBox(height: AppTheme.spacingXl + 64),
-            ],
-          ),
+            );
+          },
         ),
       ),
 

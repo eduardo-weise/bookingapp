@@ -14,6 +14,7 @@ import 'package:app/widgets/section_header.dart';
 import 'package:app/widgets/appointment_card.dart';
 import 'package:app/widgets/app_empty_state.dart';
 import 'admin_profile_form.dart';
+import 'services/admin_clients_service.dart';
 import 'services/admin_appointments_service.dart';
 
 // ── Mock Data ────────────────────────────────────────────────────────────────
@@ -82,6 +83,7 @@ class AdminDashboardPage extends StatefulWidget {
 }
 
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
+  final _clientsService = AdminClientsService();
   final _appointmentsService = AdminAppointmentsService();
 
   // ── Profile / Edit Sheet ──
@@ -159,7 +161,21 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 
   void _showBookingSheet() {
-    BookingFlow.start(context);
+    BookingFlow.start(
+      context,
+      loadTargetClients: () async {
+        final clients = await _clientsService.getClients();
+        return clients
+            .map(
+              (client) => BookingTargetClient(
+                id: client.id,
+                displayName: client.displayName,
+                subtitle: client.email == client.displayName ? null : client.email,
+              ),
+            )
+            .toList();
+      },
+    );
   }
 
   void _showAllDebtsSheet() {
