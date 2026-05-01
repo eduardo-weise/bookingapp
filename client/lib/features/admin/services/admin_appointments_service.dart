@@ -33,7 +33,7 @@ class AdminAppointmentsService {
   Future<List<AdminAppointmentModel>> getAppointmentsByDate(DateTime date) async {
     try {
       final response = await _client.get(
-        '/appointments/by-date',
+        '/appointments',
         queryParameters: {'date': date.toIso8601String()},
       );
 

@@ -128,8 +128,14 @@ Authorization: Bearer {{Token}}
 
 ###
 
-### Get Appointment History (Requires Auth)
-GET {{HostAddress}}/appointments/history
+### Get Appointments - Client (future, no date)
+GET {{HostAddress}}/appointments
+Authorization: Bearer {{Token}}
+
+###
+
+### Get Appointments - Admin/Manager by date
+GET {{HostAddress}}/appointments?date=2026-10-15
 Authorization: Bearer {{Token}}
 
 ###

@@ -29,9 +29,14 @@ class BookingFlow {
     BuildContext context, {
     Future<List<BookingTargetClient>> Function()? loadTargetClients,
     BookingTargetClient? selectedTargetClient,
+    VoidCallback? onBookingConfirmed,
   }) {
     if (selectedTargetClient == null && loadTargetClients != null) {
-      _showTargetClientsSheet(context, loadTargetClients);
+      _showTargetClientsSheet(
+        context,
+        loadTargetClients,
+        onBookingConfirmed: onBookingConfirmed,
+      );
       return;
     }
 
@@ -39,12 +44,16 @@ class BookingFlow {
       context,
       loadTargetClients: loadTargetClients,
       selectedTargetClient: selectedTargetClient,
+      onBookingConfirmed: onBookingConfirmed,
     );
   }
 
   static void _showTargetClientsSheet(
     BuildContext context,
     Future<List<BookingTargetClient>> Function() loadTargetClients,
+    {
+    VoidCallback? onBookingConfirmed,
+    }
   ) {
     showAppBottomSheet(
       context: context,
@@ -58,6 +67,7 @@ class BookingFlow {
             context,
             loadTargetClients: loadTargetClients,
             selectedTargetClient: client,
+            onBookingConfirmed: onBookingConfirmed,
           );
         },
       ),
@@ -70,6 +80,7 @@ class BookingFlow {
     BuildContext context, {
     Future<List<BookingTargetClient>> Function()? loadTargetClients,
     BookingTargetClient? selectedTargetClient,
+    VoidCallback? onBookingConfirmed,
   }) {
     showAppBottomSheet(
       context: context,
@@ -97,6 +108,7 @@ class BookingFlow {
                 service,
                 loadTargetClients: loadTargetClients,
                 selectedTargetClient: selectedTargetClient,
+                onBookingConfirmed: onBookingConfirmed,
               );
             },
           ),
@@ -112,6 +124,7 @@ class BookingFlow {
     ServiceModel service, {
     Future<List<BookingTargetClient>> Function()? loadTargetClients,
     BookingTargetClient? selectedTargetClient,
+    VoidCallback? onBookingConfirmed,
   }) {
     showAppBottomSheet(
       context: context,
@@ -123,6 +136,7 @@ class BookingFlow {
           context,
           loadTargetClients: loadTargetClients,
           selectedTargetClient: selectedTargetClient,
+            onBookingConfirmed: onBookingConfirmed,
         );
       },
       child: _DatePickerSheetContent(
@@ -137,6 +151,7 @@ class BookingFlow {
             selectedDate,
             loadTargetClients: loadTargetClients,
             selectedTargetClient: selectedTargetClient,
+            onBookingConfirmed: onBookingConfirmed,
           );
         },
       ),
@@ -152,6 +167,7 @@ class BookingFlow {
     {
     Future<List<BookingTargetClient>> Function()? loadTargetClients,
     BookingTargetClient? selectedTargetClient,
+    VoidCallback? onBookingConfirmed,
     }
   ) {
     showAppBottomSheet(
@@ -166,6 +182,7 @@ class BookingFlow {
           service,
           loadTargetClients: loadTargetClients,
           selectedTargetClient: selectedTargetClient,
+          onBookingConfirmed: onBookingConfirmed,
         );
       },
       child: _TimesSheetContent(
@@ -173,6 +190,7 @@ class BookingFlow {
         service: service,
         date: date,
         selectedTargetClient: selectedTargetClient,
+        onBookingConfirmed: onBookingConfirmed,
         onConfirmed: () => Navigator.of(context).pop(),
       ),
     );
@@ -606,6 +624,7 @@ class _TimesSheetContent extends StatefulWidget {
   final DateTime date;
   final BookingTargetClient? selectedTargetClient;
   final VoidCallback onConfirmed;
+  final VoidCallback? onBookingConfirmed;
 
   const _TimesSheetContent({
     required this.bookingService,
@@ -613,6 +632,7 @@ class _TimesSheetContent extends StatefulWidget {
     required this.date,
     required this.selectedTargetClient,
     required this.onConfirmed,
+    this.onBookingConfirmed,
   });
 
   @override
@@ -663,6 +683,7 @@ class _TimesSheetContentState extends State<_TimesSheetContent> {
       );
       if (!mounted) return;
       widget.onConfirmed();
+      widget.onBookingConfirmed?.call();
       AppSnackBar.showSuccess(
         context,
         widget.selectedTargetClient == null

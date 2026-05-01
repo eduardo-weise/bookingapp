@@ -32,7 +32,7 @@ class ClientAppointmentsService {
 
   Future<List<ClientAppointmentModel>> getAppointmentHistory() async {
     try {
-      final response = await _client.get('/appointments/history');
+      final response = await _client.get('/appointments');
 
       if (response.data is! List) {
         return const [];

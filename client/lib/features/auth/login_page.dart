@@ -345,36 +345,6 @@ class _LoginPageState extends State<LoginPage> {
                         ],
                       ),
                     ),
-
-                    // Demo buttons
-                    const SizedBox(height: AppTheme.spacingLg),
-                    const Divider(),
-                    const SizedBox(height: AppTheme.spacingMd),
-                    Center(
-                      child: Text(
-                        'Acesso rápido (demonstração)',
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.textTertiary,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppTheme.spacingSm),
-                    AppButton(
-                      label: 'Entrar como Cliente',
-                      variant: AppButtonVariant.secondary,
-                      fullWidth: true,
-                      onPressed: () =>
-                          Navigator.pushReplacementNamed(context, '/client'),
-                    ),
-                    const SizedBox(height: AppTheme.spacingSm),
-                    AppButton(
-                      label: 'Entrar como Admin',
-                      variant: AppButtonVariant.ghost,
-                      fullWidth: true,
-                      onPressed: () =>
-                          Navigator.pushReplacementNamed(context, '/admin'),
-                    ),
                   ],
                 ),
               ),
