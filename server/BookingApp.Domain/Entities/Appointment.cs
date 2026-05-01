@@ -32,7 +32,7 @@ public sealed class Appointment : AggregateRoot
 		Status = AppointmentStatus.Scheduled;
 	}
 
-	public void Cancel()
+	public void Cancel(bool allowLateCancellation = false)
 	{
 		if (Status != AppointmentStatus.Scheduled)
 		{
@@ -40,7 +40,7 @@ public sealed class Appointment : AggregateRoot
 		}
 
 		// Regra das 24h
-		if ((StartTime - DateTime.UtcNow).TotalHours < 24)
+		if (!allowLateCancellation && (StartTime - DateTime.UtcNow).TotalHours < 24)
 		{
 			throw new InvalidOperationException("Cancelamento requer 24h de antecedência.");
 		}

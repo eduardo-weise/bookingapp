@@ -14,6 +14,7 @@ import 'package:app/widgets/appointment_card.dart';
 import 'package:app/widgets/user_edit_form.dart';
 import 'package:app/widgets/app_empty_state.dart';
 import 'package:app/widgets/app_snackbar.dart';
+import 'package:app/widgets/cancel_appointment_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -51,6 +52,31 @@ class _ClientHomePageState extends State<ClientHomePage> {
       context,
       onBookingConfirmed: () {
         _upcomingSectionKey.currentState?.refresh();
+      },
+    );
+  }
+
+  Future<void> _showCancelAppointmentSheet(ClientAppointmentModel appointment) async {
+    await showCancelAppointmentSheet(
+      context: context,
+      serviceName: appointment.serviceName,
+      startTime: appointment.startTime,
+      servicePrice: appointment.servicePrice,
+      isAdmin: false,
+      onConfirm: (_) async {
+        try {
+          await _appointmentsService.cancelAppointment(appointment.id);
+          _upcomingSectionKey.currentState?.refresh();
+          if (!mounted) return;
+          AppSnackBar.showSuccess(context, 'Agendamento cancelado com sucesso.');
+        } catch (e) {
+          if (!mounted) return;
+          AppSnackBar.showError(
+            context,
+            e.toString().replaceAll('Exception: ', ''),
+          );
+          rethrow;
+        }
       },
     );
   }
@@ -217,6 +243,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 formatCardTime: _formatCardTime,
                 statusLabel: _statusLabel,
                 statusVariant: _statusVariant,
+                onCancelTap: _showCancelAppointmentSheet,
               ),
               const SizedBox(height: AppTheme.spacingXl + 64),
             ],
@@ -257,6 +284,7 @@ class _UpcomingAppointmentsSection extends StatefulWidget {
   final String Function(DateTime) formatCardTime;
   final String Function(String) statusLabel;
   final BadgeVariant Function(String) statusVariant;
+  final Future<void> Function(ClientAppointmentModel appointment) onCancelTap;
 
   const _UpcomingAppointmentsSection({
     super.key,
@@ -265,6 +293,7 @@ class _UpcomingAppointmentsSection extends StatefulWidget {
     required this.formatCardTime,
     required this.statusLabel,
     required this.statusVariant,
+    required this.onCancelTap,
   });
 
   @override
@@ -300,11 +329,6 @@ class _UpcomingAppointmentsSectionState extends State<_UpcomingAppointmentsSecti
           builder: (context, snapshot) {
             final appointments = snapshot.data ?? [];
             final upcomingAppointments = appointments
-                .where(
-                  (appointment) =>
-                      appointment.startTime.isAfter(DateTime.now()) &&
-                      appointment.status.toLowerCase() != 'canceled',
-                )
                 .toList()
               ..sort((left, right) => left.startTime.compareTo(right.startTime));
 
@@ -354,6 +378,7 @@ class _UpcomingAppointmentsSectionState extends State<_UpcomingAppointmentsSecti
                     time: widget.formatCardTime(appointment.startTime),
                     status: widget.statusVariant(appointment.status),
                     variant: AppointmentCardVariant.full,
+                    onCancelPressed: () => widget.onCancelTap(appointment),
                   ),
                 );
               }),

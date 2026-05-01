@@ -28,6 +28,8 @@ class AppointmentCard extends StatelessWidget {
   final BadgeVariant status;
   final AppointmentCardVariant variant;
   final VoidCallback? onTap;
+  final VoidCallback? onReschedulePressed;
+  final VoidCallback? onCancelPressed;
 
   const AppointmentCard({
     super.key,
@@ -38,6 +40,8 @@ class AppointmentCard extends StatelessWidget {
     required this.status,
     this.variant = AppointmentCardVariant.full,
     this.onTap,
+    this.onReschedulePressed,
+    this.onCancelPressed,
   });
 
   Color get _statusColor {
@@ -159,7 +163,7 @@ class AppointmentCard extends StatelessWidget {
                 child: AppButton(
                   label: 'Reagendar',
                   variant: AppButtonVariant.secondary,
-                  onPressed: () {},
+                  onPressed: onReschedulePressed,
                 ),
               ),
               const SizedBox(width: AppTheme.spacingLg),
@@ -167,7 +171,7 @@ class AppointmentCard extends StatelessWidget {
                 child: AppButton(
                   label: 'Cancelar',
                   variant: AppButtonVariant.danger,
-                  onPressed: () {},
+                  onPressed: onCancelPressed,
                 ),
               ),
             ],

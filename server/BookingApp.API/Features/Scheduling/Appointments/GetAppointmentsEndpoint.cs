@@ -15,6 +15,7 @@ public sealed class GetAppointmentsRequest
 public sealed record AppointmentDto(
 	Guid Id,
 	string ServiceName,
+	decimal ServicePrice,
 	DateTime StartTime,
 	DateTime EndTime,
 	string Status,
@@ -59,12 +60,12 @@ public sealed class GetAppointmentsEndpoint(ApplicationDbContext dbContext)
 			return;
 		}
 
-		var now = DateTime.UtcNow;
+		var todayStart = DateTime.UtcNow.Date;
 
 		var appointments = await dbContext.Appointments
 			.AsNoTracking()
 			.Where(a => a.ClientId == clientId)
-			.Where(a => a.StartTime >= now)
+			.Where(a => a.StartTime >= todayStart)
 			.Where(a => a.Status == AppointmentStatus.Scheduled || a.Status == AppointmentStatus.Rescheduled)
 			.OrderBy(a => a.StartTime)
 			.Select(a => new { a.Id, a.ServiceId, a.StartTime, a.EndTime, a.Status })
@@ -81,16 +82,22 @@ public sealed class GetAppointmentsEndpoint(ApplicationDbContext dbContext)
 		var servicesById = await dbContext.Services
 			.AsNoTracking()
 			.Where(s => serviceIds.Contains(s.Id))
-			.ToDictionaryAsync(s => s.Id, s => s.Name, ct);
+			.ToDictionaryAsync(s => s.Id, s => new { s.Name, s.Price }, ct);
 
 		var response = appointments
-			.Select(a => new AppointmentDto(
-				a.Id,
-				servicesById.GetValueOrDefault(a.ServiceId, "Serviço removido"),
-				a.StartTime,
-				a.EndTime,
-				a.Status.ToString()
-			))
+			.Select(a =>
+			{
+				servicesById.TryGetValue(a.ServiceId, out var service);
+
+				return new AppointmentDto(
+					a.Id,
+					service?.Name ?? "Serviço removido",
+					service?.Price ?? 0m,
+					a.StartTime,
+					a.EndTime,
+					a.Status.ToString()
+				);
+			})
 			.ToList();
 
 		await Send.OkAsync(response, cancellation: ct);
@@ -127,7 +134,7 @@ public sealed class GetAppointmentsEndpoint(ApplicationDbContext dbContext)
 		var services = await dbContext.Services
 			.AsNoTracking()
 			.Where(s => serviceIds.Contains(s.Id))
-			.Select(s => new { s.Id, s.Name })
+			.Select(s => new { s.Id, s.Name, s.Price })
 			.ToListAsync(ct);
 
 		var usersById = users.ToDictionary(u => u.Id);
@@ -142,6 +149,7 @@ public sealed class GetAppointmentsEndpoint(ApplicationDbContext dbContext)
 				return new AppointmentDto(
 					a.Id,
 					service?.Name ?? "Serviço removido",
+					service?.Price ?? 0m,
 					a.StartTime,
 					a.EndTime,
 					a.Status.ToString(),

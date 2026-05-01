@@ -144,6 +144,11 @@ Authorization: Bearer {{Token}}
 @AppointmentId = 00000000-0000-0000-0000-000000000000
 POST {{HostAddress}}/appointments/{{AppointmentId}}/cancel
 Authorization: Bearer {{Token}}
+Content-Type: application/json
+
+{
+  "applyLateCancellationFee": true
+}
 
 
 ### --- SWAP REQUESTS ---

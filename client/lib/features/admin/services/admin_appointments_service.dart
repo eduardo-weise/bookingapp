@@ -5,6 +5,7 @@ class AdminAppointmentModel {
   final String id;
   final String clientName;
   final String serviceName;
+  final double servicePrice;
   final DateTime startTime;
   final String status;
 
@@ -12,6 +13,7 @@ class AdminAppointmentModel {
     required this.id,
     required this.clientName,
     required this.serviceName,
+    required this.servicePrice,
     required this.startTime,
     required this.status,
   });
@@ -21,6 +23,7 @@ class AdminAppointmentModel {
       id: json['id'] as String,
       clientName: json['clientName'] as String,
       serviceName: json['serviceName'] as String,
+      servicePrice: (json['servicePrice'] as num?)?.toDouble() ?? 0,
       startTime: DateTime.parse(json['startTime'] as String),
       status: json['status'] as String,
     );
@@ -48,6 +51,20 @@ class AdminAppointmentsService {
       return (response.data as List)
           .map((item) => AdminAppointmentModel.fromJson(item as Map<String, dynamic>))
           .toList();
+    } on DioException catch (e) {
+      throw Exception(_handleError(e));
+    }
+  }
+
+  Future<void> cancelAppointment({
+    required String appointmentId,
+    required bool applyLateCancellationFee,
+  }) async {
+    try {
+      await _client.post(
+        '/appointments/$appointmentId/cancel',
+        data: <String, dynamic>{'applyLateCancellationFee': applyLateCancellationFee},
+      );
     } on DioException catch (e) {
       throw Exception(_handleError(e));
     }

@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 class ClientAppointmentModel {
   final String id;
   final String serviceName;
+  final double servicePrice;
   final DateTime startTime;
   final DateTime endTime;
   final String status;
@@ -11,6 +12,7 @@ class ClientAppointmentModel {
   const ClientAppointmentModel({
     required this.id,
     required this.serviceName,
+    required this.servicePrice,
     required this.startTime,
     required this.endTime,
     required this.status,
@@ -20,6 +22,7 @@ class ClientAppointmentModel {
     return ClientAppointmentModel(
       id: json['id'] as String,
       serviceName: json['serviceName'] as String,
+      servicePrice: (json['servicePrice'] as num?)?.toDouble() ?? 0,
       startTime: DateTime.parse(json['startTime'] as String),
       endTime: DateTime.parse(json['endTime'] as String),
       status: json['status'] as String,
@@ -41,6 +44,17 @@ class ClientAppointmentsService {
       return (response.data as List)
           .map((item) => ClientAppointmentModel.fromJson(item as Map<String, dynamic>))
           .toList();
+    } on DioException catch (e) {
+      throw Exception(_handleError(e));
+    }
+  }
+
+  Future<void> cancelAppointment(String appointmentId) async {
+    try {
+      await _client.post(
+        '/appointments/$appointmentId/cancel',
+        data: {},
+      );
     } on DioException catch (e) {
       throw Exception(_handleError(e));
     }

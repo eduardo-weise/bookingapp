@@ -13,6 +13,8 @@ import 'package:app/widgets/page_header.dart';
 import 'package:app/widgets/section_header.dart';
 import 'package:app/widgets/appointment_card.dart';
 import 'package:app/widgets/app_empty_state.dart';
+import 'package:app/widgets/app_snackbar.dart';
+import 'package:app/widgets/cancel_appointment_sheet.dart';
 import 'package:intl/intl.dart';
 import 'admin_profile_form.dart';
 import 'services/admin_clients_service.dart';
@@ -158,6 +160,46 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 
+  void _refreshTodayAppointments() {
+    if (!mounted) return;
+    setState(() {
+      _todayAppointmentsFuture = _appointmentsService.getAppointmentsByDate(DateTime.now());
+    });
+  }
+
+  Future<void> _showCancelAppointmentSheet(
+    AdminAppointmentModel appointment, {
+    VoidCallback? onCancelled,
+  }) async {
+    await showCancelAppointmentSheet(
+      context: context,
+      serviceName: '${appointment.clientName} • ${appointment.serviceName}',
+      startTime: appointment.startTime,
+      servicePrice: appointment.servicePrice,
+      isAdmin: true,
+      onConfirm: (applyLateCancellationFee) async {
+        try {
+          await _appointmentsService.cancelAppointment(
+            appointmentId: appointment.id,
+            applyLateCancellationFee: applyLateCancellationFee,
+          );
+          _refreshTodayAppointments();
+          onCancelled?.call();
+
+          if (!mounted) return;
+          AppSnackBar.showSuccess(context, 'Agendamento cancelado com sucesso.');
+        } catch (e) {
+          if (!mounted) return;
+          AppSnackBar.showError(
+            context,
+            e.toString().replaceAll('Exception: ', ''),
+          );
+          rethrow;
+        }
+      },
+    );
+  }
+
   void _showAllDebtsSheet() {
     showAppBottomSheet(
       context: context,
@@ -287,54 +329,73 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     DateTime date, {
     VoidCallback? onBack,
   }) {
+    Future<List<AdminAppointmentModel>> appointmentsFuture =
+        _appointmentsService.getAppointmentsByDate(date);
+
     showAppBottomSheet(
       context: context,
       title: 'Agenda: ${_formatDate(date)}',
       height: BottomSheetHeight.flexible,
       onBack: onBack,
-      child: FutureBuilder<List<AdminAppointmentModel>>(
-        future: _appointmentsService.getAppointmentsByDate(date),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+      child: StatefulBuilder(
+        builder: (context, setModalState) {
+          Future<void> refreshDateAppointments() async {
+            setModalState(() {
+              appointmentsFuture = _appointmentsService.getAppointmentsByDate(date);
+            });
           }
 
-          if (snapshot.hasError) {
-            final message = snapshot.error
-                    ?.toString()
-                    .replaceAll('Exception: ', '') ??
-                'Erro ao buscar agendamentos.';
-            return AppEmptyState(message: message);
-          }
+          return FutureBuilder<List<AdminAppointmentModel>>(
+            future: appointmentsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-          final appointments = snapshot.data ?? [];
-          if (appointments.isEmpty) {
-            return const AppEmptyState(
-              message: 'Nenhum agendamento para a data selecionada.',
-            );
-          }
+              if (snapshot.hasError) {
+                final message = snapshot.error
+                        ?.toString()
+                        .replaceAll('Exception: ', '') ??
+                    'Erro ao buscar agendamentos.';
+                return AppEmptyState(message: message);
+              }
 
-          return Column(
-            children: [
-              AppBadge(
-                label: '${appointments.length} Agendamentos',
-                variant: BadgeVariant.pending,
-              ),
-              const SizedBox(height: AppTheme.spacingLg),
-              ...appointments.map(
-                (a) => Padding(
-                  padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
-                  child: AppointmentCard(
-                    service: '${a.clientName} • ${a.serviceName}',
-                    subtitle: _statusLabel(_statusToBadge(a.status)),
-                    date: _formatCardDate(a.startTime),
-                    time: _formatHour(a.startTime),
-                    status: _statusToBadge(a.status),
-                    variant: AppointmentCardVariant.full,
+              final appointments = snapshot.data ?? [];
+              if (appointments.isEmpty) {
+                return const AppEmptyState(
+                  message: 'Nenhum agendamento para a data selecionada.',
+                );
+              }
+
+              return Column(
+                children: [
+                  AppBadge(
+                    label: '${appointments.length} Agendamentos',
+                    variant: BadgeVariant.pending,
                   ),
-                ),
-              ),
-            ],
+                  const SizedBox(height: AppTheme.spacingLg),
+                  ...appointments.map(
+                    (a) => Padding(
+                      padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
+                      child: AppointmentCard(
+                        service: '${a.clientName} • ${a.serviceName}',
+                        subtitle: _statusLabel(_statusToBadge(a.status)),
+                        date: _formatCardDate(a.startTime),
+                        time: _formatHour(a.startTime),
+                        status: _statusToBadge(a.status),
+                        variant: AppointmentCardVariant.full,
+                        onCancelPressed: () => _showCancelAppointmentSheet(
+                          a,
+                          onCancelled: () {
+                            refreshDateAppointments();
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           );
         },
       ),
@@ -558,6 +619,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                           time: _formatHour(appointment.startTime),
                           status: _statusToBadge(appointment.status),
                           variant: AppointmentCardVariant.full,
+                          onCancelPressed: () => _showCancelAppointmentSheet(appointment),
                         ),
                       );
                     }),
