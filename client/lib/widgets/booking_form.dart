@@ -5,10 +5,12 @@ import '../core/theme/app_text_styles.dart';
 import '../core/theme/app_theme.dart';
 import '../features/client/models/service_model.dart';
 import '../features/client/services/booking_service.dart';
+import '../features/client/services/client_appointments_service.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_card.dart';
 import '../widgets/app_snackbar.dart';
+
 
 class BookingTargetClient {
   final String id;
@@ -19,6 +21,17 @@ class BookingTargetClient {
     required this.id,
     required this.displayName,
     this.subtitle,
+  });
+}
+
+/// Carries reschedule context through the booking flow steps.
+class RescheduleContext {
+  final String originalAppointmentId;
+  final bool applyFee;
+
+  const RescheduleContext({
+    required this.originalAppointmentId,
+    required this.applyFee,
   });
 }
 
@@ -45,6 +58,25 @@ class BookingFlow {
       loadTargetClients: loadTargetClients,
       selectedTargetClient: selectedTargetClient,
       onBookingConfirmed: onBookingConfirmed,
+    );
+  }
+
+  /// Starts the booking flow in reschedule mode.
+  ///
+  /// Skips service selection — the original service is pre-selected.
+  /// On final confirmation the backend reschedule endpoint is called instead
+  /// of the regular book endpoint, with [applyFee] propagated through.
+  static void startReschedule(
+    BuildContext context, {
+    required RescheduleContext rescheduleContext,
+    required ServiceModel preselectedService,
+    VoidCallback? onRescheduled,
+  }) {
+    _showDatePickerSheet(
+      context,
+      preselectedService,
+      rescheduleContext: rescheduleContext,
+      onBookingConfirmed: onRescheduled,
     );
   }
 
@@ -125,20 +157,25 @@ class BookingFlow {
     Future<List<BookingTargetClient>> Function()? loadTargetClients,
     BookingTargetClient? selectedTargetClient,
     VoidCallback? onBookingConfirmed,
+    RescheduleContext? rescheduleContext,
   }) {
     showAppBottomSheet(
       context: context,
-      title: 'Data - ${service.name}',
+      title: rescheduleContext != null
+          ? 'Reagendar — Data - ${service.name}'
+          : 'Data - ${service.name}',
       height: BottomSheetHeight.flexible,
-      onBack: () {
-        Navigator.of(context).pop();
-        _showServicesSheet(
-          context,
-          loadTargetClients: loadTargetClients,
-          selectedTargetClient: selectedTargetClient,
-            onBookingConfirmed: onBookingConfirmed,
-        );
-      },
+      onBack: rescheduleContext == null
+          ? () {
+              Navigator.of(context).pop();
+              _showServicesSheet(
+                context,
+                loadTargetClients: loadTargetClients,
+                selectedTargetClient: selectedTargetClient,
+                onBookingConfirmed: onBookingConfirmed,
+              );
+            }
+          : () => Navigator.of(context).pop(),
       child: _DatePickerSheetContent(
         bookingService: _service,
         service: service,
@@ -152,6 +189,7 @@ class BookingFlow {
             loadTargetClients: loadTargetClients,
             selectedTargetClient: selectedTargetClient,
             onBookingConfirmed: onBookingConfirmed,
+            rescheduleContext: rescheduleContext,
           );
         },
       ),
@@ -168,12 +206,13 @@ class BookingFlow {
     Future<List<BookingTargetClient>> Function()? loadTargetClients,
     BookingTargetClient? selectedTargetClient,
     VoidCallback? onBookingConfirmed,
+    RescheduleContext? rescheduleContext,
     }
   ) {
     showAppBottomSheet(
       context: context,
       title:
-          'Horário - ${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}',
+          '${rescheduleContext != null ? 'Reagendar — ' : ''}Horário - ${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}',
       height: BottomSheetHeight.flexible,
       onBack: () {
         Navigator.of(context).pop();
@@ -183,6 +222,7 @@ class BookingFlow {
           loadTargetClients: loadTargetClients,
           selectedTargetClient: selectedTargetClient,
           onBookingConfirmed: onBookingConfirmed,
+          rescheduleContext: rescheduleContext,
         );
       },
       child: _TimesSheetContent(
@@ -191,6 +231,7 @@ class BookingFlow {
         date: date,
         selectedTargetClient: selectedTargetClient,
         onBookingConfirmed: onBookingConfirmed,
+        rescheduleContext: rescheduleContext,
         onConfirmed: () => Navigator.of(context).pop(),
       ),
     );
@@ -625,6 +666,7 @@ class _TimesSheetContent extends StatefulWidget {
   final BookingTargetClient? selectedTargetClient;
   final VoidCallback onConfirmed;
   final VoidCallback? onBookingConfirmed;
+  final RescheduleContext? rescheduleContext;
 
   const _TimesSheetContent({
     required this.bookingService,
@@ -633,6 +675,7 @@ class _TimesSheetContent extends StatefulWidget {
     required this.selectedTargetClient,
     required this.onConfirmed,
     this.onBookingConfirmed,
+    this.rescheduleContext,
   });
 
   @override
@@ -645,6 +688,8 @@ class _TimesSheetContentState extends State<_TimesSheetContent> {
   bool _isBooking = false;
   String? _error;
   String? _selectedTime;
+
+  bool get _isReschedule => widget.rescheduleContext != null;
 
   @override
   void initState() {
@@ -674,21 +719,45 @@ class _TimesSheetContentState extends State<_TimesSheetContent> {
   Future<void> _confirm() async {
     if (_selectedTime == null) return;
     setState(() => _isBooking = true);
+
+    // Build startTime from selected date + time slot
+    final timeParts = _selectedTime!.split(':');
+    final startTime = DateTime(
+      widget.date.year,
+      widget.date.month,
+      widget.date.day,
+      int.parse(timeParts[0]),
+      int.parse(timeParts[1]),
+    );
+
     try {
-      await widget.bookingService.bookAppointment(
-        serviceId: widget.service.id,
-        date: widget.date,
-        timeSlot: _selectedTime!,
-        clientId: widget.selectedTargetClient?.id,
-      );
+      if (_isReschedule) {
+        final ctx = widget.rescheduleContext!;
+        await ClientAppointmentsService().rescheduleAppointment(
+          appointmentId: ctx.originalAppointmentId,
+          serviceId: widget.service.id,
+          startTime: startTime,
+          applyLateRescheduleFee: ctx.applyFee ? true : null,
+        );
+      } else {
+        await widget.bookingService.bookAppointment(
+          serviceId: widget.service.id,
+          date: widget.date,
+          timeSlot: _selectedTime!,
+          clientId: widget.selectedTargetClient?.id,
+        );
+      }
+
       if (!mounted) return;
       widget.onConfirmed();
       widget.onBookingConfirmed?.call();
       AppSnackBar.showSuccess(
         context,
-        widget.selectedTargetClient == null
-            ? 'Agendamento confirmado com sucesso!'
-            : 'Agendamento para ${widget.selectedTargetClient!.displayName} confirmado com sucesso!',
+        _isReschedule
+            ? 'Agendamento reagendado com sucesso!'
+            : widget.selectedTargetClient == null
+                ? 'Agendamento confirmado com sucesso!'
+                : 'Agendamento para ${widget.selectedTargetClient!.displayName} confirmado com sucesso!',
       );
     } catch (e) {
       if (mounted) {
@@ -779,7 +848,7 @@ class _TimesSheetContentState extends State<_TimesSheetContent> {
           ),
         const SizedBox(height: AppTheme.spacingXl),
         AppButton(
-          label: 'Confirmar Agendamento',
+          label: _isReschedule ? 'Confirmar Reagendamento' : 'Confirmar Agendamento',
           fullWidth: true,
           isLoading: _isBooking,
           onPressed: (_selectedTime == null || _isBooking) ? null : _confirm,

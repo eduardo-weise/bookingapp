@@ -1,8 +1,11 @@
 import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_text_styles.dart';
 import 'package:app/core/theme/app_theme.dart';
+import 'package:app/features/client/models/service_model.dart';
+import 'package:app/features/client/services/booking_service.dart';
 import 'package:app/features/client/services/client_appointments_service.dart';
 import 'package:app/features/client/services/client_debt_service.dart';
+import 'package:app/features/client/services/user_profile_service.dart';
 import 'package:app/widgets/app_avatar.dart';
 import 'package:app/widgets/app_badge.dart';
 import 'package:app/widgets/app_bottom_sheet.dart';
@@ -15,7 +18,7 @@ import 'package:app/widgets/appointment_card.dart';
 import 'package:app/widgets/user_edit_form.dart';
 import 'package:app/widgets/app_empty_state.dart';
 import 'package:app/widgets/app_snackbar.dart';
-import 'package:app/widgets/cancel_appointment_sheet.dart';
+import 'package:app/widgets/appointment_action_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -30,9 +33,11 @@ class ClientHomePage extends StatefulWidget {
 class _ClientHomePageState extends State<ClientHomePage> {
   final _appointmentsService = ClientAppointmentsService();
   final _debtService = ClientDebtService();
+  final _profileService = UserProfileService();
   final GlobalKey<_UpcomingAppointmentsSectionState> _upcomingSectionKey =
       GlobalKey<_UpcomingAppointmentsSectionState>();
-  late final Future<List<ClientDebtModel>> _debtsFuture;
+  late Future<List<ClientDebtModel>> _debtsFuture;
+  late Future<UserProfileModel> _profileFuture;
 
   Future<List<ClientAppointmentModel>> _loadAppointments() async {
     try {
@@ -68,6 +73,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
   void initState() {
     super.initState();
     _debtsFuture = _loadDebts();
+    _profileFuture = _profileService.getProfile();
   }
 
   // ── Booking Sheet ──
@@ -81,12 +87,13 @@ class _ClientHomePageState extends State<ClientHomePage> {
   }
 
   Future<void> _showCancelAppointmentSheet(ClientAppointmentModel appointment) async {
-    await showCancelAppointmentSheet(
+    await showAppointmentActionSheet(
       context: context,
       serviceName: appointment.serviceName,
       startTime: appointment.startTime,
       servicePrice: appointment.servicePrice,
       isAdmin: false,
+      action: AppointmentActionType.cancel,
       onConfirm: (_) async {
         try {
           await _appointmentsService.cancelAppointment(appointment.id);
@@ -101,6 +108,44 @@ class _ClientHomePageState extends State<ClientHomePage> {
           );
           rethrow;
         }
+      },
+    );
+  }
+
+  Future<void> _showRescheduleSheet(ClientAppointmentModel appointment) async {
+    // Fetch the full service model to pass into BookingFlow
+    ServiceModel? service;
+    try {
+      final services = await BookingService().getServices();
+      service = services.firstWhere((s) => s.name == appointment.serviceName,
+          orElse: () => services.first);
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackBar.showError(context, 'Não foi possível carregar o serviço.');
+      return;
+    }
+
+    if (!mounted) return;
+
+    await showAppointmentActionSheet(
+      context: context,
+      serviceName: appointment.serviceName,
+      startTime: appointment.startTime,
+      servicePrice: appointment.servicePrice,
+      isAdmin: false,
+      action: AppointmentActionType.reschedule,
+      onConfirm: (applyFee) async {
+        // Confirmation sheet closes itself; then open booking flow in reschedule mode
+        if (!mounted) return;
+        BookingFlow.startReschedule(
+          context,
+          rescheduleContext: RescheduleContext(
+            originalAppointmentId: appointment.id,
+            applyFee: applyFee,
+          ),
+          preselectedService: service!,
+          onRescheduled: () => _upcomingSectionKey.currentState?.refresh(),
+        );
       },
     );
   }
@@ -184,10 +229,14 @@ class _ClientHomePageState extends State<ClientHomePage> {
     showAppBottomSheet(
       context: context,
       title: 'Editar Perfil',
-      height: BottomSheetHeight.flexible,
+      height: BottomSheetHeight.large,
       child: UserEditForm(
         onSave: () {
           Navigator.pop(context);
+          // Refresh profile after saving
+          setState(() {
+            _profileFuture = _profileService.getProfile();
+          });
         },
       ),
     );
@@ -239,19 +288,33 @@ class _ClientHomePageState extends State<ClientHomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const PageHeader(name: 'Olá, Maria', notificationCount: 1),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: AppTheme.spacingLg,
-                ),
-                child: Center(
-                  child: AppAvatar(
-                    size: AvatarSize.large,
-                    initials: 'MS',
-                    showEditBadge: true,
-                    onEditTap: _showEditProfileSheet,
-                  ),
-                ),
+              FutureBuilder<UserProfileModel>(
+                future: _profileFuture,
+                builder: (context, snapshot) {
+                  final name = snapshot.data?.displayName ?? '';
+                  final initials = snapshot.data?.initials ?? '?';
+                  return Column(
+                    children: [
+                      PageHeader(
+                        name: name.isNotEmpty ? 'Olá, $name' : 'Olá!',
+                        notificationCount: 1,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppTheme.spacingLg,
+                        ),
+                        child: Center(
+                          child: AppAvatar(
+                            size: AvatarSize.large,
+                            initials: initials,
+                            showEditBadge: true,
+                            onEditTap: _showEditProfileSheet,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
               FutureBuilder<List<ClientDebtModel>>(
                 future: _debtsFuture,
@@ -262,7 +325,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
                       locale: 'pt_BR',
                       symbol: 'R\$',
                     ).format(debt.amount);
-                    
+
                     return Column(
                       children: [
                         DebtBanner(
@@ -286,6 +349,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 statusLabel: _statusLabel,
                 statusVariant: _statusVariant,
                 onCancelTap: _showCancelAppointmentSheet,
+                onRescheduleTap: _showRescheduleSheet,
               ),
               const SizedBox(height: AppTheme.spacingXl + 64),
             ],
@@ -327,6 +391,7 @@ class _UpcomingAppointmentsSection extends StatefulWidget {
   final String Function(String) statusLabel;
   final BadgeVariant Function(String) statusVariant;
   final Future<void> Function(ClientAppointmentModel appointment) onCancelTap;
+  final Future<void> Function(ClientAppointmentModel appointment) onRescheduleTap;
 
   const _UpcomingAppointmentsSection({
     super.key,
@@ -336,6 +401,7 @@ class _UpcomingAppointmentsSection extends StatefulWidget {
     required this.statusLabel,
     required this.statusVariant,
     required this.onCancelTap,
+    required this.onRescheduleTap,
   });
 
   @override
@@ -420,6 +486,7 @@ class _UpcomingAppointmentsSectionState extends State<_UpcomingAppointmentsSecti
                     time: widget.formatCardTime(appointment.startTime),
                     status: widget.statusVariant(appointment.status),
                     variant: AppointmentCardVariant.full,
+                    onReschedulePressed: () => widget.onRescheduleTap(appointment),
                     onCancelPressed: () => widget.onCancelTap(appointment),
                   ),
                 );

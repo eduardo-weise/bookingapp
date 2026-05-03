@@ -60,6 +60,27 @@ class ClientAppointmentsService {
     }
   }
 
+  Future<void> rescheduleAppointment({
+    required String appointmentId,
+    required String serviceId,
+    required DateTime startTime,
+    bool? applyLateRescheduleFee,
+  }) async {
+    try {
+      await _client.post(
+        '/appointments/$appointmentId/reschedule',
+        data: {
+          'serviceId': serviceId,
+          'startTime': startTime.toUtc().toIso8601String(),
+          if (applyLateRescheduleFee != null)
+            'applyLateRescheduleFee': applyLateRescheduleFee,
+        },
+      );
+    } on DioException catch (e) {
+      throw Exception(_handleError(e));
+    }
+  }
+
   String _handleError(DioException e) {
     if (e.response != null) {
       final data = e.response!.data;

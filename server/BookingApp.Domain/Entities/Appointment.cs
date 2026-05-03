@@ -48,6 +48,21 @@ public sealed class Appointment : AggregateRoot
 		Status = AppointmentStatus.Canceled;
 	}
 
+	public void MarkAsRescheduled(bool allowLateReschedule = false)
+	{
+		if (Status != AppointmentStatus.Scheduled)
+		{
+			throw new InvalidOperationException("Somente agendamentos ativos podem ser reagendados.");
+		}
+
+		if (!allowLateReschedule && (StartTime - DateTime.UtcNow).TotalHours < 1)
+		{
+			throw new InvalidOperationException("Reagendamento não permitido com menos de 1h de antecedência.");
+		}
+
+		Status = AppointmentStatus.Rescheduled;
+	}
+
 	public void MarkAsNoShow()
 	{
 		if (Status == AppointmentStatus.Scheduled && DateTime.UtcNow > StartTime)
