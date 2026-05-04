@@ -264,7 +264,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   void _showFutureAppointmentsDatePickerSheet() {
     showAppBottomSheet(
       context: context,
-      title: 'Agendamentos Futuros',
+      title: 'Agendamentos',
       height: BottomSheetHeight.flexible,
       child: Column(
         children: [
@@ -274,17 +274,20 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           ),
           const SizedBox(height: AppTheme.spacingMd),
           AppDatePicker(
-            initialSelectedDate: DateTime.now(),
-            minDate: DateTime.now(),
-            maxDate: DateTime.now().add(const Duration(days: 365)),
             selectionMode: DateRangePickerSelectionMode.single,
             onSelectionChanged: (args) {
               if (args.value is DateTime) {
+                final selectedDate = args.value as DateTime;
+                // Close calendar sheet first, then open appointments sheet
                 Navigator.pop(context);
-                _showAppointmentsForDateSheet(
-                  args.value as DateTime,
-                  onBack: _showFutureAppointmentsDatePickerSheet,
-                );
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  if (mounted) {
+                    _showAppointmentsForDateSheet(
+                      selectedDate,
+                      onBack: _showFutureAppointmentsDatePickerSheet,
+                    );
+                  }
+                });
               }
             },
           ),
@@ -336,7 +339,15 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       context: context,
       title: 'Agenda: ${_formatDate(date)}',
       height: BottomSheetHeight.flexible,
-      onBack: onBack,
+      onBack: () {
+        // Close appointments sheet first, then reopen calendar
+        Navigator.pop(context);
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted && onBack != null) {
+            onBack();
+          }
+        });
+      },
       child: StatefulBuilder(
         builder: (context, setModalState) {
           Future<void> refreshDateAppointments() async {
