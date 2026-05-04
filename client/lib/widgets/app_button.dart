@@ -77,22 +77,27 @@ class AppButton extends StatelessWidget {
             ],
           );
 
+    final disabled = onPressed == null;
+
     return GestureDetector(
       onTap: onPressed,
       child: AnimatedScale(
-        scale: onPressed == null ? 1.0 : 1.0,
+        scale: 1.0,
         duration: const Duration(milliseconds: 100),
-        child: Container(
-          height: height,
-          width: fullWidth ? double.infinity : null,
-          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-            border: border,
+        child: Opacity(
+          opacity: disabled ? 0.5 : 1.0,
+          child: Container(
+            height: height,
+            width: fullWidth ? double.infinity : null,
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+              border: border,
+            ),
+            alignment: Alignment.center,
+            child: child,
           ),
-          alignment: Alignment.center,
-          child: child,
         ),
       ),
     );

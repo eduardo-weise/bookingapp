@@ -103,9 +103,6 @@ class _AppointmentActionSheetContentState
     }
 
     // Reschedule
-    if (_isWithin1Hour) {
-      return 'Não é possível reagendar com menos de 1h de antecedência.';
-    }
     if (!_isWithin24Hours) {
       return 'Tem certeza que deseja reagendar este atendimento?';
     }
@@ -149,7 +146,9 @@ class _AppointmentActionSheetContentState
           Text(
             _message,
             style: AppTextStyles.body.copyWith(
-              color: _isBlocked ? AppColors.statusCancelled : AppColors.textSecondary,
+              color: _isBlocked
+                  ? AppColors.statusCancelled
+                  : AppColors.textSecondary,
               height: 1.5,
             ),
           ),
@@ -207,8 +206,9 @@ class _AppointmentActionSheetContentState
                   variant: AppButtonVariant.secondary,
                   fullWidth: true,
                   small: true,
-                  onPressed:
-                      _isSubmitting ? null : () => Navigator.of(context).pop(),
+                  onPressed: _isSubmitting
+                      ? null
+                      : () => Navigator.of(context).pop(),
                 ),
               ),
               const SizedBox(width: AppTheme.spacingMd),
@@ -221,8 +221,7 @@ class _AppointmentActionSheetContentState
                   fullWidth: true,
                   small: true,
                   isLoading: _isSubmitting,
-                  onPressed:
-                      (_isSubmitting || _isBlocked) ? null : _submit,
+                  onPressed: (_isSubmitting || _isBlocked) ? null : _submit,
                 ),
               ),
             ],

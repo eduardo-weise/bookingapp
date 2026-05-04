@@ -470,6 +470,9 @@ class _UpcomingAppointmentsSectionState extends State<_UpcomingAppointmentsSecti
             return Column(
               children: List.generate(upcomingAppointments.length, (i) {
                 final appointment = upcomingAppointments[i];
+                final now = DateTime.now().toUtc();
+                final isWithin1Hour = appointment.startTime.toUtc().isBefore(now.add(const Duration(hours: 1)));
+                
                 return Padding(
                   padding: EdgeInsets.fromLTRB(
                     AppTheme.spacingLg,
@@ -486,7 +489,7 @@ class _UpcomingAppointmentsSectionState extends State<_UpcomingAppointmentsSecti
                     time: widget.formatCardTime(appointment.startTime),
                     status: widget.statusVariant(appointment.status),
                     variant: AppointmentCardVariant.full,
-                    onReschedulePressed: () => widget.onRescheduleTap(appointment),
+                    onReschedulePressed: isWithin1Hour ? null : () => widget.onRescheduleTap(appointment),
                     onCancelPressed: () => widget.onCancelTap(appointment),
                   ),
                 );
