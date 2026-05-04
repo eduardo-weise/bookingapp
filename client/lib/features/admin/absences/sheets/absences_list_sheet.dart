@@ -24,7 +24,7 @@ class AbsencesListSheet extends StatefulWidget {
 
 class _AbsencesListSheetState extends State<AbsencesListSheet> {
   List<AbsenceDayModel> _future = [];
-  List<AbsenceDayModel> _past = [];
+  final List<AbsenceDayModel> _past = [];
   bool _isLoadingFuture = true;
   bool _isLoadingPast = false;
   bool _showPast = false;

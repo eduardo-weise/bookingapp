@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:syncfusion_flutter_datepicker/datepicker.dart';
-import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/widgets/app_button.dart';
 import 'package:app/widgets/app_date_picker.dart';

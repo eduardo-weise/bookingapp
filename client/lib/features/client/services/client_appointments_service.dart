@@ -42,7 +42,10 @@ class ClientAppointmentsService {
       }
 
       return (response.data as List)
-          .map((item) => ClientAppointmentModel.fromJson(item as Map<String, dynamic>))
+          .map(
+            (item) =>
+                ClientAppointmentModel.fromJson(item as Map<String, dynamic>),
+          )
           .toList();
     } on DioException catch (e) {
       throw Exception(_handleError(e));
@@ -51,10 +54,7 @@ class ClientAppointmentsService {
 
   Future<void> cancelAppointment(String appointmentId) async {
     try {
-      await _client.post(
-        '/appointments/$appointmentId/cancel',
-        data: {},
-      );
+      await _client.post('/appointments/$appointmentId/cancel', data: {});
     } on DioException catch (e) {
       throw Exception(_handleError(e));
     }
@@ -72,8 +72,7 @@ class ClientAppointmentsService {
         data: {
           'serviceId': serviceId,
           'startTime': startTime.toUtc().toIso8601String(),
-          if (applyLateRescheduleFee != null)
-            'applyLateRescheduleFee': applyLateRescheduleFee,
+          'applyLateRescheduleFee': ?applyLateRescheduleFee,
         },
       );
     } on DioException catch (e) {
@@ -88,7 +87,9 @@ class ClientAppointmentsService {
         if (data.containsKey('errors') && data['errors'] is List) {
           final errList = data['errors'] as List;
           if (errList.isNotEmpty) {
-            return errList.map((err) => err['reason'] ?? err['message']).join('\n');
+            return errList
+                .map((err) => err['reason'] ?? err['message'])
+                .join('\n');
           }
         }
         if (data.containsKey('message')) return data['message'] as String;

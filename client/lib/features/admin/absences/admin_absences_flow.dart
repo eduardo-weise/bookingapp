@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:app/widgets/app_date_picker.dart';
-import 'package:app/core/theme/app_colors.dart';
 import '../../../widgets/app_bottom_sheet.dart';
 import 'services/absence_service.dart';
 import 'sheets/absences_list_sheet.dart';
@@ -50,26 +49,27 @@ class AdminAbsencesFlow {
           Navigator.of(context).pop();
           start(context);
         },
-        onPickDate: (ctx, isStart, currentStart, currentEnd, currentIsSingleDay) async {
-          Navigator.of(ctx).pop(); // Close CreateAbsenceSheet
-          
-          if (currentIsSingleDay) {
-            _showDatePicker(
-              context, // use original root context
-              isStart: isStart,
-              startDate: currentStart,
-              endDate: currentEnd,
-              isSingleDay: currentIsSingleDay,
-            );
-          } else {
-            _showDateRangePickerSheet(
-              context,
-              currentStart: currentStart,
-              currentEnd: currentEnd,
-              isSingleDay: currentIsSingleDay,
-            );
-          }
-        },
+        onPickDate:
+            (ctx, isStart, currentStart, currentEnd, currentIsSingleDay) async {
+              Navigator.of(ctx).pop(); // Close CreateAbsenceSheet
+
+              if (currentIsSingleDay) {
+                _showDatePicker(
+                  context, // use original root context
+                  isStart: isStart,
+                  startDate: currentStart,
+                  endDate: currentEnd,
+                  isSingleDay: currentIsSingleDay,
+                );
+              } else {
+                _showDateRangePickerSheet(
+                  context,
+                  currentStart: currentStart,
+                  currentEnd: currentEnd,
+                  isSingleDay: currentIsSingleDay,
+                );
+              }
+            },
       ),
     );
   }
@@ -123,7 +123,9 @@ class AdminAbsencesFlow {
 
     showAppBottomSheet(
       context: context,
-      title: isStart ? (isSingleDay ? 'Data da Ausência' : 'Data Inicial') : 'Data Final',
+      title: isStart
+          ? (isSingleDay ? 'Data da Ausência' : 'Data Inicial')
+          : 'Data Final',
       height: BottomSheetHeight.flexible,
       onBack: () {
         Navigator.of(context).pop();
@@ -146,6 +148,9 @@ class AdminAbsencesFlow {
                 final picked = args.value as DateTime;
                 Navigator.of(context).pop(); // Close date picker
                 Future.microtask(() {
+                  if (!context.mounted) {
+                    return;
+                  }
                   if (isSingleDay) {
                     _showTimeRange(
                       context,
@@ -205,8 +210,12 @@ class AdminAbsencesFlow {
       },
       child: TimeRangeSheet(
         date: date,
-        initialStartMinutes: startDate != null ? startDate.hour * 60 + startDate.minute : 480,
-        initialEndMinutes: endDate != null ? endDate.hour * 60 + endDate.minute : 1140,
+        initialStartMinutes: startDate != null
+            ? startDate.hour * 60 + startDate.minute
+            : 480,
+        initialEndMinutes: endDate != null
+            ? endDate.hour * 60 + endDate.minute
+            : 1140,
         onConfirmed: (start, end) {
           Navigator.of(context).pop();
           _showCreateSheet(
