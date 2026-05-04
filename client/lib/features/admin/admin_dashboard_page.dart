@@ -145,6 +145,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   void _showBookingSheet() {
     BookingFlow.start(
       context,
+      onBookingConfirmed: _refreshTodayAppointments,
       loadTargetClients: () async {
         final clients = await _clientsService.getClients();
         return clients
