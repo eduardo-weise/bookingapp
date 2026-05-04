@@ -6,6 +6,7 @@ import '../core/theme/app_colors.dart';
 class AppDatePicker extends StatelessWidget {
   final DateRangePickerSelectionMode selectionMode;
   final DateTime? initialSelectedDate;
+  final DateTime? initialDisplayDate;
   final PickerDateRange? initialSelectedRange;
   final DateTime? minDate;
   final DateTime? maxDate;
@@ -18,6 +19,7 @@ class AppDatePicker extends StatelessWidget {
     super.key,
     this.selectionMode = DateRangePickerSelectionMode.single,
     this.initialSelectedDate,
+    this.initialDisplayDate,
     this.initialSelectedRange,
     this.minDate,
     this.maxDate,
@@ -35,6 +37,7 @@ class AppDatePicker extends StatelessWidget {
       child: SfDateRangePicker(
         selectionMode: selectionMode,
         initialSelectedDate: initialSelectedDate,
+        initialDisplayDate: initialDisplayDate ?? initialSelectedDate,
         initialSelectedRange: initialSelectedRange,
         minDate: minDate,
         maxDate: maxDate,

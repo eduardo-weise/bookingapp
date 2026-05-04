@@ -258,7 +258,6 @@ class _DatePickerSheetContent extends StatefulWidget {
 class _DatePickerSheetContentState extends State<_DatePickerSheetContent> {
   late final DateTime _minDate;
   late final DateTime _maxDate;
-  late final DateTime _initialVisibleDate;
 
   bool _isLoadingUnavailableDates = true;
   final Set<String> _loadedMonths = <String>{};
@@ -273,8 +272,7 @@ class _DatePickerSheetContentState extends State<_DatePickerSheetContent> {
     final now = DateTime.now();
     _minDate = DateTime(now.year, now.month, now.day);
     _maxDate = _minDate.add(const Duration(days: 90));
-    _initialVisibleDate = _minDate.add(const Duration(days: 1));
-    _loadUnavailableDatesForVisibleDate(_initialVisibleDate);
+    _loadUnavailableDatesForVisibleDate(_minDate);
   }
 
   String _monthKey(DateTime date) =>
@@ -363,15 +361,20 @@ class _DatePickerSheetContentState extends State<_DatePickerSheetContent> {
           )
         else
           AppDatePicker(
-            initialSelectedDate: _initialVisibleDate,
+            initialDisplayDate: _minDate,
             minDate: _minDate,
             maxDate: _maxDate,
             blackoutDates: _blackoutDates,
             selectionMode: DateRangePickerSelectionMode.single,
-            selectableDayPredicate: (date) {
-              return date.weekday != DateTime.sunday &&
-                  date.weekday != DateTime.monday;
-            },
+            // Admins booking for a client can pick any day — the backend
+            // determines slot availability. The day-of-week filter is only
+            // applied in the self-booking (client) flow.
+            selectableDayPredicate: widget.selectedTargetClient != null
+                ? null
+                : (date) {
+                    return date.weekday != DateTime.sunday &&
+                        date.weekday != DateTime.monday;
+                  },
             onSelectionChanged: (args) {
               if (args.value is DateTime) {
                 widget.onDateSelected(args.value as DateTime);
