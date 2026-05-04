@@ -2,9 +2,10 @@ using BookingApp.API.Extentions;
 using FastEndpoints;
 using FastEndpoints.Swagger;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder();
 
 var configuration = builder.Configuration;
+var environment = builder.Environment;
 
 builder.Services
 	.AddEmail(configuration)
@@ -18,7 +19,7 @@ builder.Services
 		});
 	})
 	.AddDbContext(configuration)
-	.AddAuth(configuration)
+	.AddAuth(configuration, environment)
 	.AddFastEndpoints()
 	.AddIdempotency()
 	.SwaggerDocument();

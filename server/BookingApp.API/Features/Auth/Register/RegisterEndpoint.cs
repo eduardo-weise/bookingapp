@@ -74,7 +74,7 @@ public sealed class RegisterEndpoint(ApplicationDbContext dbContext)
 			privileges =>
 			{
 				privileges.Claims.Add(new(ClaimTypes.NameIdentifier, user.Id.ToString()));
-				privileges.Roles.Add(user.Role);
+				privileges.Claims.Add(new(ClaimTypes.Role, user.Role));
 			});
 
 		await Send.OkAsync(token, cancellation: ct);

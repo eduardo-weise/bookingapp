@@ -10,7 +10,7 @@ public static class AuthExtensions
 {
 	extension(IServiceCollection services)
 	{
-		public IServiceCollection AddAuth(IConfiguration configuration)
+		public IServiceCollection AddAuth(IConfiguration configuration, IWebHostEnvironment environment)
 		{
 			services.Configure<JwtOptions>(configuration.GetSection("JwtOptions"));
 
@@ -42,33 +42,37 @@ public static class AuthExtensions
 						AuthenticationType = "Bearer"
 					};
 
-					//jwtBearerOptions.Events = new JwtBearerEvents
-					//{
-					//	OnTokenValidated = context =>
-					//	{
-					//		var claims = context.Principal?.Claims.ToList() ?? [];
-					//		System.Diagnostics.Debug.WriteLine($"=== JWT VALIDADO ===");
-					//		System.Diagnostics.Debug.WriteLine($"Total de claims: {claims.Count}");
-					//		claims.ForEach(c => System.Diagnostics.Debug.WriteLine($"  • {c.Type} = {c.Value}"));
+					if (!environment.IsProduction())
+					{
+						bearerOptions.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+						{
+							OnTokenValidated = context =>
+							{
+								var claims = context.Principal?.Claims.ToList() ?? [];
+								System.Diagnostics.Debug.WriteLine($"=== JWT VALIDADO ===");
+								System.Diagnostics.Debug.WriteLine($"Total de claims: {claims.Count}");
+								claims.ForEach(c => System.Diagnostics.Debug.WriteLine($"  • {c.Type} = {c.Value}"));
 
-					//		// Especificamente procure por claims de role
-					//		var roleClaims = claims.Where(c => c.Type.Contains("role", StringComparison.OrdinalIgnoreCase)).ToList();
-					//		System.Diagnostics.Debug.WriteLine($"Claims de role encontrados: {roleClaims.Count}");
-					//		roleClaims.ForEach(c => System.Diagnostics.Debug.WriteLine($"  ⚠️  {c.Type} = {c.Value}"));
+								// Especificamente procure por claims de role
+								var roleClaims = claims.Where(c => c.Type.Contains("role", StringComparison.OrdinalIgnoreCase)).ToList();
+								System.Diagnostics.Debug.WriteLine($"Claims de role encontrados: {roleClaims.Count}");
+								roleClaims.ForEach(c => System.Diagnostics.Debug.WriteLine($"  ⚠️  {c.Type} = {c.Value}"));
 
-					//		return Task.CompletedTask;
-					//	},
-					//	OnAuthenticationFailed = context =>
-					//	{
-					//		System.Diagnostics.Debug.WriteLine($"❌ Auth Failed: {context.Exception?.Message}");
-					//		return Task.CompletedTask;
-					//	},
-					//	OnForbidden = context =>
-					//	{
-					//		System.Diagnostics.Debug.WriteLine($"❌ Forbidden - Autorização rejeitada");
-					//		return Task.CompletedTask;
-					//	}
-					//};
+								return Task.CompletedTask;
+							},
+							OnAuthenticationFailed = context =>
+							{
+								System.Diagnostics.Debug.WriteLine($"❌ Auth Failed: {context.Exception?.Message}");
+								return Task.CompletedTask;
+							},
+							OnForbidden = context =>
+							{
+								System.Diagnostics.Debug.WriteLine($"❌ Forbidden - Autorização rejeitada");
+								return Task.CompletedTask;
+							}
+						};
+					}
+
 				})
 			.AddAuthorizationBuilder()
 				.AddPolicy("AdminsOnly", x => x.RequireRole("Admin"))
