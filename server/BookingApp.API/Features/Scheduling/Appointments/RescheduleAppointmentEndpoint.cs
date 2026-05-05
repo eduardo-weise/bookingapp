@@ -3,6 +3,7 @@ using BookingApp.API.Extentions;
 using BookingApp.Domain.Entities;
 using BookingApp.Domain.Exceptions;
 using BookingApp.Infrastructure.Data;
+using BookingApp.Infrastructure.Settings.Authentication;
 using FastEndpoints;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +33,7 @@ public sealed class RescheduleAppointmentEndpoint(ApplicationDbContext dbContext
 	public override void Configure()
 	{
 		Post("/appointments/{id:guid}/reschedule");
-		Policies("All");
+		Policies(UserPolicy.All);
 		Tags("Application");
 		Options(x => x.WithName("RescheduleAppointment"));
 	}

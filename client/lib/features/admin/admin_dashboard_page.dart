@@ -15,39 +15,12 @@ import 'package:app/widgets/appointment_card.dart';
 import 'package:app/widgets/app_empty_state.dart';
 import 'package:app/widgets/app_snackbar.dart';
 import 'package:app/widgets/cancel_appointment_sheet.dart';
+import 'package:app/widgets/debt_banner.dart';
 import 'package:intl/intl.dart';
 import 'admin_profile_form.dart';
 import 'services/admin_clients_service.dart';
 import 'services/admin_appointments_service.dart';
-
-// ── Mock Data ────────────────────────────────────────────────────────────────
-class _Debt {
-  final String clientName;
-  final String service;
-  final String date;
-  final double amount;
-  const _Debt({
-    required this.clientName,
-    required this.service,
-    required this.date,
-    required this.amount,
-  });
-}
-
-const _debts = [
-  _Debt(
-    clientName: 'Maria Silva',
-    service: 'Corte de Cabelo',
-    date: '10 Mar 2026',
-    amount: 150,
-  ),
-  _Debt(
-    clientName: 'João Santos',
-    service: 'Manicure',
-    date: '12 Mar 2026',
-    amount: 80,
-  ),
-];
+import 'services/admin_debts_service.dart';
 
 // ── Admin Dashboard ──────────────────────────────────────────────────────────
 class AdminDashboardPage extends StatefulWidget {
@@ -60,12 +33,17 @@ class AdminDashboardPage extends StatefulWidget {
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
   final _clientsService = AdminClientsService();
   final _appointmentsService = AdminAppointmentsService();
+  final _debtsService = AdminDebtsService();
   late Future<List<AdminAppointmentModel>> _todayAppointmentsFuture;
+  late Future<List<AdminClientDebtSummary>> _debtsFuture;
 
   @override
   void initState() {
     super.initState();
-    _todayAppointmentsFuture = _appointmentsService.getAppointmentsByDate(DateTime.now());
+    _todayAppointmentsFuture = _appointmentsService.getAppointmentsByDate(
+      DateTime.now(),
+    );
+    _debtsFuture = _debtsService.getPendingDebts();
   }
 
   // ── Profile / Edit Sheet ──
@@ -82,46 +60,118 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 
-  void _showDebtDetail(_Debt debt) {
+  void _reloadDebts() {
+    setState(() {
+      _debtsFuture = _debtsService.getPendingDebts();
+    });
+  }
+
+  Future<void> _cancelDebts(String clientId, List<String> debtIds) async {
+    try {
+      await _debtsService.cancelDebts(clientId: clientId, debtIds: debtIds);
+      if (mounted) {
+        Navigator.pop(context); // Close the detail sheet
+        _reloadDebts();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Erro: ${e.toString().replaceAll('Exception: ', '')}',
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _payDebts(String clientId, List<String> debtIds) async {
+    try {
+      await _debtsService.payDebts(clientId: clientId, debtIds: debtIds);
+      if (mounted) {
+        Navigator.pop(context); // Close the detail sheet
+        _reloadDebts();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Erro: ${e.toString().replaceAll('Exception: ', '')}',
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showDebtDetail(AdminClientDebtSummary summary) {
     showAppBottomSheet(
       context: context,
       title: '',
-      height: BottomSheetHeight.medium,
+      height: BottomSheetHeight.flexible,
       child: Column(
         children: [
-          AppAvatar(size: AvatarSize.medium, initials: debt.clientName[0]),
+          AppAvatar(
+            size: AvatarSize.medium,
+            initials: summary.clientName.isNotEmpty
+                ? summary.clientName[0]
+                : '?',
+          ),
           const SizedBox(height: AppTheme.spacingSm),
-          Text(debt.clientName, style: AppTextStyles.heading2),
+          Text(summary.clientName, style: AppTextStyles.heading2),
           const SizedBox(height: AppTheme.spacingXs),
-          Text('Débito pendente', style: AppTextStyles.caption),
+          Text(
+            '${summary.debts.length} débito(s) pendente(s)',
+            style: AppTextStyles.caption,
+          ),
           const SizedBox(height: AppTheme.spacingLg),
           const Divider(),
           const SizedBox(height: AppTheme.spacingMd),
-          _detailRow('Serviço', debt.service),
-          const SizedBox(height: AppTheme.spacingMd),
-          _detailRow('Data', debt.date),
+          ...summary.debts.map(
+            (debt) => DebtBanner(
+              margin: const EdgeInsets.only(bottom: AppTheme.spacingSm),
+              title: 'Débito Pendente',
+              amount: 'R\$ ${debt.amount.toStringAsFixed(2)}',
+              description:
+                  '${debt.serviceName} em ${_formatDate(debt.appointmentDate)}',
+              onPaymentPressed: () => _payDebts(summary.clientId, [debt.id]),
+              onCancelPressed: () => _cancelDebts(summary.clientId, [debt.id]),
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingSm),
+          const Divider(),
           const SizedBox(height: AppTheme.spacingMd),
           _detailRow(
-            'Valor',
-            'R\$ ${debt.amount.toStringAsFixed(2)}',
+            'Total',
+            'R\$ ${summary.totalAmount.toStringAsFixed(2)}',
             bold: true,
           ),
-          const SizedBox(height: AppTheme.spacingMd),
-          const Divider(),
           const SizedBox(height: AppTheme.spacingLg),
-          AppButton(
-            label: 'Marcar como Pago',
-            fullWidth: true,
-            onPressed: () => Navigator.pop(context),
-          ),
-          const SizedBox(height: AppTheme.spacingSm),
-          AppButton(
-            label: 'Cancelar Cobrança',
-            variant: AppButtonVariant.ghost,
-            fullWidth: true,
-            onPressed: () => Navigator.pop(context),
-          ),
-          const SizedBox(height: AppTheme.spacingMd),
+          if (summary.debts.length > 1) ...[
+            AppButton(
+              label: 'Marcar Todos como Pagos',
+              fullWidth: true,
+              small: false,
+              onPressed: () => _payDebts(
+                summary.clientId,
+                summary.debts.map((d) => d.id).toList(),
+              ),
+            ),
+            const SizedBox(height: AppTheme.spacingSm),
+            AppButton(
+              label: 'Cancelar Todas as Cobranças',
+              variant: AppButtonVariant.ghost,
+              fullWidth: true,
+              small: false,
+              onPressed: () => _cancelDebts(
+                summary.clientId,
+                summary.debts.map((e) => e.id).toList(),
+              ),
+            ),
+            const SizedBox(height: AppTheme.spacingMd),
+          ],
         ],
       ),
     );
@@ -153,7 +203,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               (client) => BookingTargetClient(
                 id: client.id,
                 displayName: client.displayName,
-                subtitle: client.email == client.displayName ? null : client.email,
+                subtitle: client.email == client.displayName
+                    ? null
+                    : client.email,
               ),
             )
             .toList();
@@ -164,7 +216,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   void _refreshTodayAppointments() {
     if (!mounted) return;
     setState(() {
-      _todayAppointmentsFuture = _appointmentsService.getAppointmentsByDate(DateTime.now());
+      _todayAppointmentsFuture = _appointmentsService.getAppointmentsByDate(
+        DateTime.now(),
+      );
     });
   }
 
@@ -188,7 +242,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           onCancelled?.call();
 
           if (!mounted) return;
-          AppSnackBar.showSuccess(context, 'Agendamento cancelado com sucesso.');
+          AppSnackBar.showSuccess(
+            context,
+            'Agendamento cancelado com sucesso.',
+          );
         } catch (e) {
           if (!mounted) return;
           AppSnackBar.showError(
@@ -206,56 +263,92 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       context: context,
       title: 'Todos os Débitos',
       height: BottomSheetHeight.flexible,
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: _debts.length,
-        separatorBuilder: (context, index) =>
-            const SizedBox(height: AppTheme.spacingSm),
-        itemBuilder: (context, i) {
-          final d = _debts[i];
-          return AppCard(
-            padding: const EdgeInsets.all(AppTheme.spacingMd),
-            onTap: () {
-              Navigator.pop(context);
-              _showDebtDetail(d);
-            },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
+      child: FutureBuilder<List<AdminClientDebtSummary>>(
+        future: _debtsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Padding(
+              padding: EdgeInsets.all(AppTheme.spacingXl),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          if (snapshot.hasError) {
+            return const AppEmptyState(
+              message: 'Não foi possível carregar os débitos.',
+              icon: Icons.error_outline,
+            );
+          }
+
+          final summaries = snapshot.data ?? [];
+          if (summaries.isEmpty) {
+            return const AppEmptyState(
+              message: 'Nenhum débito pendente.',
+              icon: Icons.check_circle_outline,
+            );
+          }
+
+          return ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: summaries.length,
+            separatorBuilder: (context, index) =>
+                const SizedBox(height: AppTheme.spacingSm),
+            itemBuilder: (context, i) {
+              final summary = summaries[i];
+              return AppCard(
+                padding: const EdgeInsets.all(AppTheme.spacingMd),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showDebtDetail(summary);
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    AppAvatar(
-                      size: AvatarSize.small,
-                      initials: d.clientName[0],
-                    ),
-                    const SizedBox(width: AppTheme.spacingMd),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          d.clientName,
-                          style: AppTextStyles.body.copyWith(
-                            fontWeight: FontWeight.w600,
+                    Expanded(
+                      child: Row(
+                        children: [
+                          AppAvatar(
+                            size: AvatarSize.small,
+                            initials: summary.clientName.isNotEmpty
+                                ? summary.clientName[0]
+                                : '?',
                           ),
-                        ),
-                        Text(
-                          '${d.service} • ${d.date}',
-                          style: AppTextStyles.caption,
-                        ),
-                      ],
+                          const SizedBox(width: AppTheme.spacingMd),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  summary.clientName,
+                                  style: AppTextStyles.body.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  '${summary.debts.length} débito(s)',
+                                  style: AppTextStyles.caption,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppTheme.spacingSm),
+                    Text(
+                      'R\$ ${summary.totalAmount.toStringAsFixed(2)}',
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.statusCancelled,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
-                Text(
-                  'R\$ ${d.amount.toStringAsFixed(2)}',
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.statusCancelled,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
+              );
+            },
           );
         },
       ),
@@ -305,7 +398,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
-  String _formatCardDate(DateTime date) => DateFormat('dd MMM', 'pt_BR').format(date);
+  String _formatCardDate(DateTime date) =>
+      DateFormat('dd MMM', 'pt_BR').format(date);
 
   String _formatTodayBadge(DateTime date) =>
       'Hoje, ${DateFormat("dd 'de' MMMM", 'pt_BR').format(date)}';
@@ -329,10 +423,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     return BadgeVariant.pending;
   }
 
-  void _showAppointmentsForDateSheet(
-    DateTime date, {
-    VoidCallback? onBack,
-  }) {
+  void _showAppointmentsForDateSheet(DateTime date, {VoidCallback? onBack}) {
     Future<List<AdminAppointmentModel>> appointmentsFuture =
         _appointmentsService.getAppointmentsByDate(date);
 
@@ -353,7 +444,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         builder: (context, setModalState) {
           Future<void> refreshDateAppointments() async {
             setModalState(() {
-              appointmentsFuture = _appointmentsService.getAppointmentsByDate(date);
+              appointmentsFuture = _appointmentsService.getAppointmentsByDate(
+                date,
+              );
             });
           }
 
@@ -365,9 +458,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               }
 
               if (snapshot.hasError) {
-                final message = snapshot.error
-                        ?.toString()
-                        .replaceAll('Exception: ', '') ??
+                final message =
+                    snapshot.error?.toString().replaceAll('Exception: ', '') ??
                     'Erro ao buscar agendamentos.';
                 return AppEmptyState(message: message);
               }
@@ -388,7 +480,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   const SizedBox(height: AppTheme.spacingLg),
                   ...appointments.map(
                     (a) => Padding(
-                      padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
+                      padding: const EdgeInsets.only(
+                        bottom: AppTheme.spacingSm,
+                      ),
                       child: AppointmentCard(
                         service: '${a.clientName} • ${a.serviceName}',
                         subtitle: _statusLabel(_statusToBadge(a.status)),
@@ -484,78 +578,116 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               const SizedBox(height: AppTheme.spacingLg),
 
               // ── Débitos Pendentes (shared SectionHeader) ──
-              const SectionHeader(
+              SectionHeader(
                 title: 'Débitos Pendentes',
                 actionLabel: 'Ver todos',
+                onActionTap: _showAllDebtsSheet,
               ),
               const SizedBox(height: AppTheme.spacingMd),
-              SizedBox(
-                height: 175,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppTheme.spacingLg,
-                  ),
-                  itemCount: _debts.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(width: AppTheme.spacingSm),
-                  itemBuilder: (context, i) {
-                    final d = _debts[i];
-                    return GestureDetector(
-                      onTap: () => _showDebtDetail(d),
-                      child: SizedBox(
-                        width: 160,
-                        child: AppCard(
-                          padding: const EdgeInsets.all(AppTheme.spacingMd),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+              FutureBuilder<List<AdminClientDebtSummary>>(
+                future: _debtsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(
+                        vertical: AppTheme.spacingLg,
+                      ),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
+                  if (snapshot.hasError) {
+                    return const SizedBox.shrink();
+                  }
+
+                  final summaries = snapshot.data ?? [];
+                  if (summaries.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppTheme.spacingLg,
+                      ),
+                      child: Text(
+                        'Nenhum débito pendente.',
+                        style: TextStyle(color: AppColors.textTertiary),
+                      ),
+                    );
+                  }
+
+                  return SizedBox(
+                    height: 175,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppTheme.spacingLg,
+                      ),
+                      itemCount: summaries.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: AppTheme.spacingSm),
+                      itemBuilder: (context, i) {
+                        final summary = summaries[i];
+                        return GestureDetector(
+                          onTap: () => _showDebtDetail(summary),
+                          child: SizedBox(
+                            width: 160,
+                            child: AppCard(
+                              padding: const EdgeInsets.all(AppTheme.spacingMd),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  AppAvatar(
-                                    size: AvatarSize.small,
-                                    initials: d.clientName[0],
-                                  ),
-                                  const SizedBox(width: AppTheme.spacingSm),
-                                  Expanded(
-                                    child: Text(
-                                      d.clientName.split(' ')[0],
-                                      style: AppTextStyles.label.copyWith(
-                                        fontWeight: FontWeight.w600,
+                                  Row(
+                                    children: [
+                                      AppAvatar(
+                                        size: AvatarSize.small,
+                                        initials: summary.clientName.isNotEmpty
+                                            ? summary.clientName[0]
+                                            : '?',
                                       ),
-                                      overflow: TextOverflow.ellipsis,
+                                      const SizedBox(width: AppTheme.spacingSm),
+                                      Expanded(
+                                        child: Text(
+                                          summary.clientName
+                                                  .split(' ')
+                                                  .isNotEmpty
+                                              ? summary.clientName.split(' ')[0]
+                                              : summary.clientName,
+                                          style: AppTextStyles.label.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: AppTheme.spacingSm),
+                                  Text(
+                                    '${summary.debts.length} débito(s)',
+                                    style: AppTextStyles.caption.copyWith(
+                                      color: AppColors.textTertiary,
+                                      fontSize: 11,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: AppTheme.spacingSm),
+                                  const AppBadge(
+                                    label: 'Pendente',
+                                    variant: BadgeVariant.pending,
+                                  ),
+                                  const Spacer(),
+                                  Text(
+                                    'R\$ ${summary.totalAmount.toStringAsFixed(2)}',
+                                    style: AppTextStyles.heading3.copyWith(
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: AppTheme.spacingSm),
-                              Text(
-                                d.service,
-                                style: AppTextStyles.caption.copyWith(
-                                  color: AppColors.textTertiary,
-                                  fontSize: 11,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: AppTheme.spacingSm),
-                              const AppBadge(
-                                label: 'Pendente',
-                                variant: BadgeVariant.pending,
-                              ),
-                              const Spacer(),
-                              Text(
-                                'R\$ ${d.amount.toStringAsFixed(2)}',
-                                style: AppTextStyles.heading3.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
 
               const SizedBox(height: AppTheme.spacingLg),
@@ -588,16 +720,21 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: AppTheme.spacingXl),
+                      padding: EdgeInsets.symmetric(
+                        vertical: AppTheme.spacingXl,
+                      ),
                       child: Center(child: CircularProgressIndicator()),
                     );
                   }
 
                   if (snapshot.hasError) {
                     return const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: AppTheme.spacingLg),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppTheme.spacingLg,
+                      ),
                       child: AppEmptyState(
-                        message: 'Não foi possível carregar os agendamentos de hoje.',
+                        message:
+                            'Não foi possível carregar os agendamentos de hoje.',
                         icon: Icons.event_busy,
                       ),
                     );
@@ -606,7 +743,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   final todayAppointments = snapshot.data ?? [];
                   if (todayAppointments.isEmpty) {
                     return const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: AppTheme.spacingLg),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppTheme.spacingLg,
+                      ),
                       child: AppEmptyState(
                         message: 'Nenhum agendamento para hoje.',
                         icon: Icons.event_available,
@@ -622,16 +761,22 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                           AppTheme.spacingLg,
                           0,
                           AppTheme.spacingLg,
-                          i < todayAppointments.length - 1 ? AppTheme.spacingSm : 0,
+                          i < todayAppointments.length - 1
+                              ? AppTheme.spacingSm
+                              : 0,
                         ),
                         child: AppointmentCard(
-                          service: '${appointment.clientName} • ${appointment.serviceName}',
-                          subtitle: _statusLabel(_statusToBadge(appointment.status)),
+                          service:
+                              '${appointment.clientName} • ${appointment.serviceName}',
+                          subtitle: _statusLabel(
+                            _statusToBadge(appointment.status),
+                          ),
                           date: _formatCardDate(appointment.startTime),
                           time: _formatHour(appointment.startTime),
                           status: _statusToBadge(appointment.status),
                           variant: AppointmentCardVariant.full,
-                          onCancelPressed: () => _showCancelAppointmentSheet(appointment),
+                          onCancelPressed: () =>
+                              _showCancelAppointmentSheet(appointment),
                         ),
                       );
                     }),

@@ -1,6 +1,7 @@
 using BookingApp.API.Extentions;
 using BookingApp.Domain.Entities;
 using BookingApp.Infrastructure.Data;
+using BookingApp.Infrastructure.Settings.Authentication;
 using FastEndpoints;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +28,7 @@ public sealed class CreateAbsenceEndpoint(ApplicationDbContext dbContext)
 	public override void Configure()
 	{
 		Post("/absences");
-		Policies("AdminOrManager");
+		Policies(UserPolicy.AdminOrManager);
 		Tags("Absences");
 		Options(x => x.WithName("CreateAbsence"));
 	}

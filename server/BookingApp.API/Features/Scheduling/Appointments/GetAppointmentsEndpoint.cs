@@ -2,6 +2,7 @@ using System.Security.Claims;
 using BookingApp.API.Extentions;
 using BookingApp.Domain.Entities;
 using BookingApp.Infrastructure.Data;
+using BookingApp.Infrastructure.Settings.Authentication;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,7 +29,7 @@ public sealed class GetAppointmentsEndpoint(ApplicationDbContext dbContext)
 	public override void Configure()
 	{
 		Get("/appointments");
-		Policies("All");
+		Policies(UserPolicy.All);
 		Tags("Application");
 		Options(x => x.WithName("GetAppointments"));
 	}

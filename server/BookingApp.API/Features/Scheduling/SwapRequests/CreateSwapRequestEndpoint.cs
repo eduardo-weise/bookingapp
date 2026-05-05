@@ -2,6 +2,7 @@ using System.Security.Claims;
 using BookingApp.Domain.Entities;
 using BookingApp.Domain.Exceptions;
 using BookingApp.Infrastructure.Data;
+using BookingApp.Infrastructure.Settings.Authentication;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,7 +16,7 @@ public sealed class CreateSwapRequestEndpoint(ApplicationDbContext dbContext)
 	public override void Configure()
 	{
 		Post("/appointments/swaps");
-		Policies("All");
+		Policies(UserPolicy.All);
 		Tags("SwapRequest");
 		Options(x => x.WithName("CreateSwapRequest"));
 	}

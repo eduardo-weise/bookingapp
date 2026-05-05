@@ -1,4 +1,3 @@
-using BookingApp.Domain.Entities;
 using BookingApp.Infrastructure.Data;
 using FastEndpoints;
 using FluentEmail.Core;
@@ -9,16 +8,10 @@ namespace BookingApp.API.Features.Auth.ForgotPassword;
 public record ForgotPasswordRequest(string Email);
 public record ForgotPasswordResponse(string Message);
 
-public class ForgotPasswordEndpoint : Endpoint<ForgotPasswordRequest, ForgotPasswordResponse>
+public class ForgotPasswordEndpoint(ApplicationDbContext dbContext, IFluentEmail fluentEmail) : Endpoint<ForgotPasswordRequest, ForgotPasswordResponse>
 {
-	private readonly ApplicationDbContext _dbContext;
-	private readonly IFluentEmail _fluentEmail;
-
-	public ForgotPasswordEndpoint(ApplicationDbContext dbContext, IFluentEmail fluentEmail)
-	{
-		_dbContext = dbContext;
-		_fluentEmail = fluentEmail;
-	}
+	private readonly ApplicationDbContext _dbContext = dbContext;
+	private readonly IFluentEmail _fluentEmail = fluentEmail;
 
 	public override void Configure()
 	{
@@ -35,7 +28,7 @@ public class ForgotPasswordEndpoint : Endpoint<ForgotPasswordRequest, ForgotPass
 			// Generate 6-digit pin
 			var random = new Random();
 			var pin = random.Next(100000, 999999).ToString();
-			
+
 			user.GeneratePasswordResetToken(pin, DateTime.UtcNow.AddMinutes(15));
 			await _dbContext.SaveChangesAsync(ct);
 

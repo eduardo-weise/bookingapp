@@ -1,6 +1,7 @@
 using BookingApp.Domain.Entities;
 using BookingApp.Domain.Exceptions;
 using BookingApp.Infrastructure.Data;
+using BookingApp.Infrastructure.Settings.Authentication;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +15,7 @@ public sealed class ManageClientServiceDurationEndpoint(ApplicationDbContext dbC
 	public override void Configure()
 	{
 		Post("/services/{serviceId:guid}/clients/{clientId:guid}/duration");
+		Policies(UserPolicy.AdminOrManager);
 		Tags("Services");
 		Options(x => x.WithName("ManageClientServiceDuration"));
 	}

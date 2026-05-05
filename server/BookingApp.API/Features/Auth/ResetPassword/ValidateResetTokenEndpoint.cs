@@ -7,14 +7,9 @@ namespace BookingApp.API.Features.Auth.ResetPassword;
 public record ValidateResetTokenRequest(string Email, string Token);
 public record ValidateResetTokenResponse(string Message);
 
-public class ValidateResetTokenEndpoint : Endpoint<ValidateResetTokenRequest, ValidateResetTokenResponse>
+public class ValidateResetTokenEndpoint(ApplicationDbContext dbContext) : Endpoint<ValidateResetTokenRequest, ValidateResetTokenResponse>
 {
-	private readonly ApplicationDbContext _dbContext;
-
-	public ValidateResetTokenEndpoint(ApplicationDbContext dbContext)
-	{
-		_dbContext = dbContext;
-	}
+	private readonly ApplicationDbContext _dbContext = dbContext;
 
 	public override void Configure()
 	{

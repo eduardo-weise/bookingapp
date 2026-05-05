@@ -12,7 +12,10 @@ class DebtBanner extends StatelessWidget {
   final String amount;
   final String description;
   final String buttonLabel;
-  final VoidCallback onButtonPressed;
+  final VoidCallback onPaymentPressed;
+  final String? cancelLabel;
+  final VoidCallback? onCancelPressed;
+  final EdgeInsetsGeometry? margin;
 
   const DebtBanner({
     super.key,
@@ -20,15 +23,16 @@ class DebtBanner extends StatelessWidget {
     required this.amount,
     required this.description,
     this.buttonLabel = 'Pagar',
-    required this.onButtonPressed,
+    required this.onPaymentPressed,
+    this.cancelLabel,
+    this.onCancelPressed,
+    this.margin = const EdgeInsets.symmetric(horizontal: AppTheme.spacingLg),
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppTheme.spacingLg,
-      ),
+      padding: margin ?? EdgeInsets.zero,
       child: Container(
         padding: const EdgeInsets.all(AppTheme.spacingLg),
         decoration: BoxDecoration(
@@ -42,34 +46,56 @@ class DebtBanner extends StatelessWidget {
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: AppTextStyles.caption.copyWith(
-                        color: Colors.white70,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: AppTextStyles.caption.copyWith(
+                          color: Colors.white70,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: AppTheme.spacingXs),
-                    Text(
-                      amount,
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        height: 1.25,
+                      const SizedBox(height: AppTheme.spacingXs),
+                      Text(
+                        amount,
+                        style: const TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          height: 1.25,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-                AppButton(
-                  label: buttonLabel,
-                  variant: AppButtonVariant.secondary,
-                  small: true,
-                  onPressed: onButtonPressed,
+                const SizedBox(width: AppTheme.spacingMd),
+                IntrinsicWidth(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      AppButton(
+                        label: buttonLabel,
+                        variant: AppButtonVariant.secondary,
+                        small: true,
+                        fullWidth: true,
+                        onPressed: onPaymentPressed,
+                      ),
+                      if (onCancelPressed != null) ...[
+                        const SizedBox(height: AppTheme.spacingSm),
+                        AppButton(
+                          label: cancelLabel ?? 'Cancelar',
+                          variant: AppButtonVariant.danger,
+                          small: true,
+                          fullWidth: true,
+                          onPressed: onCancelPressed,
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ],
             ),

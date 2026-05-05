@@ -75,9 +75,9 @@ public static class AuthExtensions
 
 				})
 			.AddAuthorizationBuilder()
-				.AddPolicy("AdminsOnly", x => x.RequireRole("Admin"))
-				.AddPolicy("AdminOrManager", x => x.RequireRole("Admin", "Manager"))
-				.AddPolicy("All", x => x.RequireAuthenticatedUser());
+				.AddPolicy(UserPolicy.AdminOnly, x => x.RequireRole("Admin"))
+				.AddPolicy(UserPolicy.AdminOrManager, x => x.RequireRole("Admin", "Manager"))
+				.AddPolicy(UserPolicy.All, x => x.RequireAuthenticatedUser());
 
 			return services;
 		}

@@ -6,7 +6,7 @@ public enum DebtStatus
 {
 	Pending,
 	Paid,
-	Waived
+	Canceled
 }
 
 public sealed class DebtBalance : AggregateRoot
@@ -38,13 +38,13 @@ public sealed class DebtBalance : AggregateRoot
 		Status = DebtStatus.Paid;
 	}
 
-	public void Waive()
+	public void Cancel()
 	{
 		if (Status != DebtStatus.Pending)
 		{
-			throw new InvalidOperationException("Este débito já foi pago ou perdoado.");
+			throw new InvalidOperationException("Este débito já foi pago ou cancelado.");
 		}
 
-		Status = DebtStatus.Waived;
+		Status = DebtStatus.Canceled;
 	}
 }

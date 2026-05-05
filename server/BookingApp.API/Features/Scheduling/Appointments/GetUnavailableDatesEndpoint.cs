@@ -3,6 +3,7 @@ using BookingApp.API.Features.Scheduling.Appointments;
 using BookingApp.Domain.Entities;
 using BookingApp.Domain.Exceptions;
 using BookingApp.Infrastructure.Data;
+using BookingApp.Infrastructure.Settings.Authentication;
 using FastEndpoints;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -37,7 +38,7 @@ public sealed class GetUnavailableDatesEndpoint(ApplicationDbContext dbContext)
 	public override void Configure()
 	{
 		Get("/appointments/unavailable-dates");
-		Policies("All");
+		Policies(UserPolicy.All);
 		Tags("Application");
 		Options(x => x.WithName("GetUnavailableDates"));
 	}

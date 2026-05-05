@@ -1,5 +1,6 @@
 using BookingApp.Domain.Exceptions;
 using BookingApp.Infrastructure.Data;
+using BookingApp.Infrastructure.Settings.Authentication;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,7 +14,7 @@ public sealed class DeleteAbsenceEndpoint(ApplicationDbContext dbContext)
 	public override void Configure()
 	{
 		Delete("/absences/{id:guid}");
-		Policies("AdminOrManager");
+		Policies(UserPolicy.AdminOrManager);
 		Tags("Scheduling");
 		Options(x => x.WithName("DeleteAbsence"));
 	}

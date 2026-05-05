@@ -1,4 +1,5 @@
 using BookingApp.Infrastructure.Data;
+using BookingApp.Infrastructure.Settings.Authentication;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,7 +13,7 @@ public sealed class GetClientsEndpoint(ApplicationDbContext dbContext)
 	public override void Configure()
 	{
 		Get("/users/clients");
-		Policies("AdminOrManager");
+		Policies(UserPolicy.AdminOrManager);
 		Tags("Users");
 		Options(x => x.WithName("GetClients"));
 	}

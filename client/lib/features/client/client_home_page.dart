@@ -86,7 +86,9 @@ class _ClientHomePageState extends State<ClientHomePage> {
     );
   }
 
-  Future<void> _showCancelAppointmentSheet(ClientAppointmentModel appointment) async {
+  Future<void> _showCancelAppointmentSheet(
+    ClientAppointmentModel appointment,
+  ) async {
     await showAppointmentActionSheet(
       context: context,
       serviceName: appointment.serviceName,
@@ -99,7 +101,10 @@ class _ClientHomePageState extends State<ClientHomePage> {
           await _appointmentsService.cancelAppointment(appointment.id);
           _upcomingSectionKey.currentState?.refresh();
           if (!mounted) return;
-          AppSnackBar.showSuccess(context, 'Agendamento cancelado com sucesso.');
+          AppSnackBar.showSuccess(
+            context,
+            'Agendamento cancelado com sucesso.',
+          );
         } catch (e) {
           if (!mounted) return;
           AppSnackBar.showError(
@@ -117,8 +122,10 @@ class _ClientHomePageState extends State<ClientHomePage> {
     ServiceModel? service;
     try {
       final services = await BookingService().getServices();
-      service = services.firstWhere((s) => s.name == appointment.serviceName,
-          orElse: () => services.first);
+      service = services.firstWhere(
+        (s) => s.name == appointment.serviceName,
+        orElse: () => services.first,
+      );
     } catch (_) {
       if (!mounted) return;
       AppSnackBar.showError(context, 'Não foi possível carregar o serviço.');
@@ -198,7 +205,10 @@ class _ClientHomePageState extends State<ClientHomePage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(appointment.serviceName, style: AppTextStyles.heading3),
+                            Text(
+                              appointment.serviceName,
+                              style: AppTextStyles.heading3,
+                            ),
                             const SizedBox(height: 2),
                             Text(
                               _formatHistoryDateTime(appointment.startTime),
@@ -242,9 +252,11 @@ class _ClientHomePageState extends State<ClientHomePage> {
     );
   }
 
-  String _formatCardDate(DateTime value) => DateFormat('dd MMM', 'pt_BR').format(value);
+  String _formatCardDate(DateTime value) =>
+      DateFormat('dd MMM', 'pt_BR').format(value);
 
-  String _formatCardTime(DateTime value) => DateFormat('HH:mm', 'pt_BR').format(value);
+  String _formatCardTime(DateTime value) =>
+      DateFormat('HH:mm', 'pt_BR').format(value);
 
   String _formatHistoryDateTime(DateTime value) =>
       DateFormat("dd 'de' MMMM, HH:mm", 'pt_BR').format(value);
@@ -330,8 +342,9 @@ class _ClientHomePageState extends State<ClientHomePage> {
                       children: [
                         DebtBanner(
                           amount: formattedAmount,
-                          description: 'Débito pendente criado em ${DateFormat('dd MMM yyyy', 'pt_BR').format(debt.createdAt)}',
-                          onButtonPressed: () =>
+                          description:
+                              'Débito pendente criado em ${DateFormat('dd MMM yyyy', 'pt_BR').format(debt.createdAt)}',
+                          onPaymentPressed: () =>
                               Navigator.pushNamed(context, '/client/finances'),
                         ),
                         const SizedBox(height: AppTheme.spacingLg),
@@ -391,7 +404,8 @@ class _UpcomingAppointmentsSection extends StatefulWidget {
   final String Function(String) statusLabel;
   final BadgeVariant Function(String) statusVariant;
   final Future<void> Function(ClientAppointmentModel appointment) onCancelTap;
-  final Future<void> Function(ClientAppointmentModel appointment) onRescheduleTap;
+  final Future<void> Function(ClientAppointmentModel appointment)
+  onRescheduleTap;
 
   const _UpcomingAppointmentsSection({
     super.key,
@@ -409,7 +423,8 @@ class _UpcomingAppointmentsSection extends StatefulWidget {
       _UpcomingAppointmentsSectionState();
 }
 
-class _UpcomingAppointmentsSectionState extends State<_UpcomingAppointmentsSection> {
+class _UpcomingAppointmentsSectionState
+    extends State<_UpcomingAppointmentsSection> {
   late Future<List<ClientAppointmentModel>> _appointmentsFuture;
 
   @override
@@ -436,9 +451,10 @@ class _UpcomingAppointmentsSectionState extends State<_UpcomingAppointmentsSecti
           future: _appointmentsFuture,
           builder: (context, snapshot) {
             final appointments = snapshot.data ?? [];
-            final upcomingAppointments = appointments
-                .toList()
-              ..sort((left, right) => left.startTime.compareTo(right.startTime));
+            final upcomingAppointments = appointments.toList()
+              ..sort(
+                (left, right) => left.startTime.compareTo(right.startTime),
+              );
 
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Padding(
@@ -471,8 +487,10 @@ class _UpcomingAppointmentsSectionState extends State<_UpcomingAppointmentsSecti
               children: List.generate(upcomingAppointments.length, (i) {
                 final appointment = upcomingAppointments[i];
                 final now = DateTime.now().toUtc();
-                final isWithin1Hour = appointment.startTime.toUtc().isBefore(now.add(const Duration(hours: 1)));
-                
+                final isWithin1Hour = appointment.startTime.toUtc().isBefore(
+                  now.add(const Duration(hours: 1)),
+                );
+
                 return Padding(
                   padding: EdgeInsets.fromLTRB(
                     AppTheme.spacingLg,
@@ -489,7 +507,9 @@ class _UpcomingAppointmentsSectionState extends State<_UpcomingAppointmentsSecti
                     time: widget.formatCardTime(appointment.startTime),
                     status: widget.statusVariant(appointment.status),
                     variant: AppointmentCardVariant.full,
-                    onReschedulePressed: isWithin1Hour ? null : () => widget.onRescheduleTap(appointment),
+                    onReschedulePressed: isWithin1Hour
+                        ? null
+                        : () => widget.onRescheduleTap(appointment),
                     onCancelPressed: () => widget.onCancelTap(appointment),
                   ),
                 );

@@ -5,7 +5,6 @@ using BookingApp.Infrastructure.Data;
 using BookingApp.Infrastructure.Settings.Authentication;
 using FastEndpoints;
 using FluentValidation;
-using FluentValidation.Validators;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookingApp.API.Features.Auth.Register;
@@ -18,18 +17,18 @@ public sealed class RegisterValidator : Validator<RegisterRequest>
 	{
 		RuleFor(x => x.Email)
 			.NotEmpty().WithMessage("O e-mail é obrigatório.")
-			.EmailAddress(EmailValidationMode.Net4xRegex).WithMessage("Formato de e-mail inválido.");
+			.EmailAddress().WithMessage("Formato de e-mail inválido.");
 
 		RuleFor(x => x.Password)
 			.NotEmpty().WithMessage("A senha é obrigatória.")
 			.MinimumLength(8).WithMessage("A senha deve ter no mínimo 8 caracteres.");
-			
+
 		RuleFor(x => x.Name)
 			.NotEmpty().WithMessage("O nome é obrigatório.");
-			
+
 		RuleFor(x => x.Phone)
 			.NotEmpty().WithMessage("O telefone é obrigatório.");
-			
+
 		RuleFor(x => x.Cpf)
 			.NotEmpty().WithMessage("O CPF é obrigatório.");
 	}

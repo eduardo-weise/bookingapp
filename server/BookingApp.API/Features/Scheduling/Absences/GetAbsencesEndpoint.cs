@@ -1,4 +1,5 @@
 using BookingApp.Infrastructure.Data;
+using BookingApp.Infrastructure.Settings.Authentication;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,7 +20,7 @@ public sealed class GetAbsencesEndpoint(ApplicationDbContext dbContext)
 	public override void Configure()
 	{
 		Get("/absences");
-		Policies("AdminOrManager");
+		Policies(UserPolicy.AdminOrManager);
 		Tags("Absences");
 		Options(x => x.WithName("GetAbsences"));
 	}
