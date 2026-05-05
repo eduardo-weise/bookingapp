@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
-export 'package:syncfusion_flutter_datepicker/datepicker.dart' show DateRangePickerSelectionMode, PickerDateRange, DateRangePickerSelectionChangedArgs, DateRangePickerViewChangedArgs;
+export 'package:syncfusion_flutter_datepicker/datepicker.dart'
+    show
+        DateRangePickerSelectionMode,
+        PickerDateRange,
+        DateRangePickerSelectionChangedArgs,
+        DateRangePickerViewChangedArgs;
 import '../core/theme/app_colors.dart';
 
 class AppDatePicker extends StatelessWidget {
@@ -66,7 +71,10 @@ class AppDatePicker extends StatelessWidget {
         ),
         monthCellStyle: const DateRangePickerMonthCellStyle(
           textStyle: TextStyle(color: AppColors.textPrimary, fontSize: 14),
-          disabledDatesTextStyle: TextStyle(color: AppColors.textTertiary, fontSize: 14),
+          disabledDatesTextStyle: TextStyle(
+            color: AppColors.textTertiary,
+            fontSize: 14,
+          ),
           blackoutDateTextStyle: TextStyle(
             color: AppColors.statusCancelled,
             fontSize: 14,
@@ -77,17 +85,24 @@ class AppDatePicker extends StatelessWidget {
             color: AppColors.cancelledBg,
             shape: BoxShape.circle,
           ),
-          todayTextStyle: TextStyle(color: AppColors.brandPrimary, fontWeight: FontWeight.bold),
+          todayTextStyle: TextStyle(
+            color: AppColors.brandPrimary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         yearCellStyle: const DateRangePickerYearCellStyle(
           textStyle: TextStyle(color: AppColors.textPrimary),
           disabledDatesTextStyle: TextStyle(color: AppColors.textTertiary),
         ),
-        selectionTextStyle: const TextStyle(color: AppColors.surface, fontWeight: FontWeight.bold),
+        selectionTextStyle: const TextStyle(
+          color: AppColors.surface,
+          fontWeight: FontWeight.bold,
+        ),
         rangeTextStyle: const TextStyle(color: AppColors.textPrimary),
         rangeSelectionColor: AppColors.brandLight, // Light gray for the range
-        startRangeSelectionColor: AppColors.brandPrimary, // Black circle for start
-        endRangeSelectionColor: AppColors.brandPrimary,   // Black circle for end
+        startRangeSelectionColor:
+            AppColors.brandPrimary, // Black circle for start
+        endRangeSelectionColor: AppColors.brandPrimary, // Black circle for end
         todayHighlightColor: AppColors.brandPrimary,
         selectionColor: AppColors.brandPrimary,
         selectionShape: DateRangePickerSelectionShape.circle,

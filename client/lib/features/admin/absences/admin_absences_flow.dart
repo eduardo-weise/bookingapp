@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:app/widgets/app_date_picker.dart';
 import '../../../widgets/app_bottom_sheet.dart';
-import 'services/absence_service.dart';
 import 'sheets/absences_list_sheet.dart';
 import 'sheets/create_absence_sheet.dart';
 import 'sheets/date_range_sheet.dart';
 import 'sheets/time_range_sheet.dart';
 
 class AdminAbsencesFlow {
-  static final _service = AbsenceService();
-
   static void start(BuildContext context) {
     showAppBottomSheet(
       context: context,
@@ -17,7 +14,6 @@ class AdminAbsencesFlow {
       height: BottomSheetHeight.flexible,
       onBack: () => Navigator.of(context).pop(),
       child: AbsencesListSheet(
-        service: _service,
         onCreateTap: (ctx) {
           Navigator.of(ctx).pop();
           _showCreateSheet(context, isSingleDay: true);
@@ -41,7 +37,6 @@ class AdminAbsencesFlow {
         start(context);
       },
       child: CreateAbsenceSheet(
-        service: _service,
         initialStartDate: startDate,
         initialEndDate: endDate,
         initialIsSingleDay: isSingleDay,
@@ -49,6 +44,7 @@ class AdminAbsencesFlow {
           Navigator.of(context).pop();
           start(context);
         },
+
         onPickDate:
             (ctx, isStart, currentStart, currentEnd, currentIsSingleDay) async {
               Navigator.of(ctx).pop(); // Close CreateAbsenceSheet

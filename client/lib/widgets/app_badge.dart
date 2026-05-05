@@ -9,11 +9,7 @@ class AppBadge extends StatelessWidget {
   final String label;
   final BadgeVariant variant;
 
-  const AppBadge({
-    super.key,
-    required this.label,
-    required this.variant,
-  });
+  const AppBadge({super.key, required this.label, required this.variant});
 
   @override
   Widget build(BuildContext context) {

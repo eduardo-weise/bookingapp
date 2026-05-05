@@ -33,14 +33,18 @@ class AdminAppointmentModel {
 class AdminAppointmentsService {
   final Dio _client = ApiClient.client;
 
-  Future<List<AdminAppointmentModel>> getAppointmentsByDate(DateTime date) async {
+  Future<List<AdminAppointmentModel>> getAppointmentsByDate(
+    DateTime date,
+  ) async {
     try {
       final response = await _client.get(
         '/appointments',
         queryParameters: {'date': date.toIso8601String()},
       );
 
-      if (response.statusCode == 204 || response.data == null || response.data == '') {
+      if (response.statusCode == 204 ||
+          response.data == null ||
+          response.data == '') {
         return const [];
       }
 
@@ -49,7 +53,10 @@ class AdminAppointmentsService {
       }
 
       return (response.data as List)
-          .map((item) => AdminAppointmentModel.fromJson(item as Map<String, dynamic>))
+          .map(
+            (item) =>
+                AdminAppointmentModel.fromJson(item as Map<String, dynamic>),
+          )
           .toList();
     } on DioException catch (e) {
       throw Exception(_handleError(e));
@@ -63,7 +70,9 @@ class AdminAppointmentsService {
     try {
       await _client.post(
         '/appointments/$appointmentId/cancel',
-        data: <String, dynamic>{'applyLateCancellationFee': applyLateCancellationFee},
+        data: <String, dynamic>{
+          'applyLateCancellationFee': applyLateCancellationFee,
+        },
       );
     } on DioException catch (e) {
       throw Exception(_handleError(e));
@@ -77,7 +86,9 @@ class AdminAppointmentsService {
         if (data.containsKey('errors') && data['errors'] is List) {
           final errList = data['errors'] as List;
           if (errList.isNotEmpty) {
-            return errList.map((err) => err['reason'] ?? err['message']).join('\n');
+            return errList
+                .map((err) => err['reason'] ?? err['message'])
+                .join('\n');
           }
         }
         if (data.containsKey('message')) return data['message'] as String;

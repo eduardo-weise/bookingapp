@@ -72,7 +72,10 @@ class AppButton extends StatelessWidget {
               if (icon != null) ...[icon!, const SizedBox(width: 8)],
               Text(
                 label,
-                style: AppTextStyles.button.copyWith(color: fg, fontSize: fontSize),
+                style: AppTextStyles.button.copyWith(
+                  color: fg,
+                  fontSize: fontSize,
+                ),
               ),
             ],
           );

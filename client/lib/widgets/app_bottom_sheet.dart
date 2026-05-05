@@ -95,9 +95,7 @@ class _AppBottomSheet extends StatelessWidget {
                 alignment: Alignment.center,
                 children: [
                   // Title always centered
-                  Center(
-                    child: Text(title!, style: AppTextStyles.heading2),
-                  ),
+                  Center(child: Text(title!, style: AppTextStyles.heading2)),
                   // Back button anchored to the left
                   if (hasBack)
                     Align(
@@ -109,8 +107,9 @@ class _AppBottomSheet extends StatelessWidget {
                           height: 32,
                           decoration: BoxDecoration(
                             color: AppColors.muted,
-                            borderRadius:
-                                BorderRadius.circular(AppTheme.radiusFull),
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusFull,
+                            ),
                           ),
                           child: const Icon(
                             Icons.arrow_back_ios_new_rounded,

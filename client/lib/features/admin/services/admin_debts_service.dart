@@ -97,10 +97,7 @@ class AdminDebtsService {
     try {
       await _client.post(
         '/payments/debts/pay',
-        data: {
-          'clientId': clientId,
-          'debtIds': debtIds,
-        },
+        data: {'clientId': clientId, 'debtIds': debtIds},
       );
     } on DioException catch (e) {
       throw Exception('Falha ao registrar pagamento: ${e.message}');
@@ -116,10 +113,7 @@ class AdminDebtsService {
     try {
       await _client.post(
         '/payments/debts/cancel',
-        data: {
-          'clientId': clientId,
-          'debtIds': debtIds,
-        },
+        data: {'clientId': clientId, 'debtIds': debtIds},
       );
     } on DioException catch (e) {
       throw Exception('Falha ao cancelar débito: ${e.message}');

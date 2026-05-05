@@ -59,9 +59,7 @@ class AppointmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return variant == AppointmentCardVariant.full
-        ? _buildFull()
-      : _buildFull();
+    return variant == AppointmentCardVariant.full ? _buildFull() : _buildFull();
   }
 
   // ── Full variant (Client) ─────────────────────────────────────────────────
@@ -128,10 +126,7 @@ class AppointmentCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            '•',
-                            style: TextStyle(color: _statusColor),
-                          ),
+                          Text('•', style: TextStyle(color: _statusColor)),
                           const SizedBox(width: 8),
                           const Icon(
                             Icons.access_time,
@@ -159,7 +154,7 @@ class AppointmentCard extends StatelessWidget {
           const SizedBox(height: AppTheme.spacingLg),
           Row(
             children: [
-               Expanded(
+              Expanded(
                 child: AppButton(
                   label: 'Reagendar',
                   variant: AppButtonVariant.secondary,

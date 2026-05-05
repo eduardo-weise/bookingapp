@@ -53,8 +53,14 @@ class _TimeRangeSheetState extends State<TimeRangeSheet> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Início: ${_formatTime(_currentRange.start)}', style: AppTextStyles.body),
-            Text('Fim: ${_formatTime(_currentRange.end)}', style: AppTextStyles.body),
+            Text(
+              'Início: ${_formatTime(_currentRange.start)}',
+              style: AppTextStyles.body,
+            ),
+            Text(
+              'Fim: ${_formatTime(_currentRange.end)}',
+              style: AppTextStyles.body,
+            ),
           ],
         ),
         const SizedBox(height: AppTheme.spacingMd),
@@ -79,8 +85,20 @@ class _TimeRangeSheetState extends State<TimeRangeSheet> {
             final startMins = _currentRange.start.toInt();
             final endMins = _currentRange.end.toInt();
             final d = widget.date;
-            final start = DateTime(d.year, d.month, d.day, startMins ~/ 60, startMins % 60);
-            final end = DateTime(d.year, d.month, d.day, endMins ~/ 60, endMins % 60);
+            final start = DateTime(
+              d.year,
+              d.month,
+              d.day,
+              startMins ~/ 60,
+              startMins % 60,
+            );
+            final end = DateTime(
+              d.year,
+              d.month,
+              d.day,
+              endMins ~/ 60,
+              endMins % 60,
+            );
             widget.onConfirmed(start, end);
           },
         ),

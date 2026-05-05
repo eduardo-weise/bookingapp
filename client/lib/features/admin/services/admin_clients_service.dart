@@ -33,7 +33,9 @@ class AdminClientsService {
       }
 
       return (response.data as List)
-          .map((item) => AdminClientModel.fromJson(item as Map<String, dynamic>))
+          .map(
+            (item) => AdminClientModel.fromJson(item as Map<String, dynamic>),
+          )
           .toList();
     } on DioException catch (e) {
       throw Exception(_handleError(e));
@@ -47,7 +49,9 @@ class AdminClientsService {
         if (data.containsKey('errors') && data['errors'] is List) {
           final errList = data['errors'] as List;
           if (errList.isNotEmpty) {
-            return errList.map((err) => err['reason'] ?? err['message']).join('\n');
+            return errList
+                .map((err) => err['reason'] ?? err['message'])
+                .join('\n');
           }
         }
         if (data.containsKey('message')) return data['message'] as String;

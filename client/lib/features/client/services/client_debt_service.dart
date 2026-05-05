@@ -53,7 +53,9 @@ class ClientDebtService {
         if (data.containsKey('errors') && data['errors'] is List) {
           final errList = data['errors'] as List;
           if (errList.isNotEmpty) {
-            return errList.map((err) => err['reason'] ?? err['message']).join('\n');
+            return errList
+                .map((err) => err['reason'] ?? err['message'])
+                .join('\n');
           }
         }
         if (data.containsKey('message')) return data['message'] as String;

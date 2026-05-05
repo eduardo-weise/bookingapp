@@ -9,11 +9,13 @@ import 'core/services/api_client.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('pt_BR', null);
   ApiClient.initInterceptors();
-  runApp(const BookingApp());
+  runApp(const ProviderScope(child: BookingApp()));
 }
 
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
@@ -35,9 +37,7 @@ class BookingApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('pt', 'BR'),
-      ],
+      supportedLocales: const [Locale('pt', 'BR')],
       initialRoute: '/',
       routes: {
         '/': (_) => const LoginPage(),

@@ -8,36 +8,33 @@ import 'package:app/widgets/app_snackbar.dart';
 import 'package:app/widgets/app_empty_state.dart';
 import '../services/absence_service.dart';
 
-class AbsencesListSheet extends StatefulWidget {
-  final AbsenceService service;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/absence_providers.dart';
+
+class AbsencesListSheet extends ConsumerStatefulWidget {
   final void Function(BuildContext ctx) onCreateTap;
 
   const AbsencesListSheet({
     super.key,
-    required this.service,
     required this.onCreateTap,
   });
 
   @override
-  State<AbsencesListSheet> createState() => _AbsencesListSheetState();
+  ConsumerState<AbsencesListSheet> createState() => _AbsencesListSheetState();
 }
 
-class _AbsencesListSheetState extends State<AbsencesListSheet> {
-  List<AbsenceDayModel> _future = [];
+class _AbsencesListSheetState extends ConsumerState<AbsencesListSheet> {
   final List<AbsenceDayModel> _past = [];
-  bool _isLoadingFuture = true;
   bool _isLoadingPast = false;
   bool _showPast = false;
   bool _hasMorePast = true;
   int _pastPage = 1;
-  String? _error;
 
   final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    _loadFuture();
     _scrollController.addListener(_onScroll);
   }
 
@@ -55,30 +52,11 @@ class _AbsencesListSheetState extends State<AbsencesListSheet> {
     }
   }
 
-  Future<void> _loadFuture() async {
-    try {
-      final items = await widget.service.getFutureAbsences();
-      if (mounted) {
-        setState(() {
-          _future = items;
-          _isLoadingFuture = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString().replaceAll('Exception: ', '');
-          _isLoadingFuture = false;
-        });
-      }
-    }
-  }
-
   Future<void> _loadMorePast() async {
     if (_isLoadingPast || !_hasMorePast) return;
     setState(() => _isLoadingPast = true);
     try {
-      final items = await widget.service.getPastAbsences(page: _pastPage);
+      final items = await ref.read(absenceServiceProvider).getPastAbsences(page: _pastPage);
       if (mounted) {
         setState(() {
           _past.addAll(items);
@@ -94,12 +72,17 @@ class _AbsencesListSheetState extends State<AbsencesListSheet> {
 
   Future<void> _delete(AbsenceDayModel absence) async {
     try {
-      await widget.service.deleteAbsence(absence.id);
+      await ref.read(absenceServiceProvider).deleteAbsence(absence.id);
       if (!mounted) return;
+      
+      ref.read(futureAbsencesProvider.notifier).refresh();
+      // If it was a past absence, we might need to refresh past too, 
+      // but for simplicity we'll just remove it from local list for now 
+      // since past is locally managed in this state for pagination.
       setState(() {
-        _future.remove(absence);
         _past.remove(absence);
       });
+      
       AppSnackBar.showSuccess(context, 'Ausência removida.');
     } catch (e) {
       if (mounted) {
@@ -113,6 +96,8 @@ class _AbsencesListSheetState extends State<AbsencesListSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final futureAbsencesAsync = ref.watch(futureAbsencesProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -123,14 +108,19 @@ class _AbsencesListSheetState extends State<AbsencesListSheet> {
         const SizedBox(height: AppTheme.spacingLg),
 
         // ── Future absences ──
-        if (_isLoadingFuture)
-          const Center(child: CircularProgressIndicator())
-        else if (_error != null || _future.isEmpty)
-          const AppEmptyState(message: 'Nenhuma ausência futura programada.')
-        else
-          ..._future.map(
-            (a) => _AbsenceCard(absence: a, onDelete: () => _delete(a)),
+        futureAbsencesAsync.when(
+          data: (future) => future.isEmpty
+              ? const AppEmptyState(message: 'Nenhuma ausência futura programada.')
+              : Column(
+                  children: future.map(
+                    (a) => _AbsenceCard(absence: a, onDelete: () => _delete(a)),
+                  ).toList(),
+                ),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, stack) => AppEmptyState(
+            message: err.toString().replaceAll('Exception: ', ''),
           ),
+        ),
 
         // ── Past absences toggle ──
         const SizedBox(height: AppTheme.spacingLg),
@@ -186,6 +176,7 @@ class _AbsencesListSheetState extends State<AbsencesListSheet> {
     );
   }
 }
+
 
 class _AbsenceCard extends StatelessWidget {
   final AbsenceDayModel absence;

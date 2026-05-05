@@ -20,16 +20,16 @@ class AppAvatar extends StatelessWidget {
   });
 
   double get _diameter => switch (size) {
-        AvatarSize.small => 40,
-        AvatarSize.medium => 56,
-        AvatarSize.large => 80,
-      };
+    AvatarSize.small => 40,
+    AvatarSize.medium => 56,
+    AvatarSize.large => 80,
+  };
 
   double get _fontSize => switch (size) {
-        AvatarSize.small => 14,
-        AvatarSize.medium => 18,
-        AvatarSize.large => 28,
-      };
+    AvatarSize.small => 14,
+    AvatarSize.medium => 18,
+    AvatarSize.large => 28,
+  };
 
   @override
   Widget build(BuildContext context) {

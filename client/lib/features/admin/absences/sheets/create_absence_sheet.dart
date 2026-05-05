@@ -5,10 +5,11 @@ import 'package:app/core/theme/app_text_styles.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/widgets/app_button.dart';
 import 'package:app/widgets/app_snackbar.dart';
-import '../services/absence_service.dart';
 
-class CreateAbsenceSheet extends StatefulWidget {
-  final AbsenceService service;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/absence_providers.dart';
+
+class CreateAbsenceSheet extends ConsumerStatefulWidget {
   final VoidCallback onSaved;
   final DateTime? initialStartDate;
   final DateTime? initialEndDate;
@@ -19,11 +20,11 @@ class CreateAbsenceSheet extends StatefulWidget {
     DateTime? currentStart,
     DateTime? currentEnd,
     bool isSingleDay,
-  ) onPickDate;
+  )
+  onPickDate;
 
   const CreateAbsenceSheet({
     super.key,
-    required this.service,
     required this.onSaved,
     this.initialStartDate,
     this.initialEndDate,
@@ -32,10 +33,10 @@ class CreateAbsenceSheet extends StatefulWidget {
   });
 
   @override
-  State<CreateAbsenceSheet> createState() => _CreateAbsenceSheetState();
+  ConsumerState<CreateAbsenceSheet> createState() => _CreateAbsenceSheetState();
 }
 
-class _CreateAbsenceSheetState extends State<CreateAbsenceSheet> {
+class _CreateAbsenceSheetState extends ConsumerState<CreateAbsenceSheet> {
   DateTime? _startDate;
   DateTime? _endDate;
   late bool _isSingleDay;
@@ -50,23 +51,22 @@ class _CreateAbsenceSheetState extends State<CreateAbsenceSheet> {
   }
 
   void _pickDate({required bool isStart}) {
-    widget.onPickDate(
-      context,
-      isStart,
-      _startDate,
-      _endDate,
-      _isSingleDay,
-    );
+    widget.onPickDate(context, isStart, _startDate, _endDate, _isSingleDay);
   }
 
   Future<void> _save() async {
     if (_startDate == null) return;
-    final end = _isSingleDay ? (_endDate ?? _startDate!) : (_endDate ?? _startDate!);
+    final end = _isSingleDay
+        ? (_endDate ?? _startDate!)
+        : (_endDate ?? _startDate!);
 
     setState(() => _isSaving = true);
     try {
-      await widget.service.createAbsence(startDate: _startDate!, endDate: end);
+      await ref.read(absenceServiceProvider).createAbsence(startDate: _startDate!, endDate: end);
       if (!mounted) return;
+      
+      ref.read(futureAbsencesProvider.notifier).refresh();
+      
       widget.onSaved();
       AppSnackBar.showSuccess(context, 'Ausência registrada com sucesso!');
     } catch (e) {
@@ -80,6 +80,7 @@ class _CreateAbsenceSheetState extends State<CreateAbsenceSheet> {
       if (mounted) setState(() => _isSaving = false);
     }
   }
+
 
   String _formatDateString(DateTime date, {bool includeYear = false}) {
     if (includeYear) {
@@ -112,7 +113,7 @@ class _CreateAbsenceSheetState extends State<CreateAbsenceSheet> {
     final d1 = _isSingleDay
         ? _formatSingleDayDate(_startDate!)
         : _formatDateString(_startDate!);
-    
+
     if (_isSingleDay) {
       if (_endDate == null) return d1;
       final sh = _startDate!.hour.toString().padLeft(2, '0');
@@ -128,10 +129,7 @@ class _CreateAbsenceSheetState extends State<CreateAbsenceSheet> {
     }
   }
 
-  Widget _datePicker({
-    required String label,
-    required VoidCallback onTap,
-  }) {
+  Widget _datePicker({required String label, required VoidCallback onTap}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -182,7 +180,9 @@ class _CreateAbsenceSheetState extends State<CreateAbsenceSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final canSave = _startDate != null && (_isSingleDay ? _endDate != null : _endDate != null);
+    final canSave =
+        _startDate != null &&
+        (_isSingleDay ? _endDate != null : _endDate != null);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

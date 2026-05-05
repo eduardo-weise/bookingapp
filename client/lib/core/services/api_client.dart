@@ -6,14 +6,14 @@ import '../../features/auth/services/auth_service.dart';
 import '../../../main.dart';
 
 class ApiClient {
-  static final Dio _dio = Dio(BaseOptions(
-    baseUrl: ApiConfig.baseUrl,
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 10),
-    headers: {
-      'Accept': 'application/json',
-    },
-  ));
+  static final Dio _dio = Dio(
+    BaseOptions(
+      baseUrl: ApiConfig.baseUrl,
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
+      headers: {'Accept': 'application/json'},
+    ),
+  );
 
   static void initInterceptors() {
     _dio.interceptors.add(
@@ -31,18 +31,20 @@ class ApiClient {
           if (e.response?.statusCode == 401) {
             final authService = AuthService();
             final refreshed = await authService.refreshToken();
-            
+
             if (refreshed) {
               final prefs = await SharedPreferences.getInstance();
               final newAccessToken = prefs.getString('access_token');
-              
+
               if (newAccessToken != null) {
                 // Retry the original request with cloned options
-                final clonedHeaders = Map<String, dynamic>.from(e.requestOptions.headers);
+                final clonedHeaders = Map<String, dynamic>.from(
+                  e.requestOptions.headers,
+                );
                 clonedHeaders.remove('authorization');
                 clonedHeaders.remove('Authorization');
                 clonedHeaders['Authorization'] = 'Bearer $newAccessToken';
-                
+
                 final options = Options(
                   method: e.requestOptions.method,
                   headers: clonedHeaders,
@@ -52,7 +54,7 @@ class ApiClient {
                   receiveTimeout: e.requestOptions.receiveTimeout,
                   extra: e.requestOptions.extra,
                 );
-                
+
                 final retryResponse = await _dio.request(
                   e.requestOptions.path,
                   options: options,
@@ -63,10 +65,15 @@ class ApiClient {
               }
             } else {
               // Refresh token failed or is expired. Logout and redirect to login.
-              navigatorKey.currentState?.pushNamedAndRemoveUntil('/', (route) => false);
+              navigatorKey.currentState?.pushNamedAndRemoveUntil(
+                '/',
+                (route) => false,
+              );
               scaffoldMessengerKey.currentState?.showSnackBar(
                 const SnackBar(
-                  content: Text('Sessão expirada. Por favor, faça login novamente.'),
+                  content: Text(
+                    'Sessão expirada. Por favor, faça login novamente.',
+                  ),
                   backgroundColor: Colors.red,
                 ),
               );

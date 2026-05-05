@@ -64,10 +64,15 @@ class AppSnackBar {
                     ],
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
                     child: Text(
                       message,
-                      style: AppTextStyles.body.copyWith(color: AppColors.textInverse),
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.textInverse,
+                      ),
                     ),
                   ),
                 ),

@@ -43,7 +43,10 @@ class _RecoveryEmailSheetState extends State<RecoveryEmailSheet> {
       );
 
       if (mounted) {
-        AppSnackBar.showSuccess(context, 'Código enviado! Verifique seu email.');
+        AppSnackBar.showSuccess(
+          context,
+          'Código enviado! Verifique seu email.',
+        );
         widget.onSuccess(email);
         Navigator.of(context).pop();
       }

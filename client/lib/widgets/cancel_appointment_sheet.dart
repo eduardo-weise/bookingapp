@@ -168,7 +168,9 @@ class _CancelAppointmentSheetContentState
                   variant: AppButtonVariant.secondary,
                   fullWidth: true,
                   small: true,
-                  onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+                  onPressed: _isSubmitting
+                      ? null
+                      : () => Navigator.of(context).pop(),
                 ),
               ),
               const SizedBox(width: AppTheme.spacingMd),

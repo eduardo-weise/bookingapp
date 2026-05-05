@@ -11,7 +11,6 @@ import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_card.dart';
 import '../widgets/app_snackbar.dart';
 
-
 class BookingTargetClient {
   final String id;
   final String displayName;
@@ -82,11 +81,9 @@ class BookingFlow {
 
   static void _showTargetClientsSheet(
     BuildContext context,
-    Future<List<BookingTargetClient>> Function() loadTargetClients,
-    {
+    Future<List<BookingTargetClient>> Function() loadTargetClients, {
     VoidCallback? onBookingConfirmed,
-    }
-  ) {
+  }) {
     showAppBottomSheet(
       context: context,
       title: 'Selecione o Cliente',
@@ -201,14 +198,12 @@ class BookingFlow {
   static void _showTimesSheet(
     BuildContext context,
     ServiceModel service,
-    DateTime date,
-    {
+    DateTime date, {
     Future<List<BookingTargetClient>> Function()? loadTargetClients,
     BookingTargetClient? selectedTargetClient,
     VoidCallback? onBookingConfirmed,
     RescheduleContext? rescheduleContext,
-    }
-  ) {
+  }) {
     showAppBottomSheet(
       context: context,
       title:
@@ -252,7 +247,8 @@ class _DatePickerSheetContent extends StatefulWidget {
   });
 
   @override
-  State<_DatePickerSheetContent> createState() => _DatePickerSheetContentState();
+  State<_DatePickerSheetContent> createState() =>
+      _DatePickerSheetContentState();
 }
 
 class _DatePickerSheetContentState extends State<_DatePickerSheetContent> {
@@ -420,7 +416,11 @@ class _ServicesSheetContentState extends State<_ServicesSheetContent> {
   Future<void> _load() async {
     try {
       final services = await widget.bookingService.getServices();
-      if (mounted) setState(() { _services = services; _isLoading = false; });
+      if (mounted)
+        setState(() {
+          _services = services;
+          _isLoading = false;
+        });
     } catch (e) {
       if (!mounted) return;
       final message = e.toString().replaceAll('Exception: ', '');
@@ -516,18 +516,28 @@ class _SelectedClientBanner extends StatelessWidget {
       padding: const EdgeInsets.all(AppTheme.spacingMd),
       child: Row(
         children: [
-          const Icon(Icons.person_outline_rounded, color: AppColors.textSecondary),
+          const Icon(
+            Icons.person_outline_rounded,
+            color: AppColors.textSecondary,
+          ),
           const SizedBox(width: AppTheme.spacingMd),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(client.displayName, style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600)),
+                Text(
+                  client.displayName,
+                  style: AppTextStyles.body.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 if (client.subtitle != null) ...[
                   const SizedBox(height: 2),
                   Text(
                     client.subtitle!,
-                    style: AppTextStyles.caption.copyWith(color: AppColors.textTertiary),
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.textTertiary,
+                    ),
                   ),
                 ],
               ],
@@ -549,10 +559,12 @@ class _TargetClientsSheetContent extends StatefulWidget {
   });
 
   @override
-  State<_TargetClientsSheetContent> createState() => _TargetClientsSheetContentState();
+  State<_TargetClientsSheetContent> createState() =>
+      _TargetClientsSheetContentState();
 }
 
-class _TargetClientsSheetContentState extends State<_TargetClientsSheetContent> {
+class _TargetClientsSheetContentState
+    extends State<_TargetClientsSheetContent> {
   List<BookingTargetClient>? _clients;
   bool _isLoading = true;
   String? _error;
@@ -707,7 +719,11 @@ class _TimesSheetContentState extends State<_TimesSheetContent> {
         serviceId: widget.service.id,
         clientId: widget.selectedTargetClient?.id,
       );
-      if (mounted) setState(() { _slots = slots; _isLoadingSlots = false; });
+      if (mounted)
+        setState(() {
+          _slots = slots;
+          _isLoadingSlots = false;
+        });
     } catch (e) {
       if (!mounted) return;
       final message = e.toString().replaceAll('Exception: ', '');
@@ -759,8 +775,8 @@ class _TimesSheetContentState extends State<_TimesSheetContent> {
         _isReschedule
             ? 'Agendamento reagendado com sucesso!'
             : widget.selectedTargetClient == null
-                ? 'Agendamento confirmado com sucesso!'
-                : 'Agendamento para ${widget.selectedTargetClient!.displayName} confirmado com sucesso!',
+            ? 'Agendamento confirmado com sucesso!'
+            : 'Agendamento para ${widget.selectedTargetClient!.displayName} confirmado com sucesso!',
       );
     } catch (e) {
       if (mounted) {
@@ -783,7 +799,10 @@ class _TimesSheetContentState extends State<_TimesSheetContent> {
           _SelectedClientBanner(client: widget.selectedTargetClient!),
           const SizedBox(height: AppTheme.spacingLg),
         ],
-        Text('Serviço selecionado: ${widget.service.name}', style: AppTextStyles.body),
+        Text(
+          'Serviço selecionado: ${widget.service.name}',
+          style: AppTextStyles.body,
+        ),
         const SizedBox(height: AppTheme.spacingLg),
         Text(
           'Horários Disponíveis',
@@ -832,7 +851,9 @@ class _TimesSheetContentState extends State<_TimesSheetContent> {
                   decoration: BoxDecoration(
                     color: selected ? AppColors.muted : AppColors.surface,
                     border: Border.all(
-                      color: selected ? AppColors.brandPrimary : AppColors.border,
+                      color: selected
+                          ? AppColors.brandPrimary
+                          : AppColors.border,
                       width: selected ? 2 : 1,
                     ),
                     borderRadius: BorderRadius.circular(AppTheme.radiusSm),
@@ -841,7 +862,9 @@ class _TimesSheetContentState extends State<_TimesSheetContent> {
                   child: Text(
                     time,
                     style: AppTextStyles.body.copyWith(
-                      color: selected ? AppColors.brandPrimary : AppColors.textSecondary,
+                      color: selected
+                          ? AppColors.brandPrimary
+                          : AppColors.textSecondary,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),
@@ -851,7 +874,9 @@ class _TimesSheetContentState extends State<_TimesSheetContent> {
           ),
         const SizedBox(height: AppTheme.spacingXl),
         AppButton(
-          label: _isReschedule ? 'Confirmar Reagendamento' : 'Confirmar Agendamento',
+          label: _isReschedule
+              ? 'Confirmar Reagendamento'
+              : 'Confirmar Agendamento',
           fullWidth: true,
           isLoading: _isBooking,
           onPressed: (_selectedTime == null || _isBooking) ? null : _confirm,
