@@ -28,7 +28,7 @@ public sealed class RescheduleAppointmentValidator : Validator<RescheduleAppoint
 }
 
 public sealed class RescheduleAppointmentEndpoint(ApplicationDbContext dbContext)
-	: Endpoint<RescheduleAppointmentRequest, object>
+	: Endpoint<RescheduleAppointmentRequest>
 {
 	public override void Configure()
 	{
@@ -49,17 +49,13 @@ public sealed class RescheduleAppointmentEndpoint(ApplicationDbContext dbContext
 
 		var isAdminOrManager = User.IsInRole("Admin") || User.IsInRole("Manager");
 
-		// Load old appointment
-		var oldAppointment = await dbContext.Appointments
-			.SingleOrDefaultAsync(a => a.Id == req.Id, ct);
+		var appointment = await dbContext.Appointments
+			.SingleOrDefaultAsync(a => a.Id == req.Id, ct)
+			?? throw new NotFoundException("Agendamento não encontrado.");
 
-		if (oldAppointment is null)
-			throw new NotFoundException("Agendamento não encontrado.");
+		EnsureUserCanReschedule(appointment, authenticatedUserId, isAdminOrManager);
 
-		if (!isAdminOrManager && oldAppointment.ClientId != authenticatedUserId)
-			throw new UnauthorizedAccessException("Este agendamento não pertence a você.");
-
-		var hoursUntilStart = (oldAppointment.StartTime - DateTime.UtcNow).TotalHours;
+		var hoursUntilStart = (appointment.StartTime - DateTime.UtcNow).TotalHours;
 
 		// Clients: block if < 1h
 		if (!isAdminOrManager && hoursUntilStart < 1)
@@ -67,26 +63,55 @@ public sealed class RescheduleAppointmentEndpoint(ApplicationDbContext dbContext
 
 		var isLateReschedule = hoursUntilStart < 24;
 
-		// Mark old appointment as rescheduled
-		oldAppointment.MarkAsRescheduled(allowLateReschedule: true);
-
-		// Load service for new appointment
 		var service = await dbContext.Services
 			.AsNoTracking()
-			.SingleOrDefaultAsync(s => s.Id == req.ServiceId, ct);
+			.SingleOrDefaultAsync(s => s.Id == req.ServiceId, ct)
+			?? throw new NotFoundException("Serviço não encontrado.");
 
-		if (service is null)
-			throw new NotFoundException("Serviço não encontrado.");
-
-		var clientDuration = await dbContext.ClientServiceDurations
+		var client = await dbContext.Users
 			.AsNoTracking()
-			.SingleOrDefaultAsync(c => c.ClientId == oldAppointment.ClientId && c.ServiceId == req.ServiceId, ct);
+			.SingleOrDefaultAsync(u => u.Id == appointment.ClientId, ct)
+			?? throw new NotFoundException("Cliente não encontrado.");
 
-		var duration = clientDuration?.Duration ?? service.DefaultDuration;
+		var duration = service.DefaultDuration + client.ExtraServiceDuration;
 		var startTime = req.StartTime.EnsureUtc();
 		var endTime = startTime.Add(duration);
 
-		// Check conflicts for new slot
+		await EnsureNoSchedulingConflicts(req.Id, startTime, endTime, ct);
+
+		// Update existing appointment and mark as rescheduled
+		appointment.Reschedule(req.ServiceId, startTime, endTime, allowLateReschedule: true);
+
+		// Apply late reschedule fee if applicable
+		var shouldApplyFee = isLateReschedule && (!isAdminOrManager || req.ApplyLateRescheduleFee == true);
+
+		if (shouldApplyFee)
+		{
+			var hasPendingDebt = await dbContext.DebtBalances
+				.AsNoTracking()
+				.AnyAsync(d => d.AppointmentId == appointment.Id && d.Status == DebtStatus.Pending, ct);
+
+			if (!hasPendingDebt)
+			{
+				var feeAmount = service.Price * 0.15m;
+				await dbContext.DebtBalances.AddAsync(
+					new DebtBalance(appointment.ClientId, appointment.Id, feeAmount),
+					ct);
+			}
+		}
+
+		await dbContext.SaveChangesAsync(ct);
+		await Send.NoContentAsync(ct);
+	}
+
+	private static void EnsureUserCanReschedule(Appointment appointment, Guid authenticatedUserId, bool isAdminOrManager)
+	{
+		if (!isAdminOrManager && appointment.ClientId != authenticatedUserId)
+			throw new UnauthorizedAccessException("Este agendamento não pertence a você.");
+	}
+
+	private async Task EnsureNoSchedulingConflicts(Guid appointmentId, DateTime startTime, DateTime endTime, CancellationToken ct)
+	{
 		var hasAbsenceConflict = await dbContext.AbsenceDays
 			.AsNoTracking()
 			.AnyAsync(a => a.StartDate < endTime && a.EndDate > startTime, ct);
@@ -96,46 +121,11 @@ public sealed class RescheduleAppointmentEndpoint(ApplicationDbContext dbContext
 
 		var hasOverlap = await dbContext.Appointments
 			.AsNoTracking()
-			.AnyAsync(a => a.Id != req.Id &&
-						   a.Status == AppointmentStatus.Scheduled &&
+			.AnyAsync(a => a.Id != appointmentId &&
+						   (a.Status == AppointmentStatus.Scheduled || a.Status == AppointmentStatus.Rescheduled) &&
 						   a.StartTime < endTime && a.EndTime > startTime, ct);
 
 		if (hasOverlap)
 			throw new ConflictException("Horário não disponível.");
-
-		// Create new appointment
-		var newAppointment = new Appointment(oldAppointment.ClientId, req.ServiceId, startTime, endTime);
-		await dbContext.Appointments.AddAsync(newAppointment, ct);
-
-		// Apply late reschedule fee if applicable
-		var shouldApplyFee = false;
-		if (isLateReschedule)
-		{
-			shouldApplyFee = isAdminOrManager
-				? req.ApplyLateRescheduleFee ?? false
-				: true;
-		}
-
-		if (shouldApplyFee)
-		{
-			var hasPendingDebt = await dbContext.DebtBalances
-				.AsNoTracking()
-				.AnyAsync(d => d.AppointmentId == oldAppointment.Id && d.Status == DebtStatus.Pending, ct);
-
-			if (!hasPendingDebt)
-			{
-				var feeAmount = service.Price * 0.15m;
-				await dbContext.DebtBalances.AddAsync(
-					new DebtBalance(oldAppointment.ClientId, oldAppointment.Id, feeAmount),
-					ct);
-			}
-		}
-
-		await dbContext.SaveChangesAsync(ct);
-
-		await Send.CreatedAtAsync<RescheduleAppointmentEndpoint>(
-			null,
-			new { Id = newAppointment.Id },
-			cancellation: ct);
 	}
 }

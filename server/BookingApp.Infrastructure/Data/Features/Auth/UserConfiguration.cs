@@ -21,6 +21,9 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
 		builder.Property(u => u.PasswordHash)
 			   .IsRequired();
 
+		builder.Property(u => u.ExtraServiceDuration)
+			   .IsRequired();
+
 		builder.HasMany(u => u.RefreshTokens)
 			.WithOne(rt => rt.User)
 			.HasForeignKey(rt => rt.UserId)

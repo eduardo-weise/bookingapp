@@ -10,7 +10,6 @@ public sealed class ApplicationDbContext(
 	public DbSet<User> Users => Set<User>();
 	public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 	public DbSet<Service> Services => Set<Service>();
-	public DbSet<ClientServiceDuration> ClientServiceDurations => Set<ClientServiceDuration>();
 	public DbSet<Appointment> Appointments => Set<Appointment>();
 	public DbSet<SwapRequest> SwapRequests => Set<SwapRequest>();
 	public DbSet<AbsenceDay> AbsenceDays => Set<AbsenceDay>();

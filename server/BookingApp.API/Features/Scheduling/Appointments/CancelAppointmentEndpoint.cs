@@ -30,7 +30,9 @@ public sealed class CancelAppointmentEndpoint(ApplicationDbContext dbContext)
 			return;
 		}
 
-		var isAdminOrManager = User.IsInRole("Admin") || User.IsInRole("Manager");
+		// Admin/Manager: pode opcionalmente aplicar taxa
+		// Cliente: taxa obrigatória em cancelamento tardio
+		var canOptionallyApplyFee = User.IsInRole("Admin") || User.IsInRole("Manager");
 
 		var appointment = await dbContext.Appointments
 			.SingleOrDefaultAsync(a => a.Id == req.Id, ct);
@@ -38,17 +40,19 @@ public sealed class CancelAppointmentEndpoint(ApplicationDbContext dbContext)
 		if (appointment is null)
 			throw new NotFoundException("Agendamento não encontrado.");
 
-		if (!isAdminOrManager && appointment.ClientId != authenticatedUserId)
+		// Admin/Manager: pode cancelar qualquer agendamento
+		// Cliente: apenas seu próprio agendamento
+		var isOwnAppointment = appointment.ClientId == authenticatedUserId;
+		if (!canOptionallyApplyFee && !isOwnAppointment)
 			throw new UnauthorizedAccessException("Este agendamento não pertence a você.");
 
-		var isLateCancellation = appointment.StartTime <= DateTime.UtcNow.AddHours(24);
+		var hoursUntilStart = (appointment.StartTime - DateTime.UtcNow).TotalHours;
+		var isLateCancellation = hoursUntilStart < 24;
 		var shouldApplyFee = false;
 
 		if (isLateCancellation)
 		{
-			shouldApplyFee = isAdminOrManager
-				? req.ApplyLateCancellationFee ?? true
-				: true;
+			shouldApplyFee = !canOptionallyApplyFee || req.ApplyLateCancellationFee == true;
 		}
 
 		appointment.Cancel(allowLateCancellation: isLateCancellation);

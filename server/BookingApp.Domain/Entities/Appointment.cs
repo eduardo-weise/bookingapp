@@ -48,7 +48,7 @@ public sealed class Appointment : AggregateRoot
 		Status = AppointmentStatus.Canceled;
 	}
 
-	public void MarkAsRescheduled(bool allowLateReschedule = false)
+	public void Reschedule(Guid newServiceId, DateTime newStartTime, DateTime newEndTime, bool allowLateReschedule = false)
 	{
 		if (Status != AppointmentStatus.Scheduled)
 		{
@@ -60,6 +60,9 @@ public sealed class Appointment : AggregateRoot
 			throw new InvalidOperationException("Reagendamento não permitido com menos de 1h de antecedência.");
 		}
 
+		ServiceId = newServiceId;
+		StartTime = newStartTime;
+		EndTime = newEndTime;
 		Status = AppointmentStatus.Rescheduled;
 	}
 

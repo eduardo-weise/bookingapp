@@ -22,22 +22,11 @@ public sealed class ManageClientServiceDurationEndpoint(ApplicationDbContext dbC
 
 	public override async Task HandleAsync(ManageClientServiceDurationRequest req, CancellationToken ct)
 	{
-		var service = await dbContext.Services
-			.SingleOrDefaultAsync(s => s.Id == req.ServiceId, ct)
-			?? throw new NotFoundException("Serviço não encontrado.");
+		var client = await dbContext.Users
+			.SingleOrDefaultAsync(u => u.Id == req.ClientId, ct)
+			?? throw new NotFoundException("Cliente não encontrado.");
 
-		var existingDuration = await dbContext.ClientServiceDurations
-			.SingleOrDefaultAsync(c => c.ClientId == req.ClientId && c.ServiceId == req.ServiceId, ct);
-
-		if (existingDuration is not null)
-		{
-			existingDuration.UpdateDuration(req.Duration);
-		}
-		else
-		{
-			var newDuration = new ClientServiceDuration(req.ClientId, req.ServiceId, req.Duration);
-			await dbContext.ClientServiceDurations.AddAsync(newDuration, ct);
-		}
+		client.UpdateExtraServiceDuration(req.Duration);
 
 		await dbContext.SaveChangesAsync(ct);
 

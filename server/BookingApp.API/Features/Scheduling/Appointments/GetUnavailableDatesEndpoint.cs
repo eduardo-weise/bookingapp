@@ -60,13 +60,13 @@ public sealed class GetUnavailableDatesEndpoint(ApplicationDbContext dbContext)
 
 		if (req.ClientId.HasValue)
 		{
-			var clientDuration = await dbContext.ClientServiceDurations
+			var client = await dbContext.Users
 				.AsNoTracking()
-				.SingleOrDefaultAsync(c => c.ClientId == req.ClientId.Value && c.ServiceId == req.ServiceId, ct);
+				.SingleOrDefaultAsync(u => u.Id == req.ClientId.Value, ct);
 
-			if (clientDuration is not null)
+			if (client is not null)
 			{
-				duration = clientDuration.Duration;
+				duration += client.ExtraServiceDuration;
 			}
 		}
 

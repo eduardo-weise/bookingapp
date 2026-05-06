@@ -5,10 +5,15 @@ import '../core/theme/app_theme.dart';
 
 enum BottomSheetHeight { small, medium, large, flexible }
 
+const _bottomSheetAnimationStyle = AnimationStyle(
+  duration: Duration(milliseconds: 320),
+  reverseDuration: Duration(milliseconds: 240),
+);
+
 Future<void> showAppBottomSheet({
   required BuildContext context,
   required Widget child,
-  String? title,
+  Object? title,
   BottomSheetHeight height = BottomSheetHeight.medium,
   VoidCallback? onBack,
 }) {
@@ -25,6 +30,7 @@ Future<void> showAppBottomSheet({
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     barrierColor: AppColors.overlay,
+    sheetAnimationStyle: _bottomSheetAnimationStyle,
     builder: (context) => _AppBottomSheet(
       title: title,
       height: sheetHeight,
@@ -35,7 +41,7 @@ Future<void> showAppBottomSheet({
 }
 
 class _AppBottomSheet extends StatelessWidget {
-  final String? title;
+  final Object? title;
   final double? height;
   final Widget child;
   final VoidCallback? onBack;
@@ -47,10 +53,18 @@ class _AppBottomSheet extends StatelessWidget {
     this.onBack,
   });
 
+  bool _hasTitle() {
+    if (title == null) return false;
+    if (title is String) return (title as String).isNotEmpty;
+    if (title is ValueNotifier<String>) {
+      return (title as ValueNotifier<String>).value.isNotEmpty;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final hasTitle = title != null && title!.isNotEmpty;
-    final hasBack = onBack != null;
+    final backAction = onBack ?? () => Navigator.of(context).pop();
 
     return Container(
       height: height,
@@ -85,44 +99,52 @@ class _AppBottomSheet extends StatelessWidget {
               ),
             ),
           ),
-          // Title row with optional back button
-          if (hasTitle)
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppTheme.spacingLg,
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Title always centered
-                  Center(child: Text(title!, style: AppTextStyles.heading2)),
-                  // Back button anchored to the left
-                  if (hasBack)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: GestureDetector(
-                        onTap: onBack,
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: AppColors.muted,
-                            borderRadius: BorderRadius.circular(
-                              AppTheme.radiusFull,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            size: 14,
-                            color: AppColors.textSecondary,
-                          ),
+          // Header row with mandatory back button and optional centered title
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppTheme.spacingLg,
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                if (_hasTitle())
+                  Center(
+                    child: title is ValueNotifier<String>
+                        ? ValueListenableBuilder<String>(
+                            valueListenable: title as ValueNotifier<String>,
+                            builder: (context, titleValue, _) {
+                              return Text(titleValue,
+                                  style: AppTextStyles.heading2);
+                            },
+                          )
+                        : Text(title as String,
+                            style: AppTextStyles.heading2),
+                  ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: GestureDetector(
+                    onTap: backAction,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.muted,
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusFull,
                         ),
                       ),
+                      child: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 14,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
-                ],
-              ),
+                  ),
+                ),
+              ],
             ),
-          if (hasTitle) const SizedBox(height: AppTheme.spacingMd),
+          ),
+          const SizedBox(height: AppTheme.spacingMd),
           // Content
           Flexible(
             child: SingleChildScrollView(

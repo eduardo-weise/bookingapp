@@ -55,11 +55,11 @@ public sealed class BookAppointmentEndpoint(ApplicationDbContext dbContext)
 			targetClientId = req.ClientId.Value;
 		}
 
-		var clientExists = await dbContext.Users
+		var client = await dbContext.Users
 			.AsNoTracking()
-			.AnyAsync(u => u.Id == targetClientId && u.Role == "Client" && !u.IsDeleted, ct);
+			.SingleOrDefaultAsync(u => u.Id == targetClientId, ct);
 
-		if (!clientExists)
+		if (client is null)
 			throw new NotFoundException("Cliente não encontrado.");
 
 		var service = await dbContext.Services
@@ -69,11 +69,7 @@ public sealed class BookAppointmentEndpoint(ApplicationDbContext dbContext)
 		if (service is null)
 			throw new NotFoundException("Serviço não encontrado.");
 
-		var clientDuration = await dbContext.ClientServiceDurations
-			.AsNoTracking()
-			.SingleOrDefaultAsync(c => c.ClientId == targetClientId && c.ServiceId == req.ServiceId, ct);
-
-		var duration = clientDuration?.Duration ?? service.DefaultDuration;
+		var duration = service.DefaultDuration + client.ExtraServiceDuration;
 		var startTime = req.StartTime.EnsureUtc();
 		var endTime = startTime.Add(duration);
 

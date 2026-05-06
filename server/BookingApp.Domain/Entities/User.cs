@@ -13,6 +13,7 @@ public sealed class User : AggregateRoot
 	public string? MfaSecret { get; private set; }
 	public bool IsDeleted { get; private set; }
 	public string Role { get; private set; }
+	public TimeSpan ExtraServiceDuration { get; private set; }
 
 	// Password Recovery
 	public string? ResetPasswordToken { get; private set; }
@@ -32,8 +33,19 @@ public sealed class User : AggregateRoot
 		PhoneNumber = phoneNumber;
 		Cpf = cpf;
 		Role = role;
+		ExtraServiceDuration = TimeSpan.Zero;
 		IsMfaEnabled = false;
 		IsDeleted = false;
+	}
+
+	public void UpdateExtraServiceDuration(TimeSpan extraDuration)
+	{
+		if (extraDuration < TimeSpan.Zero)
+		{
+			throw new InvalidOperationException("Duração extra não pode ser negativa.");
+		}
+
+		ExtraServiceDuration = extraDuration;
 	}
 
 	public void UpdateProfile(string name, string phoneNumber, string? cpf = null)
