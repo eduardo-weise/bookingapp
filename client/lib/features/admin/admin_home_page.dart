@@ -20,9 +20,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/admin_providers.dart';
 import '../client/providers/client_providers.dart';
 
-// ── Admin Dashboard ──────────────────────────────────────────────────────────
-class AdminDashboardPage extends ConsumerWidget {
-  const AdminDashboardPage({super.key});
+// ── Admin Home ─────────────────────────────────────────────────────────────
+class AdminHomePage extends ConsumerWidget {
+  const AdminHomePage({super.key});
 
   // ── Profile / Edit Sheet ──
   void _showEditProfileSheet(BuildContext context) {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/login_page.dart';
 import 'features/client/client_home_page.dart';
-import 'features/admin/admin_dashboard_page.dart';
+import 'features/admin/admin_home_page.dart';
 
 import 'core/services/api_client.dart';
 
@@ -42,7 +42,7 @@ class BookingApp extends StatelessWidget {
       routes: {
         '/': (_) => const LoginPage(),
         '/client': (_) => const ClientHomePage(),
-        '/admin': (_) => const AdminDashboardPage(),
+        '/admin': (_) => const AdminHomePage(),
       },
     );
   }

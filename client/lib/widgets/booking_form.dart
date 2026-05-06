@@ -416,11 +416,12 @@ class _ServicesSheetContentState extends State<_ServicesSheetContent> {
   Future<void> _load() async {
     try {
       final services = await widget.bookingService.getServices();
-      if (mounted)
+      if (mounted) {
         setState(() {
           _services = services;
           _isLoading = false;
         });
+      }
     } catch (e) {
       if (!mounted) return;
       final message = e.toString().replaceAll('Exception: ', '');
@@ -719,11 +720,12 @@ class _TimesSheetContentState extends State<_TimesSheetContent> {
         serviceId: widget.service.id,
         clientId: widget.selectedTargetClient?.id,
       );
-      if (mounted)
+      if (mounted) {
         setState(() {
           _slots = slots;
           _isLoadingSlots = false;
         });
+      }
     } catch (e) {
       if (!mounted) return;
       final message = e.toString().replaceAll('Exception: ', '');
