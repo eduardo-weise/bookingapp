@@ -119,6 +119,17 @@ class _AppointmentActionSheetContentState
     setState(() => _isSubmitting = true);
     try {
       final applyFee = _isWithin24Hours ? _applyFee : false;
+
+      // For reschedule, close confirmation first, then open booking flow.
+      // This avoids popping the newly opened sheet by mistake.
+      if (!_isCancel) {
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
+        await widget.onConfirm(applyFee);
+        return;
+      }
+
       await widget.onConfirm(applyFee);
       if (!mounted) return;
       Navigator.of(context).pop();

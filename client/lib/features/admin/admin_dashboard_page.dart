@@ -12,8 +12,8 @@ import 'services/admin_debts_service.dart';
 import 'widgets/admin_stats_section.dart';
 import 'widgets/admin_pending_debts_section.dart';
 import 'widgets/admin_today_appointments_section.dart';
-import 'sheets/admin_debt_detail_sheet.dart';
 import 'sheets/admin_all_debts_sheet.dart';
+import 'sheets/admin_debt_clients_sheet.dart';
 import 'sheets/admin_agenda_sheets.dart';
 import 'sheets/admin_profile_sheet.dart';
 
@@ -70,19 +70,22 @@ class AdminDashboardPage extends ConsumerWidget {
     }
   }
 
-  void _showDebtDetail(BuildContext context, WidgetRef ref, AdminClientDebtSummary summary) {
-    showAdminDebtDetailSheet(
+  void _showClientDebts(BuildContext context, WidgetRef ref, AdminClientDebtSummary summary) {
+    showAdminAllDebtsSheet(
       context: context,
-      summary: summary,
       onPayDebts: (clientId, debtIds) => _payDebts(context, ref, clientId, debtIds),
       onCancelDebts: (clientId, debtIds) => _cancelDebts(context, ref, clientId, debtIds),
+      clientId: summary.clientId,
+      clientName: summary.clientName,
+      onBackToClients: () => _showAllDebtsSheet(context, ref),
     );
   }
 
   void _showAllDebtsSheet(BuildContext context, WidgetRef ref) {
-    showAdminAllDebtsSheet(
+    showAdminDebtClientsSheet(
       context: context,
-      onDebtSelected: (summary) => _showDebtDetail(context, ref, summary),
+      onPayDebts: (clientId, debtIds) => _payDebts(context, ref, clientId, debtIds),
+      onCancelDebts: (clientId, debtIds) => _cancelDebts(context, ref, clientId, debtIds),
     );
   }
 
@@ -190,7 +193,7 @@ class AdminDashboardPage extends ConsumerWidget {
                 AdminPendingDebtsSection(
                   onSeeAll: () => _showAllDebtsSheet(context, ref),
                   onDebtSelected: (summary) =>
-                      _showDebtDetail(context, ref, summary),
+                      _showClientDebts(context, ref, summary),
                 ),
                 const SizedBox(height: AppTheme.spacingLg),
                 AdminTodayAppointmentsSection(

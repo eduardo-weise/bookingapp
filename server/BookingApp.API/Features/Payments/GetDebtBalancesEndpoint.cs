@@ -52,16 +52,9 @@ public sealed class GetDebtBalancesEndpoint(ApplicationDbContext dbContext)
 		{
 			query = query.Where(q => q.d.ClientId == clientId);
 		}
-		else
-		{
-			// Admin view typically wants to see Pending debts, but let's return all,
-			// or maybe just pending if we want to mimic the previous logic.
-			// Actually, let's keep it simple and just return what the DB has,
-			// filtering by Pending is typically better for "DebtBalances", but let's filter Pending.
-			query = query.Where(q => q.d.Status == DebtStatus.Pending);
-		}
-
+		
 		var debts = await query
+			.Where(q => q.d.Status == DebtStatus.Pending)
 			.Select(q => new DebtBalanceResponse(
 				q.d.Id, 
 				q.d.ClientId,

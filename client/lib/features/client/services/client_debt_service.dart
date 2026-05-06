@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 class ClientDebtModel {
   final String id;
   final String appointmentId;
+  final String serviceName;
+  final DateTime appointmentDate;
   final double amount;
   final String status;
   final DateTime createdAt;
@@ -11,18 +13,27 @@ class ClientDebtModel {
   const ClientDebtModel({
     required this.id,
     required this.appointmentId,
+    required this.serviceName,
+    required this.appointmentDate,
     required this.amount,
     required this.status,
     required this.createdAt,
   });
 
   factory ClientDebtModel.fromJson(Map<String, dynamic> json) {
+    final createdAt = DateTime.parse(json['createdAt'] as String);
+
     return ClientDebtModel(
       id: json['id'] as String,
       appointmentId: json['appointmentId'] as String,
+      serviceName: json['serviceName']?.toString() ?? 'Serviço',
+      appointmentDate: DateTime.tryParse(
+            json['appointmentDate']?.toString() ?? '',
+          ) ??
+          createdAt,
       amount: (json['amount'] as num?)?.toDouble() ?? 0,
       status: json['status']?.toString() ?? 'Pending',
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: createdAt,
     );
   }
 }
