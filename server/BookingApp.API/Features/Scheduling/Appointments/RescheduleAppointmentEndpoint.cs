@@ -94,8 +94,9 @@ public sealed class RescheduleAppointmentEndpoint(ApplicationDbContext dbContext
 			if (!hasPendingDebt)
 			{
 				var feeAmount = service.Price * 0.15m;
-				await dbContext.DebtBalances.AddAsync(
-					new DebtBalance(appointment.ClientId, appointment.Id, feeAmount),
+			var description = $"Reagendamento tardio de agendamento com {service.Name}";
+			await dbContext.DebtBalances.AddAsync(
+				new DebtBalance(appointment.ClientId, appointment.Id, feeAmount, DebtType.LateReschedule, description, 15),
 					ct);
 			}
 		}

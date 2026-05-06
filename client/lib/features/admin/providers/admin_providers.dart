@@ -30,8 +30,16 @@ class AdminPendingDebts extends _$AdminPendingDebts {
   }
 
   Future<void> refresh() async {
+    if (!ref.mounted) {
+      return;
+    }
+    final service = ref.read(adminDebtsServiceProvider);
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => ref.read(adminDebtsServiceProvider).getPendingDebts());
+    final nextState = await AsyncValue.guard(() => service.getPendingDebts());
+    if (!ref.mounted) {
+      return;
+    }
+    state = nextState;
   }
 }
 
@@ -43,8 +51,16 @@ class AdminTodayAppointments extends _$AdminTodayAppointments {
   }
 
   Future<void> refresh() async {
+    if (!ref.mounted) {
+      return;
+    }
+    final service = ref.read(adminAppointmentsServiceProvider);
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => ref.read(adminAppointmentsServiceProvider).getAppointmentsByDate(DateTime.now()));
+    final nextState = await AsyncValue.guard(() => service.getAppointmentsByDate(DateTime.now()));
+    if (!ref.mounted) {
+      return;
+    }
+    state = nextState;
   }
 }
 
@@ -56,7 +72,15 @@ class AdminDateAppointments extends _$AdminDateAppointments {
   }
 
   Future<void> refresh(DateTime date) async {
+    if (!ref.mounted) {
+      return;
+    }
+    final service = ref.read(adminAppointmentsServiceProvider);
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => ref.read(adminAppointmentsServiceProvider).getAppointmentsByDate(date));
+    final nextState = await AsyncValue.guard(() => service.getAppointmentsByDate(date));
+    if (!ref.mounted) {
+      return;
+    }
+    state = nextState;
   }
 }

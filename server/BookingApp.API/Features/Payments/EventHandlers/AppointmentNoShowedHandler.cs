@@ -27,8 +27,9 @@ public sealed class AppointmentNoShowedHandler(IServiceScopeFactory scopeFactory
 
 		// Implementação da multa: 50% do valor do serviço
 		var penaltyAmount = service.Price * 0.5m;
+		var description = $"Multa por ausência (no-show) em agendamento com {service.Name}";
 
-		var debt = new DebtBalance(eventModel.ClientId, eventModel.AppointmentId, penaltyAmount);
+		var debt = new DebtBalance(eventModel.ClientId, eventModel.AppointmentId, penaltyAmount, DebtType.NoShow, description, 50);
 
 		await dbContext.DebtBalances.AddAsync(debt, ct);
 

@@ -18,6 +18,18 @@ internal sealed class DebtBalanceConfiguration : IEntityTypeConfiguration<DebtBa
 			   .HasConversion<string>()
 			   .IsRequired();
 
+		builder.Property(d => d.Type)
+			   .HasConversion<string>()
+			   .IsRequired();
+
+		builder.Property(d => d.Description)
+			   .HasMaxLength(500)
+			   .IsRequired();
+
+		builder.Property(d => d.FeePercentage)
+			   .HasColumnType("numeric(5,2)")
+			   .IsRequired();
+
 		builder.HasOne<User>()
 			   .WithMany()
 			   .HasForeignKey(d => d.ClientId)
