@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_theme.dart';
-import 'package:app/widgets/app_avatar.dart';
 import 'package:app/widgets/booking_form.dart';
 import 'package:app/widgets/page_header.dart';
 import 'package:app/widgets/app_snackbar.dart';
@@ -174,19 +173,9 @@ class AdminDashboardPage extends ConsumerWidget {
                   greeting: 'Bem-vindo de volta',
                   name: profile.displayName,
                   notificationCount: 1,
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: AppTheme.spacingLg,
-                  ),
-                  child: Center(
-                    child: AppAvatar(
-                      size: AvatarSize.large,
-                      initials: profile.initials,
-                      showEditBadge: true,
-                      onEditTap: () => _showEditProfileSheet(context),
-                    ),
-                  ),
+                  initials: profile.initials,
+                  showEditBadge: true,
+                  onAvatarTap: () => _showEditProfileSheet(context),
                 ),
                 const AdminStatsSection(),
                 const SizedBox(height: AppTheme.spacingLg),

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/client/providers/client_providers.dart';
-import 'package:app/widgets/app_avatar.dart';
 import 'package:app/widgets/page_header.dart';
 
 class ClientProfileHeader extends ConsumerWidget {
@@ -26,24 +24,12 @@ class ClientProfileHeader extends ConsumerWidget {
   }
 
   Widget _buildContent(String name, String initials) {
-    return Column(
-      children: [
-        PageHeader(
-          name: name.isNotEmpty ? 'Olá, $name' : 'Olá!',
-          notificationCount: 1,
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingLg),
-          child: Center(
-            child: AppAvatar(
-              size: AvatarSize.large,
-              initials: initials,
-              showEditBadge: true,
-              onEditTap: onEditTap,
-            ),
-          ),
-        ),
-      ],
+    return PageHeader(
+      name: name.isNotEmpty ? 'Olá, $name' : 'Olá!',
+      notificationCount: 1,
+      initials: initials.isNotEmpty ? initials : '?',
+      showEditBadge: true,
+      onAvatarTap: onEditTap,
     );
   }
 }
