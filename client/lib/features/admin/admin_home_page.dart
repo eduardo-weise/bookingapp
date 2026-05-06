@@ -19,6 +19,7 @@ import 'sheets/admin_profile_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/admin_providers.dart';
 import '../client/providers/client_providers.dart';
+import 'package:app/core/extensions/date_time_extensions.dart';
 
 // ── Admin Home ─────────────────────────────────────────────────────────────
 class AdminHomePage extends ConsumerWidget {
@@ -127,8 +128,9 @@ class AdminHomePage extends ConsumerWidget {
             appointmentId: appointment.id,
             applyLateCancellationFee: applyLateCancellationFee,
           );
-          ref.read(adminTodayAppointmentsProvider.notifier).refresh();
-          ref.read(adminDateAppointmentsProvider(appointment.startTime).notifier).refresh(appointment.startTime);
+          if (appointment.startTime.isSameDateUtc(DateTime.now())) {
+            ref.read(adminTodayAppointmentsProvider.notifier).refresh();
+          }
           onCancelled?.call();
 
           if (!context.mounted) return;
