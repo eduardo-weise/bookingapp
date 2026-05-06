@@ -5,6 +5,9 @@ import 'package:app/widgets/booking_form.dart';
 import 'package:app/widgets/page_header.dart';
 import 'package:app/widgets/app_snackbar.dart';
 import 'package:app/widgets/cancel_appointment_sheet.dart';
+import 'package:app/widgets/appointment_action_sheet.dart';
+import 'package:app/features/client/models/service_model.dart';
+import 'package:app/features/client/services/booking_service.dart';
 import 'services/admin_appointments_service.dart';
 import 'services/admin_debts_service.dart';
 
@@ -131,6 +134,10 @@ class AdminHomePage extends ConsumerWidget {
           if (appointment.startTime.isSameDateUtc(DateTime.now())) {
             ref.read(adminTodayAppointmentsProvider.notifier).refresh();
           }
+          // Refresh debts if a new debt was created
+          if (applyLateCancellationFee) {
+            ref.read(adminPendingDebtsProvider.notifier).refresh();
+          }
           onCancelled?.call();
 
           if (!context.mounted) return;
@@ -150,12 +157,61 @@ class AdminHomePage extends ConsumerWidget {
     );
   }
 
+  Future<void> _showRescheduleAppointmentSheet(
+    BuildContext context,
+    WidgetRef ref,
+    AdminAppointmentModel appointment,
+  ) async {
+    ServiceModel? service;
+    try {
+      final services = await BookingService().getServices();
+      service = services.firstWhere(
+        (s) => s.name == appointment.serviceName,
+        orElse: () => services.first,
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      AppSnackBar.showError(context, 'Nao foi possivel carregar o servico.');
+      return;
+    }
+
+    if (!context.mounted) return;
+
+    await showAppointmentActionSheet(
+      context: context,
+      serviceName: '${appointment.clientName} • ${appointment.serviceName}',
+      startTime: appointment.startTime,
+      servicePrice: appointment.servicePrice,
+      isAdmin: true,
+      action: AppointmentActionType.reschedule,
+      onConfirm: (applyFee) async {
+        if (!context.mounted) return;
+        BookingFlow.startReschedule(
+          context,
+          rescheduleContext: RescheduleContext(
+            originalAppointmentId: appointment.id,
+            applyFee: applyFee,
+          ),
+          preselectedService: service!,
+          onRescheduled: () {
+            ref.read(adminTodayAppointmentsProvider.notifier).refresh();
+            if (applyFee) {
+              ref.read(adminPendingDebtsProvider.notifier).refresh();
+            }
+          },
+        );
+      },
+    );
+  }
+
   void _showFutureAppointmentsDatePickerSheet(BuildContext context, WidgetRef ref) {
     showFutureAppointmentsDatePickerSheet(
       context: context,
       appointmentsService: ref.read(adminAppointmentsServiceProvider),
       onCancelAppointment: (appointment) =>
           _showCancelAppointmentSheet(context, ref, appointment),
+      onRescheduleAppointment: (appointment) =>
+          _showRescheduleAppointmentSheet(context, ref, appointment),
     );
   }
 
@@ -188,6 +244,8 @@ class AdminHomePage extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppTheme.spacingLg),
                 AdminTodayAppointmentsSection(
+                  onRescheduleAppointment: (appointment) =>
+                      _showRescheduleAppointmentSheet(context, ref, appointment),
                   onCancelAppointment: (appointment) =>
                       _showCancelAppointmentSheet(context, ref, appointment),
                 ),

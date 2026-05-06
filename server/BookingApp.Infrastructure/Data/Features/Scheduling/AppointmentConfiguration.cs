@@ -14,10 +14,16 @@ internal sealed class AppointmentConfiguration : IEntityTypeConfiguration<Appoin
 
 		builder.Property(a => a.StartTime)
 			   .HasColumnType("timestamp with time zone")
+			   .HasConversion(
+				   c => c.Kind == DateTimeKind.Utc ? c : c.ToUniversalTime(),  // save: garante UTC
+				   c => DateTime.SpecifyKind(c, DateTimeKind.Utc))            // read: sempre UTC
 			   .IsRequired();
 
 		builder.Property(a => a.EndTime)
 			   .HasColumnType("timestamp with time zone")
+			   .HasConversion(
+				   c => c.Kind == DateTimeKind.Utc ? c : c.ToUniversalTime(),  // save: garante UTC
+				   c => DateTime.SpecifyKind(c, DateTimeKind.Utc))            // read: sempre UTC
 			   .IsRequired();
 
 		builder.Property(a => a.Status)

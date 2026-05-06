@@ -17,10 +17,16 @@ internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refre
 
 		builder.Property(rt => rt.ExpiresAt)
 			   .HasColumnType("timestamp with time zone")
+			   .HasConversion(
+				   c => c.Kind == DateTimeKind.Utc ? c : c.ToUniversalTime(),  // save: garante UTC
+				   c => DateTime.SpecifyKind(c, DateTimeKind.Utc))            // read: sempre UTC
 			   .IsRequired();
 
 		builder.Property(rt => rt.CreatedAt)
 			   .HasColumnType("timestamp with time zone")
+			   .HasConversion(
+				   c => c.Kind == DateTimeKind.Utc ? c : c.ToUniversalTime(),  // save: garante UTC
+				   c => DateTime.SpecifyKind(c, DateTimeKind.Utc))            // read: sempre UTC
 			   .IsRequired();
 
 		builder.Property(rt => rt.RevokedAt)

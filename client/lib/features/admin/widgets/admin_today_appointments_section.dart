@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
+import 'package:app/core/extensions/date_time_extensions.dart';
 import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/widgets/app_badge.dart';
@@ -12,20 +12,22 @@ import '../services/admin_appointments_service.dart';
 
 class AdminTodayAppointmentsSection extends ConsumerWidget {
   final Function(AdminAppointmentModel) onCancelAppointment;
+  final Function(AdminAppointmentModel) onRescheduleAppointment;
 
   const AdminTodayAppointmentsSection({
     super.key,
     required this.onCancelAppointment,
+    required this.onRescheduleAppointment,
   });
 
   String _formatTodayBadge(DateTime date) =>
-      'Hoje, ${DateFormat("dd 'de' MMMM", 'pt_BR').format(date)}';
+      'Hoje, ${date.displayDateLong}';
 
   String _formatCardDate(DateTime date) =>
-      DateFormat('dd MMM', 'pt_BR').format(date);
+      date.displayDateShort;
 
   String _formatHour(DateTime date) =>
-      '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+      date.displayTime;
 
   String _statusLabel(BadgeVariant status) {
     switch (status) {
@@ -87,6 +89,7 @@ class AdminTodayAppointmentsSection extends ConsumerWidget {
             return Column(
               children: List.generate(todayAppointments.length, (i) {
                 final appointment = todayAppointments[i];
+                final isPastStartTime = _isPastStartTime(appointment.startTime);
                 return Padding(
                   padding: EdgeInsets.fromLTRB(
                     AppTheme.spacingLg,
@@ -102,6 +105,9 @@ class AdminTodayAppointmentsSection extends ConsumerWidget {
                     time: _formatHour(appointment.startTime),
                     status: _statusToBadge(appointment.status),
                     variant: AppointmentCardVariant.full,
+                    onReschedulePressed: isPastStartTime
+                        ? null
+                        : () => onRescheduleAppointment(appointment),
                     onCancelPressed: () => onCancelAppointment(appointment),
                   ),
                 );
@@ -122,5 +128,8 @@ class AdminTodayAppointmentsSection extends ConsumerWidget {
         ),
       ],
     );
+  }
+  bool _isPastStartTime(DateTime startTime) {
+    return startTime.localDateTime.isBefore(DateTime.now());
   }
 }

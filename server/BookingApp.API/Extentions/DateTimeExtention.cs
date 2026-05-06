@@ -8,8 +8,8 @@ internal static class DateTimeExtention
 		{
 			DateTimeKind.Utc => value,
 			DateTimeKind.Local => value.ToUniversalTime(),
-			DateTimeKind.Unspecified => DateTime.SpecifyKind(value, DateTimeKind.Utc),
-			_ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+			DateTimeKind.Unspecified => value.ToUniversalTime(),  // Converte Unspecified como se fosse local
+			_ => value.ToUniversalTime()
 		};
 	}
 

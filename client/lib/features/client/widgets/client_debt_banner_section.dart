@@ -1,5 +1,6 @@
 import 'package:app/core/theme/app_text_styles.dart';
 import 'package:app/core/theme/app_theme.dart';
+import 'package:app/core/extensions/date_time_extensions.dart';
 import 'package:app/features/client/providers/client_providers.dart';
 import 'package:app/features/client/services/client_debt_service.dart';
 import 'package:app/widgets/app_button.dart';
@@ -185,6 +186,6 @@ class _ClientDebtBannerSectionState
   }
 
   String _formatDate(DateTime date) {
-    return DateFormat('dd MMM', 'pt_BR').format(date).toLowerCase();
+    return date.displayDateShort.toLowerCase();
   }
 }

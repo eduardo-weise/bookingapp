@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:app/core/extensions/date_time_extensions.dart';
 import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_text_styles.dart';
 import 'package:app/core/theme/app_theme.dart';
@@ -84,15 +84,15 @@ class _CreateAbsenceSheetState extends ConsumerState<CreateAbsenceSheet> {
 
   String _formatDateString(DateTime date, {bool includeYear = false}) {
     if (includeYear) {
-      final format = DateFormat("EEE, d 'de' MMM 'de' yyyy", 'pt_BR');
-      String formatted = format.format(date).toLowerCase();
+      String formatted = date
+          .formatLocal("EEE, d 'de' MMM 'de' yyyy")
+          .toLowerCase();
       if (!formatted.contains('.')) {
         formatted = formatted.replaceFirst(',', '.,'); // seg, -> seg.,
       }
       return formatted;
     }
-    final format = DateFormat("EEE, d 'de' MMM", 'pt_BR');
-    String formatted = format.format(date).toLowerCase();
+    String formatted = date.formatLocal("EEE, d 'de' MMM").toLowerCase();
     if (!formatted.contains('.')) {
       formatted = formatted.replaceFirst(',', '.,'); // seg, -> seg.,
       formatted = '$formatted.'; // de set -> de set.
@@ -101,10 +101,11 @@ class _CreateAbsenceSheetState extends ConsumerState<CreateAbsenceSheet> {
   }
 
   String _formatSingleDayDate(DateTime date) {
-    final weekday = DateFormat('EEE', 'pt_BR').format(date).substring(0, 3);
-    final day = date.day.toString().padLeft(2, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    final year = date.year;
+    final localDate = date.localDateTime;
+    final weekday = date.formatLocal('EEE').substring(0, 3);
+    final day = localDate.day.toString().padLeft(2, '0');
+    final month = localDate.month.toString().padLeft(2, '0');
+    final year = localDate.year;
     return '$weekday, $day/$month/$year';
   }
 
@@ -116,11 +117,7 @@ class _CreateAbsenceSheetState extends ConsumerState<CreateAbsenceSheet> {
 
     if (_isSingleDay) {
       if (_endDate == null) return d1;
-      final sh = _startDate!.hour.toString().padLeft(2, '0');
-      final sm = _startDate!.minute.toString().padLeft(2, '0');
-      final eh = _endDate!.hour.toString().padLeft(2, '0');
-      final em = _endDate!.minute.toString().padLeft(2, '0');
-      return '$d1 ($sh:$sm - $eh:$em)';
+      return '$d1 (${_startDate!.displayTime} - ${_endDate!.displayTime})';
     } else {
       if (_endDate == null) return d1;
       // Include year in end date to show period context

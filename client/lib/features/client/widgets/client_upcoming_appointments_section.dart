@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:app/core/extensions/date_time_extensions.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/client/providers/client_providers.dart';
 import 'package:app/features/client/services/client_appointments_service.dart';
@@ -7,7 +8,6 @@ import 'package:app/widgets/app_badge.dart';
 import 'package:app/widgets/app_empty_state.dart';
 import 'package:app/widgets/appointment_card.dart';
 import 'package:app/widgets/section_header.dart';
-import 'package:intl/intl.dart';
 
 class ClientUpcomingAppointmentsSection extends ConsumerWidget {
   final Future<void> Function(ClientAppointmentModel appointment) onCancelTap;
@@ -21,10 +21,10 @@ class ClientUpcomingAppointmentsSection extends ConsumerWidget {
   });
 
   String formatCardDate(DateTime value) =>
-      DateFormat('dd MMM', 'pt_BR').format(value);
+      value.displayDateShort;
 
   String formatCardTime(DateTime value) =>
-      DateFormat('HH:mm', 'pt_BR').format(value);
+      value.displayTime;
 
   BadgeVariant statusVariant(String status) {
     switch (status.toLowerCase()) {

@@ -77,6 +77,12 @@ class _AppointmentActionSheetContentState
     return start.isBefore(now.add(const Duration(hours: 1)));
   }
 
+  bool get _isPastStartTime {
+    final now = DateTime.now();
+    final start = widget.startTime.toLocal();
+    return start.isBefore(now);
+  }
+
   bool get _isWithin24Hours {
     final now = DateTime.now().toUtc();
     final start = widget.startTime.toUtc();
@@ -112,8 +118,18 @@ class _AppointmentActionSheetContentState
     return 'Este reagendamento está dentro de 24h do atendimento. Será cobrada uma taxa de $_formattedFeePercent no valor de $_formattedFeeAmount. Deseja continuar?';
   }
 
-  /// Clients cannot reschedule within 1h; this disables the confirm button.
-  bool get _isBlocked => !_isCancel && !widget.isAdmin && _isWithin1Hour;
+  /// Determines if the action button should be disabled.
+  /// - Reschedule: disabled for clients within 1h, disabled for admins AFTER start time.
+  /// - Cancel: never disabled due to time.
+  bool get _isBlocked {
+    if (_isCancel) {
+      return false; // Cancel is never blocked by time
+    }
+    if (widget.isAdmin) {
+      return _isPastStartTime; // Admin: blocked only after start
+    }
+    return _isWithin1Hour; // Client: blocked within 1h before start
+  }
 
   Future<void> _submit() async {
     setState(() => _isSubmitting = true);

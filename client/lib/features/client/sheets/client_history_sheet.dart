@@ -1,7 +1,7 @@
 import 'package:app/features/client/providers/client_providers.dart';
+import 'package:app/core/extensions/date_time_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_text_styles.dart';
 import 'package:app/core/theme/app_theme.dart';
@@ -12,7 +12,7 @@ import 'package:app/widgets/app_empty_state.dart';
 
 void showClientHistorySheet({required BuildContext context}) {
   String formatHistoryDateTime(DateTime value) =>
-      DateFormat("dd 'de' MMMM, HH:mm", 'pt_BR').format(value);
+  value.formatLocal("dd 'de' MMMM, HH:mm");
 
   BadgeVariant statusVariant(String status) {
     switch (status.toLowerCase()) {

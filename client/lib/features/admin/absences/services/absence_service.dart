@@ -1,5 +1,5 @@
 import 'package:app/core/services/api_client.dart';
-import 'package:intl/intl.dart';
+import 'package:app/core/extensions/date_time_extensions.dart';
 import 'package:dio/dio.dart';
 
 class AbsenceDayModel {
@@ -38,16 +38,16 @@ class AbsenceDayModel {
   }
 
   String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+    return date.formatLocal('dd/MM/yyyy');
   }
 
   String _formatDateWithWeekday(DateTime date) {
-    final weekday = DateFormat('EEE', 'pt_BR').format(date).substring(0, 3);
+    final weekday = date.formatLocal('EEE').substring(0, 3);
     return '$weekday, ${_formatDate(date)}';
   }
 
   String _formatTime(DateTime date) {
-    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    return date.displayTime;
   }
 
   String get formattedDate {

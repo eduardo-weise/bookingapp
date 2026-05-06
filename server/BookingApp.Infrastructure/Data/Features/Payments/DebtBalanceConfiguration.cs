@@ -30,6 +30,13 @@ internal sealed class DebtBalanceConfiguration : IEntityTypeConfiguration<DebtBa
 			   .HasColumnType("numeric(5,2)")
 			   .IsRequired();
 
+		builder.Property(d => d.CreatedAt)
+			   .HasColumnType("timestamp with time zone")
+			   .HasConversion(
+				   c => c.Kind == DateTimeKind.Utc ? c : c.ToUniversalTime(),  // save: garante UTC
+				   c => DateTime.SpecifyKind(c, DateTimeKind.Utc))            // read: sempre UTC
+			   .IsRequired();
+
 		builder.HasOne<User>()
 			   .WithMany()
 			   .HasForeignKey(d => d.ClientId)
