@@ -13,6 +13,18 @@ class AbsenceDayModel {
     required this.endDate,
   });
 
+  factory AbsenceDayModel.create({
+    required String id,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) {
+    return AbsenceDayModel(
+      id: id,
+      startDate: startDate,
+      endDate: endDate,
+    );
+  }
+
   factory AbsenceDayModel.fromJson(Map<String, dynamic> json) {
     return AbsenceDayModel(
       id: json['id'] as String,
@@ -100,18 +112,20 @@ class AbsenceService {
   }
 
   /// Creates absence days for the given date range.
-  Future<void> createAbsence({
+  Future<AbsenceDayModel> createAbsence({
     required DateTime startDate,
     required DateTime endDate,
   }) async {
     try {
-      await _client.post(
+      final response = await _client.post(
         '/absences',
         data: {
           'startDate': startDate.toIso8601String(),
           'endDate': endDate.toIso8601String(),
         },
       );
+
+      return AbsenceDayModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(_handleError(e));
     }

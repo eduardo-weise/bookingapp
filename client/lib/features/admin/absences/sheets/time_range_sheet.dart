@@ -66,8 +66,8 @@ class _TimeRangeSheetState extends State<TimeRangeSheet> {
         const SizedBox(height: AppTheme.spacingMd),
         RangeSlider(
           values: _currentRange,
-          min: 0,
-          max: 1440,
+          min: 420, // 7:00
+          max: 1260, // 21:00
           divisions: 1440 ~/ 5,
           activeColor: AppColors.brandPrimary,
           inactiveColor: AppColors.border,

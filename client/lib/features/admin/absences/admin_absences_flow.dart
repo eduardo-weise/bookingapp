@@ -7,16 +7,20 @@ import 'sheets/date_range_sheet.dart';
 import 'sheets/time_range_sheet.dart';
 
 class AdminAbsencesFlow {
-  static void start(BuildContext context) {
+  static void start(BuildContext context, {VoidCallback? onBack}) {
     showAppBottomSheet(
       context: context,
       title: 'Ausências / Férias',
       height: BottomSheetHeight.flexible,
-      onBack: () => Navigator.of(context).pop(),
+      onBack: onBack ?? () => Navigator.of(context, rootNavigator: true).pop(),
       child: AbsencesListSheet(
-        onCreateTap: (ctx) {
-          Navigator.of(ctx).pop();
-          _showCreateSheet(context, isSingleDay: true);
+        onCreateTap: (_) {
+          Navigator.of(context, rootNavigator: true).pop();
+          _showCreateSheet(
+            context,
+            isSingleDay: true,
+            onBack: onBack,
+          );
         },
       ),
     );
@@ -27,27 +31,27 @@ class AdminAbsencesFlow {
     DateTime? startDate,
     DateTime? endDate,
     required bool isSingleDay,
+    VoidCallback? onBack,
   }) {
     showAppBottomSheet(
       context: context,
       title: 'Registrar Ausência',
       height: BottomSheetHeight.flexible,
       onBack: () {
-        Navigator.of(context).pop();
-        start(context);
+        Navigator.of(context, rootNavigator: true).pop();
+        start(context, onBack: onBack);
       },
       child: CreateAbsenceSheet(
         initialStartDate: startDate,
         initialEndDate: endDate,
         initialIsSingleDay: isSingleDay,
-        onSaved: () {
-          Navigator.of(context).pop();
-          start(context);
+        onSaved: (_) {
+          Navigator.of(context, rootNavigator: true).pop();
         },
 
         onPickDate:
             (ctx, isStart, currentStart, currentEnd, currentIsSingleDay) async {
-              Navigator.of(ctx).pop(); // Close CreateAbsenceSheet
+              Navigator.of(ctx, rootNavigator: true).pop(); // Close CreateAbsenceSheet
 
               if (currentIsSingleDay) {
                 _showDatePicker(
@@ -56,6 +60,7 @@ class AdminAbsencesFlow {
                   startDate: currentStart,
                   endDate: currentEnd,
                   isSingleDay: currentIsSingleDay,
+                  onBack: onBack,
                 );
               } else {
                 _showDateRangePickerSheet(
@@ -63,6 +68,7 @@ class AdminAbsencesFlow {
                   currentStart: currentStart,
                   currentEnd: currentEnd,
                   isSingleDay: currentIsSingleDay,
+                  onBack: onBack,
                 );
               }
             },
@@ -75,30 +81,33 @@ class AdminAbsencesFlow {
     DateTime? currentStart,
     DateTime? currentEnd,
     required bool isSingleDay,
+    VoidCallback? onBack,
   }) {
     showAppBottomSheet(
       context: context,
       title: 'Período de Ausência',
       height: BottomSheetHeight.flexible,
       onBack: () {
-        Navigator.of(context).pop();
+        Navigator.of(context, rootNavigator: true).pop();
         _showCreateSheet(
           context,
           startDate: currentStart,
           endDate: currentEnd,
           isSingleDay: isSingleDay,
+          onBack: onBack,
         );
       },
       child: DateRangeSheet(
         initialStartDate: currentStart,
         initialEndDate: currentEnd,
         onConfirmed: (start, end) {
-          Navigator.of(context).pop();
+          Navigator.of(context, rootNavigator: true).pop();
           _showCreateSheet(
             context,
             startDate: start,
             endDate: end,
             isSingleDay: isSingleDay,
+            onBack: onBack,
           );
         },
       ),
@@ -111,6 +120,7 @@ class AdminAbsencesFlow {
     DateTime? startDate,
     DateTime? endDate,
     required bool isSingleDay,
+    VoidCallback? onBack,
   }) {
     final initial = isStart
         ? (startDate ?? DateTime.now())
@@ -124,12 +134,13 @@ class AdminAbsencesFlow {
           : 'Data Final',
       height: BottomSheetHeight.flexible,
       onBack: () {
-        Navigator.of(context).pop();
+        Navigator.of(context, rootNavigator: true).pop();
         _showCreateSheet(
           context,
           startDate: startDate,
           endDate: endDate,
           isSingleDay: isSingleDay,
+          onBack: onBack,
         );
       },
       child: Column(
@@ -142,7 +153,7 @@ class AdminAbsencesFlow {
             onSelectionChanged: (args) {
               if (args.value is DateTime) {
                 final picked = args.value as DateTime;
-                Navigator.of(context).pop(); // Close date picker
+                Navigator.of(context, rootNavigator: true).pop(); // Close date picker
                 Future.microtask(() {
                   if (!context.mounted) {
                     return;
@@ -154,6 +165,7 @@ class AdminAbsencesFlow {
                       startDate: startDate,
                       endDate: endDate,
                       isSingleDay: isSingleDay,
+                      onBack: onBack,
                     );
                   } else {
                     DateTime? newStart = startDate;
@@ -171,6 +183,7 @@ class AdminAbsencesFlow {
                       startDate: newStart,
                       endDate: newEnd,
                       isSingleDay: isSingleDay,
+                      onBack: onBack,
                     );
                   }
                 });
@@ -189,19 +202,21 @@ class AdminAbsencesFlow {
     DateTime? startDate,
     DateTime? endDate,
     required bool isSingleDay,
+    VoidCallback? onBack,
   }) {
     showAppBottomSheet(
       context: context,
       title: 'Período',
       height: BottomSheetHeight.flexible,
       onBack: () {
-        Navigator.of(context).pop();
+        Navigator.of(context, rootNavigator: true).pop();
         _showDatePicker(
           context,
           isStart: true,
           startDate: startDate,
           endDate: endDate,
           isSingleDay: isSingleDay,
+          onBack: onBack,
         );
       },
       child: TimeRangeSheet(
@@ -213,12 +228,13 @@ class AdminAbsencesFlow {
             ? endDate.hour * 60 + endDate.minute
             : 1140,
         onConfirmed: (start, end) {
-          Navigator.of(context).pop();
+          Navigator.of(context, rootNavigator: true).pop();
           _showCreateSheet(
             context,
             startDate: start,
             endDate: end,
             isSingleDay: isSingleDay,
+            onBack: onBack,
           );
         },
       ),

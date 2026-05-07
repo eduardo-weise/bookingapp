@@ -3,6 +3,7 @@ import 'package:app/core/extensions/date_time_extensions.dart';
 import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_text_styles.dart';
 import 'package:app/core/theme/app_theme.dart';
+import '../services/absence_service.dart';
 import 'package:app/widgets/app_button.dart';
 import 'package:app/widgets/app_snackbar.dart';
 
@@ -10,7 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/absence_providers.dart';
 
 class CreateAbsenceSheet extends ConsumerStatefulWidget {
-  final VoidCallback onSaved;
+  final void Function(AbsenceDayModel absence) onSaved;
   final DateTime? initialStartDate;
   final DateTime? initialEndDate;
   final bool initialIsSingleDay;
@@ -62,12 +63,14 @@ class _CreateAbsenceSheetState extends ConsumerState<CreateAbsenceSheet> {
 
     setState(() => _isSaving = true);
     try {
-      await ref.read(absenceServiceProvider).createAbsence(startDate: _startDate!, endDate: end);
+      final absence = await ref.read(absenceServiceProvider).createAbsence(
+        startDate: _startDate!,
+        endDate: end,
+      );
       if (!mounted) return;
-      
-      ref.read(futureAbsencesProvider.notifier).refresh();
-      
-      widget.onSaved();
+
+      ref.read(futureAbsencesProvider.notifier).addAbsence(absence);
+      widget.onSaved(absence);
       AppSnackBar.showSuccess(context, 'Ausência registrada com sucesso!');
     } catch (e) {
       if (mounted) {

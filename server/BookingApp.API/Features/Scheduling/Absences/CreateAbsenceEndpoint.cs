@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace BookingApp.API.Features.Scheduling.CreateAbsence;
 
 public sealed record CreateAbsenceRequest(DateTime StartDate, DateTime EndDate);
+public sealed record CreateAbsenceResponse(Guid Id, DateTime StartDate, DateTime EndDate);
 
 public sealed class CreateAbsenceValidator : Validator<CreateAbsenceRequest>
 {
@@ -23,7 +24,7 @@ public sealed class CreateAbsenceValidator : Validator<CreateAbsenceRequest>
 }
 
 public sealed class CreateAbsenceEndpoint(ApplicationDbContext dbContext)
-	: Endpoint<CreateAbsenceRequest>
+	: Endpoint<CreateAbsenceRequest, CreateAbsenceResponse>
 {
 	public override void Configure()
 	{
@@ -61,6 +62,8 @@ public sealed class CreateAbsenceEndpoint(ApplicationDbContext dbContext)
 		await dbContext.AbsenceDays.AddAsync(absence, ct);
 		await dbContext.SaveChangesAsync(ct);
 
-		await Send.NoContentAsync(ct);
+		var response = new CreateAbsenceResponse(absence.Id, absence.StartDate, absence.EndDate);
+
+		await Send.CreatedAtAsync<CreateAbsenceEndpoint>(null, response, cancellation: ct);
 	}
 }

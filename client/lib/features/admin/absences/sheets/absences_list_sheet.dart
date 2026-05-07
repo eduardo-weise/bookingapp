@@ -74,8 +74,8 @@ class _AbsencesListSheetState extends ConsumerState<AbsencesListSheet> {
     try {
       await ref.read(absenceServiceProvider).deleteAbsence(absence.id);
       if (!mounted) return;
-      
-      ref.read(futureAbsencesProvider.notifier).refresh();
+
+      ref.read(futureAbsencesProvider.notifier).removeAbsence(absence.id);
       // If it was a past absence, we might need to refresh past too, 
       // but for simplicity we'll just remove it from local list for now 
       // since past is locally managed in this state for pagination.

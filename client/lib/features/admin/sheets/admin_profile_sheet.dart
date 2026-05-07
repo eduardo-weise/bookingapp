@@ -15,12 +15,14 @@ void showAdminProfileSheet(BuildContext context) {
     context: context,
     title: 'Editar Perfil',
     height: BottomSheetHeight.flexible,
-    child: const _AdminProfileSheetContent(),
+    child: _AdminProfileSheetContent(parentContext: context),
   );
 }
 
 class _AdminProfileSheetContent extends ConsumerWidget {
-  const _AdminProfileSheetContent();
+  const _AdminProfileSheetContent({required this.parentContext});
+
+  final BuildContext parentContext;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -57,9 +59,14 @@ class _AdminProfileSheetContent extends ConsumerWidget {
             variant: AppButtonVariant.secondary,
             fullWidth: true,
             onPressed: () {
-              final currentContext = Navigator.of(context).context;
-              Navigator.pop(context); // Close profile sheet
-              AdminAbsencesFlow.start(currentContext); // Open absences flow
+              Navigator.of(context).pop();
+              AdminAbsencesFlow.start(
+                parentContext,
+                onBack: () {
+                  Navigator.of(parentContext).pop();
+                  showAdminProfileSheet(parentContext);
+                },
+              );
             },
           ),
           const SizedBox(height: AppTheme.spacingMd),
