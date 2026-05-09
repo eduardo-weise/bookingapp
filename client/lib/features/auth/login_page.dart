@@ -61,6 +61,7 @@ class _LoginPageState extends State<LoginPage> {
         () => _errorMessage = e.toString().replaceAll('Exception: ', ''),
       );
       AppSnackBar.showError(context, _errorMessage!);
+      _passwordCtrl.clear();
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -114,6 +115,7 @@ class _LoginPageState extends State<LoginPage> {
       title: '',
       height: BottomSheetHeight.flexible,
       child: RecoveryEmailSheet(
+        initialEmail: _emailCtrl.text,
         onSuccess: (email) {
           nextEmail = email;
         },

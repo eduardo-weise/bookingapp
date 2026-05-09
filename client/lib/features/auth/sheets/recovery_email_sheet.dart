@@ -10,16 +10,17 @@ import '../../../widgets/app_snackbar.dart';
 import '../services/auth_service.dart';
 
 class RecoveryEmailSheet extends StatefulWidget {
-  final Function(String email) onSuccess;
+	final Function(String email) onSuccess;
+	final String? initialEmail;
 
-  const RecoveryEmailSheet({super.key, required this.onSuccess});
+	const RecoveryEmailSheet({super.key, required this.onSuccess, this.initialEmail});
 
   @override
   State<RecoveryEmailSheet> createState() => _RecoveryEmailSheetState();
 }
 
 class _RecoveryEmailSheetState extends State<RecoveryEmailSheet> {
-  final _emailController = TextEditingController();
+	late final _emailController = TextEditingController(text: widget.initialEmail);
   final _authService = AuthService();
   bool _isLoading = false;
 
