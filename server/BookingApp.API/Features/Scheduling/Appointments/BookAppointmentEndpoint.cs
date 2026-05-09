@@ -82,7 +82,7 @@ public sealed class BookAppointmentEndpoint(ApplicationDbContext dbContext)
 
 		var hasOverlap = await dbContext.Appointments
 			.AsNoTracking()
-			.AnyAsync(a => a.Status == AppointmentStatus.Scheduled &&
+			.AnyAsync(a => (a.Status == AppointmentStatus.Scheduled || a.Status == AppointmentStatus.Rescheduled) &&
 						   a.StartTime < endTime && a.EndTime > startTime, ct);
 
 		if (hasOverlap)

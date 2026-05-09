@@ -16,6 +16,8 @@ void showFutureAppointmentsDatePickerSheet({
   required AdminAppointmentsService appointmentsService,
   required Function(AdminAppointmentModel) onCancelAppointment,
   required Function(AdminAppointmentModel) onRescheduleAppointment,
+  required Function(AdminAppointmentModel) onNoShowAppointment,
+  Function(AdminAppointmentModel, VoidCallback onReopen)? onRescheduleWithReopen,
 }) {
   showAppBottomSheet(
     context: context,
@@ -41,12 +43,16 @@ void showFutureAppointmentsDatePickerSheet({
                     date: selectedDate,
                     onCancelAppointment: onCancelAppointment,
                     onRescheduleAppointment: onRescheduleAppointment,
+                    onNoShowAppointment: onNoShowAppointment,
                     onBack: () => showFutureAppointmentsDatePickerSheet(
                       context: context,
                       appointmentsService: appointmentsService,
                       onCancelAppointment: onCancelAppointment,
                       onRescheduleAppointment: onRescheduleAppointment,
+                      onNoShowAppointment: onNoShowAppointment,
+                      onRescheduleWithReopen: onRescheduleWithReopen,
                     ),
+                    onRescheduleWithReopen: onRescheduleWithReopen,
                   );
                 }
               });
@@ -63,7 +69,9 @@ void showAppointmentsForDateSheet({
   required DateTime date,
   required Function(AdminAppointmentModel) onCancelAppointment,
   required Function(AdminAppointmentModel) onRescheduleAppointment,
+  required Function(AdminAppointmentModel) onNoShowAppointment,
   VoidCallback? onBack,
+  Function(AdminAppointmentModel, VoidCallback onReopen)? onRescheduleWithReopen,
 }) {
   showAppBottomSheet(
     context: context,
@@ -81,6 +89,30 @@ void showAppointmentsForDateSheet({
       date: date,
       onCancelAppointment: onCancelAppointment,
       onRescheduleAppointment: onRescheduleAppointment,
+      onNoShowAppointment: (appointment) async {
+        Navigator.of(context).pop();
+        await Future.delayed(const Duration(milliseconds: 100));
+        try {
+          await onNoShowAppointment(appointment);
+        } finally {
+          if (context.mounted) {
+            Future.delayed(const Duration(milliseconds: 100), () {
+              if (context.mounted) {
+                showAppointmentsForDateSheet(
+                  context: context,
+                  date: date,
+                  onCancelAppointment: onCancelAppointment,
+                  onRescheduleAppointment: onRescheduleAppointment,
+                  onNoShowAppointment: onNoShowAppointment,
+                  onBack: onBack,
+                  onRescheduleWithReopen: onRescheduleWithReopen,
+                );
+              }
+            });
+          }
+        }
+      },
+      onRescheduleWithReopen: onRescheduleWithReopen,
     ),
   );
 }
@@ -89,11 +121,15 @@ class _AdminDateAppointmentsContent extends ConsumerWidget {
   final DateTime date;
   final Function(AdminAppointmentModel) onCancelAppointment;
   final Function(AdminAppointmentModel) onRescheduleAppointment;
+  final Function(AdminAppointmentModel) onNoShowAppointment;
+  final Function(AdminAppointmentModel, VoidCallback onReopen)? onRescheduleWithReopen;
 
   const _AdminDateAppointmentsContent({
     required this.date,
     required this.onCancelAppointment,
     required this.onRescheduleAppointment,
+    required this.onNoShowAppointment,
+    this.onRescheduleWithReopen,
   });
 
   @override
@@ -118,6 +154,7 @@ class _AdminDateAppointmentsContent extends ConsumerWidget {
             ...appointments.map(
               (a) {
                 final isPastStartTime = _isPastStartTime(a.startTime);
+                final showNoShow = _isTodayOrBefore(a.startTime);
                 return Padding(
                   padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
                   child: AppointmentCard(
@@ -129,7 +166,31 @@ class _AdminDateAppointmentsContent extends ConsumerWidget {
                     variant: AppointmentCardVariant.full,
                     onReschedulePressed: isPastStartTime
                         ? null
-                        : () => onRescheduleAppointment(a),
+                        : () {
+                            if (onRescheduleWithReopen != null) {
+                              Navigator.of(context).pop();
+                              Future.delayed(const Duration(milliseconds: 100), () {
+                                if (context.mounted) {
+                                  onRescheduleWithReopen!(
+                                    a,
+                                    () => showAppointmentsForDateSheet(
+                                      context: context,
+                                      date: date,
+                                      onCancelAppointment: onCancelAppointment,
+                                      onRescheduleAppointment: onRescheduleAppointment,
+                                      onNoShowAppointment: onNoShowAppointment,
+                                      onRescheduleWithReopen: onRescheduleWithReopen,
+                                    ),
+                                  );
+                                }
+                              });
+                            } else {
+                              onRescheduleAppointment(a);
+                            }
+                          },
+                    onNoShowPressed: showNoShow
+                        ? () => onNoShowAppointment(a)
+                        : null,
                     onCancelPressed: () {
                       onCancelAppointment(a);
                       // No need to manually refresh here, the consumer of the callback 
@@ -153,6 +214,14 @@ class _AdminDateAppointmentsContent extends ConsumerWidget {
   }
   bool _isPastStartTime(DateTime startTime) {
     return startTime.localDateTime.isBefore(DateTime.now());
+  }
+
+  bool _isTodayOrBefore(DateTime startTime) {
+    final now = DateTime.now();
+    final local = startTime.localDateTime;
+    return local.year < now.year ||
+        (local.year == now.year && local.month < now.month) ||
+        (local.year == now.year && local.month == now.month && local.day <= now.day);
   }
 }
 

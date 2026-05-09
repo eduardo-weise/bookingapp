@@ -29,6 +29,7 @@ class AppointmentCard extends StatelessWidget {
   final AppointmentCardVariant variant;
   final VoidCallback? onTap;
   final VoidCallback? onReschedulePressed;
+  final VoidCallback? onNoShowPressed;
   final VoidCallback? onCancelPressed;
 
   const AppointmentCard({
@@ -41,6 +42,7 @@ class AppointmentCard extends StatelessWidget {
     this.variant = AppointmentCardVariant.full,
     this.onTap,
     this.onReschedulePressed,
+    this.onNoShowPressed,
     this.onCancelPressed,
   });
 
@@ -161,7 +163,17 @@ class AppointmentCard extends StatelessWidget {
                   onPressed: onReschedulePressed,
                 ),
               ),
-              const SizedBox(width: AppTheme.spacingLg),
+              if (onNoShowPressed != null) ...[
+                const SizedBox(width: AppTheme.spacingSm),
+                Expanded(
+                  child: AppButton(
+                    label: 'No Show',
+                    variant: AppButtonVariant.primary,
+                    onPressed: onNoShowPressed,
+                  ),
+                ),
+              ],
+              const SizedBox(width: AppTheme.spacingSm),
               Expanded(
                 child: AppButton(
                   label: 'Cancelar',

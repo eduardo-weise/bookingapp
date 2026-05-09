@@ -13,11 +13,13 @@ import '../services/admin_appointments_service.dart';
 class AdminTodayAppointmentsSection extends ConsumerWidget {
   final Function(AdminAppointmentModel) onCancelAppointment;
   final Function(AdminAppointmentModel) onRescheduleAppointment;
+  final Function(AdminAppointmentModel) onNoShowAppointment;
 
   const AdminTodayAppointmentsSection({
     super.key,
     required this.onCancelAppointment,
     required this.onRescheduleAppointment,
+    required this.onNoShowAppointment,
   });
 
   String _formatTodayBadge(DateTime date) =>
@@ -108,6 +110,7 @@ class AdminTodayAppointmentsSection extends ConsumerWidget {
                     onReschedulePressed: isPastStartTime
                         ? null
                         : () => onRescheduleAppointment(appointment),
+                    onNoShowPressed: () => onNoShowAppointment(appointment),
                     onCancelPressed: () => onCancelAppointment(appointment),
                   ),
                 );

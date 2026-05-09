@@ -157,12 +157,60 @@ class AdminHomePage extends ConsumerWidget {
     );
   }
 
-  Future<void> _showRescheduleAppointmentSheet(
+  Future<void> _showNoShowAppointmentSheet(
     BuildContext context,
     WidgetRef ref,
     AdminAppointmentModel appointment,
   ) async {
-    ServiceModel? service;
+    await showAppointmentActionSheet(
+      context: context,
+      serviceName: '${appointment.clientName} • ${appointment.serviceName}',
+      startTime: appointment.startTime,
+      servicePrice: appointment.servicePrice,
+      isAdmin: true,
+      action: AppointmentActionType.noShow,
+      onConfirm: (applyFee) async {
+        try {
+          await ref.read(adminAppointmentsServiceProvider).markNoShow(
+            appointmentId: appointment.id,
+            applyNoShowFee: applyFee,
+          );
+          if (appointment.startTime.isSameDateUtc(DateTime.now())) {
+            ref.read(adminTodayAppointmentsProvider.notifier).refresh();
+          }
+          // Refresh debts since a new no-show debt was created
+          ref.read(adminPendingDebtsProvider.notifier).refresh();
+
+          if (!context.mounted) return;
+          AppSnackBar.showSuccess(
+            context,
+            applyFee
+                ? 'No-show registrado com sucesso. Multa de 50% aplicada ao cliente.'
+                : 'No-show registrado sem multa.',
+          );
+        } catch (e) {
+          if (!context.mounted) return;
+          AppSnackBar.showError(
+            context,
+            e.toString().replaceAll('Exception: ', ''),
+          );
+          rethrow;
+        }
+      },
+    );
+  }
+
+  Future<void> _showRescheduleAppointmentSheet(
+    BuildContext context,
+    WidgetRef ref,
+    AdminAppointmentModel appointment, {
+    VoidCallback? onReopenPreviousSheet,
+  }) async {
+    final isWithin24Hours = appointment.startTime.toUtc().isBefore(
+      DateTime.now().toUtc().add(const Duration(hours: 24)),
+    );
+
+    late ServiceModel service;
     try {
       final services = await BookingService().getServices();
       service = services.firstWhere(
@@ -177,6 +225,23 @@ class AdminHomePage extends ConsumerWidget {
 
     if (!context.mounted) return;
 
+    if (!isWithin24Hours) {
+      BookingFlow.startReschedule(
+        context,
+        rescheduleContext: RescheduleContext(
+          originalAppointmentId: appointment.id,
+          applyFee: false,
+        ),
+        preselectedService: service,
+        onRescheduled: () {
+          ref.read(adminTodayAppointmentsProvider.notifier).refresh();
+          onReopenPreviousSheet?.call();
+        },
+        onBack: onReopenPreviousSheet,
+      );
+      return;
+    }
+
     await showAppointmentActionSheet(
       context: context,
       serviceName: '${appointment.clientName} • ${appointment.serviceName}',
@@ -186,19 +251,22 @@ class AdminHomePage extends ConsumerWidget {
       action: AppointmentActionType.reschedule,
       onConfirm: (applyFee) async {
         if (!context.mounted) return;
+
         BookingFlow.startReschedule(
           context,
           rescheduleContext: RescheduleContext(
             originalAppointmentId: appointment.id,
             applyFee: applyFee,
           ),
-          preselectedService: service!,
+          preselectedService: service,
           onRescheduled: () {
             ref.read(adminTodayAppointmentsProvider.notifier).refresh();
             if (applyFee) {
               ref.read(adminPendingDebtsProvider.notifier).refresh();
             }
+            onReopenPreviousSheet?.call();
           },
+          onBack: onReopenPreviousSheet,
         );
       },
     );
@@ -212,6 +280,15 @@ class AdminHomePage extends ConsumerWidget {
           _showCancelAppointmentSheet(context, ref, appointment),
       onRescheduleAppointment: (appointment) =>
           _showRescheduleAppointmentSheet(context, ref, appointment),
+      onNoShowAppointment: (appointment) =>
+          _showNoShowAppointmentSheet(context, ref, appointment),
+      onRescheduleWithReopen: (appointment, onReopen) =>
+          _showRescheduleAppointmentSheet(
+            context,
+            ref,
+            appointment,
+            onReopenPreviousSheet: onReopen,
+          ),
     );
   }
 
@@ -248,6 +325,8 @@ class AdminHomePage extends ConsumerWidget {
                       _showRescheduleAppointmentSheet(context, ref, appointment),
                   onCancelAppointment: (appointment) =>
                       _showCancelAppointmentSheet(context, ref, appointment),
+                  onNoShowAppointment: (appointment) =>
+                      _showNoShowAppointmentSheet(context, ref, appointment),
                 ),
                 const SizedBox(height: AppTheme.spacingXl),
               ],

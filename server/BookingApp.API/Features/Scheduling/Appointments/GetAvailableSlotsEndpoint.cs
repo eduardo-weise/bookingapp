@@ -67,7 +67,7 @@ public sealed class GetAvailableSlotsEndpoint(ApplicationDbContext dbContext)
 
 		var existingAppointments = await dbContext.Appointments
 			.AsNoTracking()
-			.Where(a => a.Status == AppointmentStatus.Scheduled && a.StartTime.Date == targetDate)
+			.Where(a => (a.Status == AppointmentStatus.Scheduled || a.Status == AppointmentStatus.Rescheduled) && a.StartTime.Date == targetDate)
 			.OrderBy(a => a.StartTime)
 			.ToListAsync(ct);
 

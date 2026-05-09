@@ -1,5 +1,4 @@
 using BookingApp.Domain.Common;
-using BookingApp.Domain.Events;
 
 namespace BookingApp.Domain.Entities;
 
@@ -34,7 +33,7 @@ public sealed class Appointment : AggregateRoot
 
 	public void Cancel(bool allowLateCancellation = false)
 	{
-		if (Status != AppointmentStatus.Scheduled)
+		if (!IsActive())
 		{
 			throw new InvalidOperationException("Somente agendamentos ativos podem ser cancelados.");
 		}
@@ -50,7 +49,7 @@ public sealed class Appointment : AggregateRoot
 
 	public void Reschedule(Guid newServiceId, DateTime newStartTime, DateTime newEndTime, bool allowLateReschedule = false)
 	{
-		if (Status != AppointmentStatus.Scheduled)
+		if (!IsActive())
 		{
 			throw new InvalidOperationException("Somente agendamentos ativos podem ser reagendados.");
 		}
@@ -66,17 +65,21 @@ public sealed class Appointment : AggregateRoot
 		Status = AppointmentStatus.Rescheduled;
 	}
 
-	public void MarkAsNoShow()
+	public void NoShow()
 	{
-		if (Status == AppointmentStatus.Scheduled && DateTime.UtcNow > StartTime)
+		if (IsActive())
 		{
 			Status = AppointmentStatus.NoShow;
-			AddDomainEvent(new AppointmentNoShowed(Id, ClientId));
 		}
 	}
 
 	public void ChangeClient(Guid newClientId)
 	{
 		ClientId = newClientId;
+	}
+
+	public bool IsActive()
+	{
+		return Status is AppointmentStatus.Scheduled or AppointmentStatus.Rescheduled;
 	}
 }

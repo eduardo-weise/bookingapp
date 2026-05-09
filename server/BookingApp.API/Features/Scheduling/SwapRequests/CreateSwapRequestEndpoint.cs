@@ -35,7 +35,7 @@ public sealed class CreateSwapRequestEndpoint(ApplicationDbContext dbContext)
 
 		if (requesterAppt is null ||
 			requesterAppt.ClientId != clientId ||
-			requesterAppt.Status != AppointmentStatus.Scheduled)
+			!requesterAppt.IsActive())
 		{
 			throw new ConflictException("Agendamento de origem inválido ou não pertence a você.");
 		}
@@ -43,7 +43,7 @@ public sealed class CreateSwapRequestEndpoint(ApplicationDbContext dbContext)
 		var targetAppt = await dbContext.Appointments
 			.SingleOrDefaultAsync(a => a.Id == req.TargetAppointmentId, ct);
 
-		if (targetAppt is null || targetAppt.Status != AppointmentStatus.Scheduled)
+		if (targetAppt is null || !targetAppt.IsActive())
 		{
 			throw new ConflictException("Agendamento de destino inválido ou indisponível.");
 		}

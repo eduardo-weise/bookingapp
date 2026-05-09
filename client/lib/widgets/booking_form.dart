@@ -70,12 +70,14 @@ class BookingFlow {
     required RescheduleContext rescheduleContext,
     required ServiceModel preselectedService,
     VoidCallback? onRescheduled,
+    VoidCallback? onBack,
   }) {
     _showDatePickerSheet(
       context,
       preselectedService,
       rescheduleContext: rescheduleContext,
       onBookingConfirmed: onRescheduled,
+      onBack: onBack,
     );
   }
 
@@ -155,6 +157,7 @@ class BookingFlow {
     BookingTargetClient? selectedTargetClient,
     VoidCallback? onBookingConfirmed,
     RescheduleContext? rescheduleContext,
+    VoidCallback? onBack,
   }) {
     showAppBottomSheet(
       context: context,
@@ -172,7 +175,10 @@ class BookingFlow {
                 onBookingConfirmed: onBookingConfirmed,
               );
             }
-          : () => Navigator.of(context).pop(),
+          : () {
+              Navigator.of(context).pop();
+              onBack?.call();
+            },
       child: _DatePickerSheetContent(
         bookingService: _service,
         service: service,

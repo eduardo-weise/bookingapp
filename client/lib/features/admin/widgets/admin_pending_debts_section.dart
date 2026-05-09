@@ -27,11 +27,7 @@ class AdminPendingDebtsSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader(
-          title: 'Débitos Pendentes',
-          actionLabel: 'Ver todos',
-          onActionTap: onSeeAll,
-        ),
+        SectionHeader(title: 'Débitos Pendentes', onActionTap: onSeeAll),
         const SizedBox(height: AppTheme.spacingMd),
         debtsAsync.when(
           data: (summaries) {

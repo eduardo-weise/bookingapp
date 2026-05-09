@@ -80,7 +80,7 @@ public sealed class GetUnavailableDatesEndpoint(ApplicationDbContext dbContext)
 		var existingAppointments = await dbContext.Appointments
 			.AsNoTracking()
 			.Where(a =>
-				a.Status == AppointmentStatus.Scheduled &&
+				(a.Status == AppointmentStatus.Scheduled || a.Status == AppointmentStatus.Rescheduled) &&
 				a.StartTime >= startDate &&
 				a.StartTime < endDateExclusive)
 			.OrderBy(a => a.StartTime)

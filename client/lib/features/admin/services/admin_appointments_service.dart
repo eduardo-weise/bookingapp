@@ -79,6 +79,20 @@ class AdminAppointmentsService {
     }
   }
 
+  Future<void> markNoShow({
+    required String appointmentId,
+    required bool applyNoShowFee,
+  }) async {
+    try {
+      await _client.post(
+        '/appointments/$appointmentId/noshow',
+        data: <String, dynamic>{'applyNoShowFee': applyNoShowFee},
+      );
+    } on DioException catch (e) {
+      throw Exception(_handleError(e));
+    }
+  }
+
   String _handleError(DioException e) {
     if (e.response != null) {
       final data = e.response!.data;

@@ -6,7 +6,7 @@ import 'package:app/core/theme/app_theme.dart';
 import 'package:app/widgets/app_bottom_sheet.dart';
 import 'package:app/widgets/app_button.dart';
 
-enum AppointmentActionType { cancel, reschedule }
+enum AppointmentActionType { cancel, reschedule, noShow }
 
 /// Shows a confirmation sheet for appointment actions (cancel or reschedule).
 ///
@@ -24,9 +24,11 @@ Future<void> showAppointmentActionSheet({
 }) {
   return showAppBottomSheet(
     context: context,
-    title: action == AppointmentActionType.cancel
-        ? 'Cancelar Agendamento'
-        : 'Reagendar Atendimento',
+    title: switch (action) {
+      AppointmentActionType.cancel => 'Cancelar Agendamento',
+      AppointmentActionType.reschedule => 'Reagendar Atendimento',
+      AppointmentActionType.noShow => 'Marcar como No-Show',
+    },
     height: BottomSheetHeight.flexible,
     child: _AppointmentActionSheetContent(
       serviceName: serviceName,
@@ -67,9 +69,10 @@ class _AppointmentActionSheetContentState
   bool _applyFee = true;
 
   bool get _isCancel => widget.action == AppointmentActionType.cancel;
+  bool get _isNoShow => widget.action == AppointmentActionType.noShow;
 
-  /// Fee percentage: 35% for cancellation, 15% for reschedule.
-  double get _feePercent => _isCancel ? 0.35 : 0.15;
+  /// Fee percentage: 35% for cancellation, 15% for reschedule, 50% for no-show.
+  double get _feePercent => _isCancel ? 0.35 : _isNoShow ? 0.50 : 0.15;
 
   bool get _isWithin1Hour {
     final now = DateTime.now().toUtc();
@@ -98,6 +101,13 @@ class _AppointmentActionSheetContentState
       '${(_feePercent * 100).toStringAsFixed(0)}%';
 
   String get _message {
+    if (_isNoShow) {
+      if (widget.isAdmin) {
+        return 'O cliente não compareceu ao atendimento. Você pode optar por aplicar ou não a taxa de $_formattedFeePercent. Taxa estimada: $_formattedFeeAmount.';
+      }
+      return 'O cliente não compareceu ao atendimento? Será gerada uma multa automática de 50% do valor do serviço.';
+    }
+
     if (_isCancel) {
       if (!_isWithin24Hours) {
         return 'Tem certeza que deseja cancelar este atendimento?';
@@ -122,8 +132,8 @@ class _AppointmentActionSheetContentState
   /// - Reschedule: disabled for clients within 1h, disabled for admins AFTER start time.
   /// - Cancel: never disabled due to time.
   bool get _isBlocked {
-    if (_isCancel) {
-      return false; // Cancel is never blocked by time
+    if (_isCancel || _isNoShow) {
+      return false;
     }
     if (widget.isAdmin) {
       return _isPastStartTime; // Admin: blocked only after start
@@ -138,7 +148,7 @@ class _AppointmentActionSheetContentState
 
       // For reschedule, close confirmation first, then open booking flow.
       // This avoids popping the newly opened sheet by mistake.
-      if (!_isCancel) {
+      if (!_isCancel && !_isNoShow) {
         if (mounted) {
           Navigator.of(context).pop();
         }
@@ -156,7 +166,7 @@ class _AppointmentActionSheetContentState
 
   @override
   Widget build(BuildContext context) {
-    final shouldShowFeeOption = widget.isAdmin && _isWithin24Hours;
+    final shouldShowFeeOption = widget.isAdmin && (_isWithin24Hours || _isNoShow);
 
     return SingleChildScrollView(
       child: Column(
@@ -244,7 +254,9 @@ class _AppointmentActionSheetContentState
                   label: 'Confirmar',
                   variant: _isCancel
                       ? AppButtonVariant.danger
-                      : AppButtonVariant.primary,
+                      : _isNoShow
+                          ? AppButtonVariant.primary
+                          : AppButtonVariant.primary,
                   fullWidth: true,
                   small: true,
                   isLoading: _isSubmitting,
