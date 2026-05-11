@@ -1,0 +1,9 @@
+{
+  "plugin": [
+    "@warp-dot-dev/opencode-warp"
+  ],
+  "instructions": [
+    "AGENTS.md", 
+    ".agents/*.md"
+  ]
+}

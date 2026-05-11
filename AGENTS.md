@@ -104,3 +104,62 @@ flutter run              # default device
 - Sem CI/CD, sem testes
 - `TERMS_OF_USE.md` = design doc da feature AcceptTerms (não é legal)
 - Ver `.github/copilot-instructions.md` (estilo de pensamento PT-BR)
+
+## Regras de Negócio (fonte: `BUSINESS_RULES.md`)
+
+> Antes de implementar qualquer feature que toque em agendamentos, pagamentos, autenticação ou permissões, **ler `BUSINESS_RULES.md` na raiz**.
+
+### Estados de Agendamento (máquina de estados)
+
+```
+Scheduled → Canceled | Rescheduled | NoShow | Completed
+Rescheduled → Canceled | Rescheduled | NoShow | Completed
+```
+
+- **Ativo**: `Scheduled` ou `Rescheduled` → únicos que podem ser cancelados, reagendados ou marcados como no-show.
+- **Final**: `Canceled`, `Completed`, `NoShow` → sem ação posterior.
+
+### Taxas e Multas
+
+| Ação | Prazo | Taxa Cliente | Taxa Admin |
+|---|---|---|---|
+| Cancelamento | ≤ 24h | **35% obrigatória** | 35% opcional |
+| Reagendamento | ≤ 24h | **15% obrigatória** | 15% opcional |
+| No-Show | após horário | — | 50% opcional |
+
+### Autorização por Role
+
+- `Admin` / `Manager` → policy `AdminOrManager` (mesmas permissões).
+- `Client` → policy `All`, só pode operar no próprio `ClientId`.
+- Admin pode agendar em nome de outro cliente (`ClientId` opcional em `POST /appointments`).
+
+### Regras de Tempo (Agendamentos)
+
+- **Cancelamento tardio**: < 24h do horário.
+- **Reagendamento bloqueado (cliente)**: < 1h do horário.
+- **No-show**: só pode ser marcado **após** o horário do agendamento (`UtcNow > StartTime`).
+- **Janelas de atendimento**: 08:00–11:00 e 14:00–21:00.
+- **Slots**: gerados a cada 30 minutos dentro das janelas.
+
+### Regras de Conflito
+
+- Não pode haver overlap com outro agendamento ativo (`Scheduled` ou `Rescheduled`).
+- Não pode agendar em dia de ausência programada.
+- Swap request: ambos agendamentos devem estar ativos; TTL 24h.
+
+### MFA e Auth
+
+- MFA via TOTP (Google Authenticator); secret 20 bytes Base32.
+- Login com MFA → retorna `TempToken` → cliente chama `POST /auth/mfa/verify` com código 6 dígitos.
+- Recuperação de senha: PIN de 6 dígitos, válido por **15 minutos**.
+- Refresh tokens: revogados em massa no soft delete ou novo login.
+
+### Flutter — Regras de UI Críticas
+
+- **Login**: email **não é limpo** em erro; senha **é limpa** automaticamente.
+- **Cadastro**: senha mínimo **6 caracteres** (inconsistência: backend exige 8).
+- **Cliente**: no-show **nunca é exibido** na visão do cliente.
+- **Cliente**: remarcar **desabilitado** se < 1h do horário.
+- **Admin**: no-show só aparece se data do agendamento ≤ hoje (`_isTodayOrBefore`).
+- **Admin**: remarcar sem confirmação se > 24h do horário.
+- **Booking flow**: `minDate = hoje`, `maxDate = hoje + 90 dias`; domingo/segunda bloqueados para cliente.
