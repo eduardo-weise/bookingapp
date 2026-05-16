@@ -74,7 +74,7 @@ final class FutureAbsencesProvider
   FutureAbsences create() => FutureAbsences();
 }
 
-String _$futureAbsencesHash() => r'c34a893e000abd1e5b402d3c8529e9a848fc4c46';
+String _$futureAbsencesHash() => r'b2dc161dcb01d4579e7bf4d2155c55757d7af2d7';
 
 abstract class _$FutureAbsences extends $AsyncNotifier<List<AbsenceDayModel>> {
   FutureOr<List<AbsenceDayModel>> build();
@@ -123,7 +123,7 @@ final class PastAbsencesProvider
   PastAbsences create() => PastAbsences();
 }
 
-String _$pastAbsencesHash() => r'610ad50049c793693248c566bc62777237629740';
+String _$pastAbsencesHash() => r'13814675835596fd01c61ab1af2b33e324a0aaa9';
 
 abstract class _$PastAbsences extends $AsyncNotifier<List<AbsenceDayModel>> {
   FutureOr<List<AbsenceDayModel>> build();

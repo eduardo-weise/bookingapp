@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookingApp.API.Features.Users.GetClients;
 
-public sealed record ClientListItemDto(Guid Id, string DisplayName, string Email);
+public sealed record ClientListItemDto(Guid Id, string DisplayName, string Email, int ExtraDurationMinutes, string? AvatarUrl);
 
 public sealed class GetClientsEndpoint(ApplicationDbContext dbContext)
 	: EndpointWithoutRequest<List<ClientListItemDto>>
@@ -27,7 +27,9 @@ public sealed class GetClientsEndpoint(ApplicationDbContext dbContext)
 			.Select(u => new ClientListItemDto(
 				u.Id,
 				string.IsNullOrWhiteSpace(u.Name) ? u.Email : u.Name!,
-				u.Email
+				u.Email,
+				(int)u.ExtraServiceDuration.TotalMinutes,
+				u.AvatarUrl
 			))
 			.ToListAsync(ct);
 

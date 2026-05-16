@@ -23,6 +23,27 @@ AdminDebtsService adminDebtsService(Ref ref) {
 
 // State Providers
 @riverpod
+class AdminAllClients extends _$AdminAllClients {
+  @override
+  FutureOr<List<AdminClientModel>> build() {
+    return ref.watch(adminClientsServiceProvider).getClients();
+  }
+
+  Future<void> refresh() async {
+    if (!ref.mounted) {
+      return;
+    }
+    final service = ref.read(adminClientsServiceProvider);
+    state = const AsyncValue.loading();
+    final nextState = await AsyncValue.guard(() => service.getClients());
+    if (!ref.mounted) {
+      return;
+    }
+    state = nextState;
+  }
+}
+
+@riverpod
 class AdminPendingDebts extends _$AdminPendingDebts {
   @override
   FutureOr<List<AdminClientDebtSummary>> build() {

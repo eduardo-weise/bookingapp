@@ -15,7 +15,7 @@ import 'widgets/admin_stats_section.dart';
 import 'widgets/admin_pending_debts_section.dart';
 import 'widgets/admin_today_appointments_section.dart';
 import 'sheets/admin_all_debts_sheet.dart';
-import 'sheets/admin_debt_clients_sheet.dart';
+import 'sheets/admin_clients_sheet.dart';
 import 'sheets/admin_agenda_sheets.dart';
 import 'sheets/admin_profile_sheet.dart';
 
@@ -80,12 +80,12 @@ class AdminHomePage extends ConsumerWidget {
       onCancelDebts: (clientId, debtIds) => _cancelDebts(context, ref, clientId, debtIds),
       clientId: summary.clientId,
       clientName: summary.clientName,
-      onBackToClients: () => _showAllDebtsSheet(context, ref),
+      onBackToClients: () => _showAllClientsSheet(context, ref),
     );
   }
 
-  void _showAllDebtsSheet(BuildContext context, WidgetRef ref) {
-    showAdminDebtClientsSheet(
+  void _showAllClientsSheet(BuildContext context, WidgetRef ref) {
+    showAdminClientsSheet(
       context: context,
       onPayDebts: (clientId, debtIds) => _payDebts(context, ref, clientId, debtIds),
       onCancelDebts: (clientId, debtIds) => _cancelDebts(context, ref, clientId, debtIds),
@@ -316,7 +316,7 @@ class AdminHomePage extends ConsumerWidget {
                 const AdminStatsSection(),
                 const SizedBox(height: AppTheme.spacingLg),
                 AdminPendingDebtsSection(
-                  onSeeAll: () => _showAllDebtsSheet(context, ref),
+                  onSeeAll: () => _showAllClientsSheet(context, ref),
                   onDebtSelected: (summary) =>
                       _showClientDebts(context, ref, summary),
                 ),
@@ -343,12 +343,12 @@ class AdminHomePage extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           FloatingActionButton.small(
-            heroTag: 'admin_debts_fab',
-            onPressed: () => _showAllDebtsSheet(context, ref),
+            heroTag: 'admin_clients_fab',
+            onPressed: () => _showAllClientsSheet(context, ref),
             backgroundColor: AppColors.surface,
-            foregroundColor: AppColors.statusCancelled,
+            foregroundColor: AppColors.brandPrimary,
             elevation: 4,
-            child: const Icon(Icons.attach_money),
+            child: const Icon(Icons.group),
           ),
           const SizedBox(height: AppTheme.spacingMd),
           FloatingActionButton.small(

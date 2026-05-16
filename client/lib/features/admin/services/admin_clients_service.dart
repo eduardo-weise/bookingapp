@@ -5,11 +5,15 @@ class AdminClientModel {
   final String id;
   final String displayName;
   final String email;
+  final int extraDurationMinutes;
+  final String? avatarUrl;
 
   const AdminClientModel({
     required this.id,
     required this.displayName,
     required this.email,
+    required this.extraDurationMinutes,
+    this.avatarUrl,
   });
 
   factory AdminClientModel.fromJson(Map<String, dynamic> json) {
@@ -17,6 +21,8 @@ class AdminClientModel {
       id: json['id'] as String,
       displayName: json['displayName'] as String,
       email: json['email'] as String,
+      extraDurationMinutes: json['extraDurationMinutes'] as int? ?? 0,
+      avatarUrl: json['avatarUrl'] as String?,
     );
   }
 }
@@ -37,6 +43,17 @@ class AdminClientsService {
             (item) => AdminClientModel.fromJson(item as Map<String, dynamic>),
           )
           .toList();
+    } on DioException catch (e) {
+      throw Exception(_handleError(e));
+    }
+  }
+
+  Future<void> updateClientExtraDuration(String clientId, int minutes) async {
+    try {
+      await _client.patch(
+        '/users/clients/$clientId/extra-duration',
+        data: {'extraDurationMinutes': minutes},
+      );
     } on DioException catch (e) {
       throw Exception(_handleError(e));
     }

@@ -152,6 +152,56 @@ final class AdminDebtsServiceProvider
 
 String _$adminDebtsServiceHash() => r'60bac0342e32a95e9c69d370b96db08425f88995';
 
+@ProviderFor(AdminAllClients)
+final adminAllClientsProvider = AdminAllClientsProvider._();
+
+final class AdminAllClientsProvider
+    extends $AsyncNotifierProvider<AdminAllClients, List<AdminClientModel>> {
+  AdminAllClientsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'adminAllClientsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$adminAllClientsHash();
+
+  @$internal
+  @override
+  AdminAllClients create() => AdminAllClients();
+}
+
+String _$adminAllClientsHash() => r'fe336cdeb253cf5804fa1869662a8a526f01902d';
+
+abstract class _$AdminAllClients
+    extends $AsyncNotifier<List<AdminClientModel>> {
+  FutureOr<List<AdminClientModel>> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref =
+        this.ref
+            as $Ref<AsyncValue<List<AdminClientModel>>, List<AdminClientModel>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                AsyncValue<List<AdminClientModel>>,
+                List<AdminClientModel>
+              >,
+              AsyncValue<List<AdminClientModel>>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(AdminPendingDebts)
 final adminPendingDebtsProvider = AdminPendingDebtsProvider._();
 
@@ -180,7 +230,7 @@ final class AdminPendingDebtsProvider
   AdminPendingDebts create() => AdminPendingDebts();
 }
 
-String _$adminPendingDebtsHash() => r'65e003bdc8a4d1ecc0c52b9b8093e9d1cebf49e5';
+String _$adminPendingDebtsHash() => r'b69e38a10df0e60088aa7c4dc2656dde0a42f6bf';
 
 abstract class _$AdminPendingDebts
     extends $AsyncNotifier<List<AdminClientDebtSummary>> {
@@ -238,7 +288,7 @@ final class AdminTodayAppointmentsProvider
 }
 
 String _$adminTodayAppointmentsHash() =>
-    r'b18d6f1117064bf7b3932c47cc8c2c36f6112598';
+    r'388e95282ce9a2133c2e53ff2b6642bfbde2536d';
 
 abstract class _$AdminTodayAppointments
     extends $AsyncNotifier<List<AdminAppointmentModel>> {
@@ -313,7 +363,7 @@ final class AdminDateAppointmentsProvider
 }
 
 String _$adminDateAppointmentsHash() =>
-    r'faa698dbb963cae35b59a6da0d397f6f62b0708c';
+    r'7f91d52234078855479982255cfd1ef6434fc52b';
 
 final class AdminDateAppointmentsFamily extends $Family
     with
