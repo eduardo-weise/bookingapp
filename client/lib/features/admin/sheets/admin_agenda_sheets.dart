@@ -32,6 +32,8 @@ void showFutureAppointmentsDatePickerSheet({
         const SizedBox(height: AppTheme.spacingMd),
         AppDatePicker(
           selectionMode: DateRangePickerSelectionMode.single,
+          // Domingos são bloqueados em todos os contextos de agendamento.
+          selectableDayPredicate: (date) => date.weekday != DateTime.sunday,
           onSelectionChanged: (args) {
             if (args.value is DateTime) {
               final selectedDate = args.value as DateTime;

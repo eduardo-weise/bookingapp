@@ -16,6 +16,7 @@ class AppDatePicker extends StatelessWidget {
   final DateTime? minDate;
   final DateTime? maxDate;
   final List<DateTime>? blackoutDates;
+  final List<DateTime>? specialDates;
   final void Function(DateRangePickerSelectionChangedArgs)? onSelectionChanged;
   final void Function(DateRangePickerViewChangedArgs)? onViewChanged;
   final bool Function(DateTime date)? selectableDayPredicate;
@@ -29,6 +30,7 @@ class AppDatePicker extends StatelessWidget {
     this.minDate,
     this.maxDate,
     this.blackoutDates,
+    this.specialDates,
     this.onSelectionChanged,
     this.onViewChanged,
     this.selectableDayPredicate,
@@ -61,6 +63,7 @@ class AppDatePicker extends StatelessWidget {
           dayFormat: 'E',
           viewHeaderHeight: 40,
           blackoutDates: blackoutDates,
+          specialDates: specialDates,
           viewHeaderStyle: DateRangePickerViewHeaderStyle(
             textStyle: TextStyle(
               color: AppColors.textSecondary,
@@ -84,6 +87,16 @@ class AppDatePicker extends StatelessWidget {
           blackoutDatesDecoration: BoxDecoration(
             color: AppColors.cancelledBg,
             shape: BoxShape.circle,
+          ),
+          // Dias com agendamento existente: azul-claro
+          specialDatesDecoration: BoxDecoration(
+            color: Color(0xFFBBDEFB),
+            shape: BoxShape.circle,
+          ),
+          specialDatesTextStyle: TextStyle(
+            color: Color(0xFF1565C0),
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
           ),
           todayTextStyle: TextStyle(
             color: AppColors.brandPrimary,

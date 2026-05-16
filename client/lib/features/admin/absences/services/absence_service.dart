@@ -18,11 +18,7 @@ class AbsenceDayModel {
     required DateTime startDate,
     required DateTime endDate,
   }) {
-    return AbsenceDayModel(
-      id: id,
-      startDate: startDate,
-      endDate: endDate,
-    );
+    return AbsenceDayModel(id: id, startDate: startDate, endDate: endDate);
   }
 
   factory AbsenceDayModel.fromJson(Map<String, dynamic> json) {
@@ -63,18 +59,19 @@ class AbsenceDayModel {
   }
 
   String get formattedDate {
-    // Single day with time: "seg, 29/04/2026 (08:00 - 16:55)"
+    // Dia único com horário: "sáb, 30/05/2026 (08:00 - 19:00)"
     if (isSingleDayWithTime) {
       return '${_formatDateWithWeekday(startDate)} (${_formatTime(startDate)} - ${_formatTime(endDate)})';
     }
 
-    // Single day without time: "seg, 29/04/2026"
+    // Dia único sem horário: "seg, 29/04/2026"
     if (isSingleDay) {
       return _formatDateWithWeekday(startDate);
     }
 
-    // Period: "seg, 18/05/2026 - sex, 20/05/2026"
-    return '${_formatDateWithWeekday(startDate)} - ${_formatDateWithWeekday(endDate)}';
+    // Período: endDate é fim exclusivo (meia-noite do próximo dia), subtrair 1 dia para exibição.
+    final displayEndDate = endDate.subtract(const Duration(days: 1));
+    return '${_formatDateWithWeekday(startDate)} - ${_formatDateWithWeekday(displayEndDate)}';
   }
 }
 
@@ -120,8 +117,8 @@ class AbsenceService {
       final response = await _client.post(
         '/absences',
         data: {
-          'startDate': startDate.toIso8601String(),
-          'endDate': endDate.toIso8601String(),
+          'startDate': startDate.toUtc().toIso8601String(),
+          'endDate': endDate.toUtc().toIso8601String(),
         },
       );
 

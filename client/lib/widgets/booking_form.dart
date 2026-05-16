@@ -265,6 +265,7 @@ class _DatePickerSheetContentState extends State<_DatePickerSheetContent> {
   final Set<String> _loadedMonths = <String>{};
   final Set<String> _loadingMonths = <String>{};
   final Set<DateTime> _blackoutDatesSet = <DateTime>{};
+  List<DateTime> _existingAppointmentDates = [];
 
   List<DateTime> get _blackoutDates => _blackoutDatesSet.toList();
 
@@ -275,6 +276,34 @@ class _DatePickerSheetContentState extends State<_DatePickerSheetContent> {
     _minDate = DateTime(now.year, now.month, now.day);
     _maxDate = _minDate.add(const Duration(days: 90));
     _loadUnavailableDatesForVisibleDate(_minDate);
+    // Carrega agendamentos ativos apenas no fluxo do próprio cliente.
+    if (widget.selectedTargetClient == null) {
+      _loadExistingAppointments();
+    }
+  }
+
+  /// Busca agendamentos ativos do cliente e extrai as datas locais
+  /// para destacá-las em azul-claro no calendário (apenas informativo).
+  Future<void> _loadExistingAppointments() async {
+    try {
+      final appointments =
+          await ClientAppointmentsService().getAppointmentHistory();
+      final activeDates = appointments
+          .where(
+            (a) => a.status == 'Scheduled' || a.status == 'Rescheduled',
+          )
+          .map((a) {
+            final local = a.startTime.toLocal();
+            return DateTime(local.year, local.month, local.day);
+          })
+          .toSet()
+          .toList();
+      if (mounted) {
+        setState(() => _existingAppointmentDates = activeDates);
+      }
+    } catch (_) {
+      // Silencioso — não é crítico para o fluxo de agendamento.
+    }
   }
 
   String _monthKey(DateTime date) =>
@@ -315,7 +344,9 @@ class _DatePickerSheetContentState extends State<_DatePickerSheetContent> {
         clientId: widget.selectedTargetClient?.id,
       );
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _blackoutDatesSet.addAll(
           blocked.map((date) => DateTime(date.year, date.month, date.day)),
@@ -324,7 +355,9 @@ class _DatePickerSheetContentState extends State<_DatePickerSheetContent> {
         _isLoadingUnavailableDates = false;
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       final message = e.toString().replaceAll('Exception: ', '');
       AppSnackBar.showError(context, message);
@@ -351,9 +384,11 @@ class _DatePickerSheetContentState extends State<_DatePickerSheetContent> {
           style: TextStyle(color: AppColors.textSecondary),
         ),
         const SizedBox(height: AppTheme.spacingXs),
-        const Text(
-          'Dias marcados em vermelho estão indisponíveis.',
-          style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
+        Text(
+          widget.selectedTargetClient == null
+              ? 'Dias em vermelho estão indisponíveis. Dias em azul-claro já têm agendamento.'
+              : 'Dias em vermelho estão indisponíveis.',
+          style: const TextStyle(color: AppColors.textTertiary, fontSize: 12),
         ),
         const SizedBox(height: AppTheme.spacingMd),
         if (_isLoadingUnavailableDates)
@@ -367,16 +402,22 @@ class _DatePickerSheetContentState extends State<_DatePickerSheetContent> {
             minDate: _minDate,
             maxDate: _maxDate,
             blackoutDates: _blackoutDates,
+            specialDates: widget.selectedTargetClient == null
+                ? _existingAppointmentDates
+                : null,
             selectionMode: DateRangePickerSelectionMode.single,
-            // Admins booking for a client can pick any day — the backend
-            // determines slot availability. The day-of-week filter is only
-            // applied in the self-booking (client) flow.
-            selectableDayPredicate: widget.selectedTargetClient != null
-                ? null
-                : (date) {
-                    return date.weekday != DateTime.sunday &&
-                        date.weekday != DateTime.monday;
-                  },
+            // Domingo bloqueado para todos os contextos.
+            // Segunda bloqueada apenas no fluxo do cliente (sem selectedTargetClient).
+            selectableDayPredicate: (date) {
+              if (date.weekday == DateTime.sunday) {
+                return false;
+              }
+              if (widget.selectedTargetClient == null &&
+                  date.weekday == DateTime.monday) {
+                return false;
+              }
+              return true;
+            },
             onSelectionChanged: (args) {
               if (args.value is DateTime) {
                 widget.onDateSelected(args.value as DateTime);
@@ -384,7 +425,9 @@ class _DatePickerSheetContentState extends State<_DatePickerSheetContent> {
             },
             onViewChanged: (args) {
               final visibleStart = args.visibleDateRange.startDate;
-              if (visibleStart == null) return;
+              if (visibleStart == null) {
+                return;
+              }
               _loadUnavailableDatesForVisibleDate(visibleStart);
             },
           ),

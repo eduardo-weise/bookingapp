@@ -30,7 +30,7 @@ class BookingService {
       final response = await _client.get(
         '/appointments/available-slots',
         queryParameters: {
-          'Date': date.toIso8601String(),
+          'Date': date.toUtc().toIso8601String(),
           'ServiceId': serviceId,
           'ClientId': clientId,
         },
@@ -55,8 +55,8 @@ class BookingService {
       final response = await _client.get(
         '/appointments/unavailable-dates',
         queryParameters: {
-          'StartDate': startDate.toIso8601String(),
-          'EndDate': endDate.toIso8601String(),
+          'StartDate': startDate.toUtc().toIso8601String(),
+          'EndDate': endDate.toUtc().toIso8601String(),
           'ServiceId': serviceId,
           'ClientId': clientId,
         },
@@ -82,13 +82,15 @@ class BookingService {
   }) async {
     try {
       final parts = timeSlot.split(':');
+      // Cria o horário local e converte para UTC antes de enviar.
+      // Garante que o backend armazene o horário correto em UTC.
       final startTime = DateTime(
         date.year,
         date.month,
         date.day,
         int.parse(parts[0]),
         int.parse(parts[1]),
-      );
+      ).toUtc();
 
       await _client.post(
         '/appointments',

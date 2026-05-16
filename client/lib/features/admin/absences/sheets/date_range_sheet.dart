@@ -55,6 +55,8 @@ class _DateRangeSheetState extends State<DateRangeSheet> {
           ),
           minDate: DateTime.now(),
           maxDate: DateTime.now().add(const Duration(days: 365 * 2)),
+          // Domingos são bloqueados em todos os contextos.
+          selectableDayPredicate: (date) => date.weekday != DateTime.sunday,
           onSelectionChanged: _onSelectionChanged,
         ),
         const SizedBox(height: AppTheme.spacingXl),

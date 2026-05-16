@@ -34,7 +34,9 @@ public sealed class GetAvailableSlotsEndpoint(ApplicationDbContext dbContext)
 
 	public override async Task HandleAsync(GetAvailableSlotsRequest req, CancellationToken ct)
 	{
-		var targetDate = req.Date.EnsureUtcDate();
+		// O Flutter envia a data como meia-noite local em UTC (ex.: BRT meia-noite = 03:00Z).
+		// EnsureUtc() preserva esse horário; EnsureUtcDate() truncaria para 00:00Z (errado).
+		var targetDate = req.Date.EnsureUtc();
 		var targetDayEnd = targetDate.AddDays(1);
 
 		var absences = await dbContext.AbsenceDays
@@ -67,7 +69,10 @@ public sealed class GetAvailableSlotsEndpoint(ApplicationDbContext dbContext)
 
 		var existingAppointments = await dbContext.Appointments
 			.AsNoTracking()
-			.Where(a => (a.Status == AppointmentStatus.Scheduled || a.Status == AppointmentStatus.Rescheduled) && a.StartTime.Date == targetDate)
+			.Where(a =>
+				(a.Status == AppointmentStatus.Scheduled || a.Status == AppointmentStatus.Rescheduled) &&
+				a.StartTime >= targetDate &&
+				a.StartTime < targetDayEnd)
 			.OrderBy(a => a.StartTime)
 			.ToListAsync(ct);
 

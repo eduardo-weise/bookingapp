@@ -59,7 +59,9 @@ class _CreateAbsenceSheetState extends ConsumerState<CreateAbsenceSheet> {
     if (_startDate == null) return;
     final end = _isSingleDay
         ? (_endDate ?? _startDate!)
-        : (_endDate ?? _startDate!);
+        // Para períodos: endDate é fim exclusivo (meia-noite do próximo dia).
+        // Garante que todos os slots do último dia sejam bloqueados no backend.
+        : (_endDate ?? _startDate!).add(const Duration(days: 1));
 
     setState(() => _isSaving = true);
     try {

@@ -45,8 +45,10 @@ public sealed class GetUnavailableDatesEndpoint(ApplicationDbContext dbContext)
 
 	public override async Task HandleAsync(GetUnavailableDatesRequest req, CancellationToken ct)
 	{
-		var startDate = req.StartDate.EnsureUtcDate();
-		var endDate = req.EndDate.EnsureUtcDate();
+		// O Flutter envia as datas como meia-noite local em UTC.
+		// EnsureUtc() preserva esse horário correto.
+		var startDate = req.StartDate.EnsureUtc();
+		var endDate = req.EndDate.EnsureUtc();
 		var endDateExclusive = endDate.AddDays(1);
 
 		var service = await dbContext.Services
@@ -92,7 +94,7 @@ public sealed class GetUnavailableDatesEndpoint(ApplicationDbContext dbContext)
 		for (var currentDate = startDate; currentDate <= endDate; currentDate = currentDate.AddDays(1))
 		{
 			var dayAppointments = existingAppointments
-				.Where(a => a.StartTime.Date == currentDate)
+				.Where(a => a.StartTime >= currentDate && a.StartTime < currentDate.AddDays(1))
 				.ToList();
 
 			var dayAbsences = absences

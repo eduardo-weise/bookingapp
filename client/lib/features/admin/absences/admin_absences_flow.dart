@@ -150,6 +150,8 @@ class AdminAbsencesFlow {
             minDate: first,
             maxDate: DateTime.now().add(const Duration(days: 365 * 2)),
             selectionMode: DateRangePickerSelectionMode.single,
+            // Domingos são bloqueados em todos os contextos.
+            selectableDayPredicate: (date) => date.weekday != DateTime.sunday,
             onSelectionChanged: (args) {
               if (args.value is DateTime) {
                 final picked = args.value as DateTime;
