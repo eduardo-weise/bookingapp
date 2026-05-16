@@ -59,7 +59,11 @@ public sealed class RescheduleAppointmentEndpoint(ApplicationDbContext dbContext
 
 		// Clients: block if < 1h
 		if (!isAdminOrManager && hoursUntilStart < 1)
-			throw new InvalidOperationException("Reagendamento não permitido com menos de 1h de antecedência.");
+		{
+			AddError("Reagendamento não permitido com menos de 1h de antecedência.");
+			await Send.ErrorsAsync(cancellation: ct);
+			return;
+		}
 
 		var isLateReschedule = hoursUntilStart < 24;
 
@@ -79,6 +83,9 @@ public sealed class RescheduleAppointmentEndpoint(ApplicationDbContext dbContext
 
 		await EnsureNoSchedulingConflicts(req.Id, startTime, endTime, ct);
 
+		// Salva o horário original para usar na descrição do débito.
+		var originalStartTime = appointment.StartTime;
+
 		// Update existing appointment and mark as rescheduled
 		appointment.Reschedule(req.ServiceId, startTime, endTime, allowLateReschedule: true);
 
@@ -94,9 +101,9 @@ public sealed class RescheduleAppointmentEndpoint(ApplicationDbContext dbContext
 			if (!hasPendingDebt)
 			{
 				var feeAmount = service.Price * 0.15m;
-			var description = $"Reagendamento tardio de agendamento com {service.Name}";
-			await dbContext.DebtBalances.AddAsync(
-				new DebtBalance(appointment.ClientId, appointment.Id, feeAmount, DebtType.LateReschedule, description, 15),
+				var description = $"Taxa de reagendamento tardio (15%) — {service.Name}";
+				await dbContext.DebtBalances.AddAsync(
+					new DebtBalance(appointment.ClientId, appointment.Id, feeAmount, DebtType.LateReschedule, description, 15),
 					ct);
 			}
 		}

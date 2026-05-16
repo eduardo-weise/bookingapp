@@ -43,10 +43,20 @@ public sealed class NoShowAppointmentEndpoint(ApplicationDbContext dbContext)
 			throw new UnauthorizedAccessException("Este agendamento não pertence a você.");
 
 		if (!appointment.IsActive())
-			throw new InvalidOperationException("Somente agendamentos ativos podem ser marcados como no-show.");
+		{
+			AddError("Somente agendamentos ativos podem ser marcados como no-show.");
+			await Send.ErrorsAsync(cancellation: ct);
+			return;
+		}
 
-		if (DateTime.UtcNow <= appointment.StartTime)
-			throw new InvalidOperationException("Não é possível marcar no-show antes do horário do agendamento.");
+		// Admin/Manager pode marcar no-show antecipado (cliente avisou previamente).
+		// Cliente só pode marcar após o horário do agendamento.
+		if (!isAdminOrManager && DateTime.UtcNow <= appointment.StartTime)
+		{
+			AddError("Não é possível marcar não comparecimento antes do horário do agendamento.");
+			await Send.ErrorsAsync(cancellation: ct);
+			return;
+		}
 
 		appointment.NoShow();
 
@@ -57,16 +67,16 @@ public sealed class NoShowAppointmentEndpoint(ApplicationDbContext dbContext)
 				.SingleOrDefaultAsync(s => s.Id == appointment.ServiceId, ct);
 
 			if (service is null)
-				throw new NotFoundException("Serviço não encontrado para aplicar multa de no-show.");
+				throw new NotFoundException("Serviço não encontrado para aplicar multa de não comparecimento.");
 
 			var penaltyAmount = service.Price * 0.5m;
-			var description = $"Multa por ausência (no-show) em agendamento com {service.Name}";
+			var description = $"Multa por não comparecimento (50%) — {service.Name}";
 
 			await dbContext.DebtBalances.AddAsync(
 				new DebtBalance(appointment.ClientId, appointment.Id, penaltyAmount, DebtType.NoShow, description, 50),
 				ct);
 		}
-
+s
 		await dbContext.SaveChangesAsync(ct);
 
 		await Send.NoContentAsync(ct);

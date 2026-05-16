@@ -5,6 +5,7 @@ class ClientDebtModel {
   final String id;
   final String appointmentId;
   final String serviceName;
+  final String description;
   final DateTime appointmentDate;
   final double amount;
   final String status;
@@ -14,6 +15,7 @@ class ClientDebtModel {
     required this.id,
     required this.appointmentId,
     required this.serviceName,
+    required this.description,
     required this.appointmentDate,
     required this.amount,
     required this.status,
@@ -27,6 +29,7 @@ class ClientDebtModel {
       id: json['id'] as String,
       appointmentId: json['appointmentId'] as String,
       serviceName: json['serviceName']?.toString() ?? 'Serviço',
+      description: json['description']?.toString() ?? '',
       appointmentDate: DateTime.tryParse(
             json['appointmentDate']?.toString() ?? '',
           ) ??

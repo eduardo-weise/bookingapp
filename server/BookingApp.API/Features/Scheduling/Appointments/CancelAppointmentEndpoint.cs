@@ -73,9 +73,9 @@ public sealed class CancelAppointmentEndpoint(ApplicationDbContext dbContext)
 					throw new NotFoundException("Serviço não encontrado para aplicar taxa de cancelamento.");
 
 				var feeAmount = service.Price * 0.35m;
-			var description = $"Cancelamento tardio de agendamento com {service.Name}";
-			await dbContext.DebtBalances.AddAsync(
-				new DebtBalance(appointment.ClientId, appointment.Id, feeAmount, DebtType.LateCancellation, description, 35),
+				var description = $"Taxa de cancelamento tardio (35%) — {service.Name}";
+				await dbContext.DebtBalances.AddAsync(
+					new DebtBalance(appointment.ClientId, appointment.Id, feeAmount, DebtType.LateCancellation, description, 35),
 					ct);
 			}
 		}

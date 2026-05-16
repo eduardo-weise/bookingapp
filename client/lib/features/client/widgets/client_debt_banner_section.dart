@@ -36,8 +36,9 @@ class _ClientDebtBannerSectionState
           symbol: 'R\$',
         ).format(totalAmount);
 
-        final visibleDebts =
-            _isExpanded || debts.length <= 2 ? debts : debts.take(2).toList();
+        final visibleDebts = _isExpanded || debts.length <= 2
+            ? debts
+            : debts.take(2).toList();
 
         return Column(
           children: [
@@ -147,7 +148,9 @@ class _ClientDebtBannerSectionState
                       const Text('• ', style: TextStyle(color: Colors.white70)),
                       Expanded(
                         child: Text(
-                          debt.serviceName,
+                          debt.description.isNotEmpty
+                              ? debt.description
+                              : debt.serviceName,
                           style: AppTextStyles.body.copyWith(
                             color: Colors.white70,
                           ),
@@ -156,8 +159,10 @@ class _ClientDebtBannerSectionState
                         ),
                       ),
                       Text(
-                        ' (${_formatDate(debt.appointmentDate)}) - ${NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(debt.amount)}',
-                        style: AppTextStyles.body.copyWith(color: Colors.white70),
+                        ' ${_formatDate(debt.appointmentDate)} - ${NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(debt.amount)}',
+                        style: AppTextStyles.body.copyWith(
+                          color: Colors.white70,
+                        ),
                       ),
                     ],
                   ),

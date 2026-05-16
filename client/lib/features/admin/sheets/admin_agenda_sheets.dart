@@ -17,7 +17,8 @@ void showFutureAppointmentsDatePickerSheet({
   required Function(AdminAppointmentModel) onCancelAppointment,
   required Function(AdminAppointmentModel) onRescheduleAppointment,
   required Function(AdminAppointmentModel) onNoShowAppointment,
-  Function(AdminAppointmentModel, VoidCallback onReopen)? onRescheduleWithReopen,
+  Function(AdminAppointmentModel, VoidCallback onReopen)?
+  onRescheduleWithReopen,
 }) {
   showAppBottomSheet(
     context: context,
@@ -73,7 +74,8 @@ void showAppointmentsForDateSheet({
   required Function(AdminAppointmentModel) onRescheduleAppointment,
   required Function(AdminAppointmentModel) onNoShowAppointment,
   VoidCallback? onBack,
-  Function(AdminAppointmentModel, VoidCallback onReopen)? onRescheduleWithReopen,
+  Function(AdminAppointmentModel, VoidCallback onReopen)?
+  onRescheduleWithReopen,
 }) {
   showAppBottomSheet(
     context: context,
@@ -124,7 +126,8 @@ class _AdminDateAppointmentsContent extends ConsumerWidget {
   final Function(AdminAppointmentModel) onCancelAppointment;
   final Function(AdminAppointmentModel) onRescheduleAppointment;
   final Function(AdminAppointmentModel) onNoShowAppointment;
-  final Function(AdminAppointmentModel, VoidCallback onReopen)? onRescheduleWithReopen;
+  final Function(AdminAppointmentModel, VoidCallback onReopen)?
+  onRescheduleWithReopen;
 
   const _AdminDateAppointmentsContent({
     required this.date,
@@ -153,25 +156,26 @@ class _AdminDateAppointmentsContent extends ConsumerWidget {
               variant: BadgeVariant.pending,
             ),
             const SizedBox(height: AppTheme.spacingLg),
-            ...appointments.map(
-              (a) {
-                final isPastStartTime = _isPastStartTime(a.startTime);
-                final showNoShow = _isTodayOrBefore(a.startTime);
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
-                  child: AppointmentCard(
-                    service: '${a.clientName} • ${a.serviceName}',
-                    subtitle: _statusLabel(_statusToBadge(a.status)),
-                    date: _formatCardDate(a.startTime),
-                    time: _formatHour(a.startTime),
-                    status: _statusToBadge(a.status),
-                    variant: AppointmentCardVariant.full,
-                    onReschedulePressed: isPastStartTime
-                        ? null
-                        : () {
-                            if (onRescheduleWithReopen != null) {
-                              Navigator.of(context).pop();
-                              Future.delayed(const Duration(milliseconds: 100), () {
+            ...appointments.map((a) {
+              final isPastStartTime = _isPastStartTime(a.startTime);
+              final showNoShow = _isTodayOrBefore(a.startTime);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
+                child: AppointmentCard(
+                  service: '${a.clientName} • ${a.serviceName}',
+                  subtitle: _statusLabel(_statusToBadge(a.status)),
+                  date: _formatCardDate(a.startTime),
+                  time: _formatHour(a.startTime),
+                  status: _statusToBadge(a.status),
+                  variant: AppointmentCardVariant.full,
+                  onReschedulePressed: isPastStartTime
+                      ? null
+                      : () {
+                          if (onRescheduleWithReopen != null) {
+                            Navigator.of(context).pop();
+                            Future.delayed(
+                              const Duration(milliseconds: 100),
+                              () {
                                 if (context.mounted) {
                                   onRescheduleWithReopen!(
                                     a,
@@ -179,31 +183,33 @@ class _AdminDateAppointmentsContent extends ConsumerWidget {
                                       context: context,
                                       date: date,
                                       onCancelAppointment: onCancelAppointment,
-                                      onRescheduleAppointment: onRescheduleAppointment,
+                                      onRescheduleAppointment:
+                                          onRescheduleAppointment,
                                       onNoShowAppointment: onNoShowAppointment,
-                                      onRescheduleWithReopen: onRescheduleWithReopen,
+                                      onRescheduleWithReopen:
+                                          onRescheduleWithReopen,
                                     ),
                                   );
                                 }
-                              });
-                            } else {
-                              onRescheduleAppointment(a);
-                            }
-                          },
-                    onNoShowPressed: showNoShow
-                        ? () => onNoShowAppointment(a)
-                        : null,
-                    onCancelPressed: () {
-                      onCancelAppointment(a);
-                      // No need to manually refresh here, the consumer of the callback 
-                      // (AdminDashboardPage) should call ref.refresh or similar if needed.
-                      // Actually, if we want to refresh THIS specific date, we can do it here too:
-                      // ref.read(adminDateAppointmentsProvider(date).notifier).refresh(date);
-                    },
-                  ),
-                );
-              },
-            ),
+                              },
+                            );
+                          } else {
+                            onRescheduleAppointment(a);
+                          }
+                        },
+                  onNoShowPressed: showNoShow
+                      ? () => onNoShowAppointment(a)
+                      : null,
+                  onCancelPressed: () {
+                    onCancelAppointment(a);
+                    // No need to manually refresh here, the consumer of the callback
+                    // (AdminDashboardPage) should call ref.refresh or similar if needed.
+                    // Actually, if we want to refresh THIS specific date, we can do it here too:
+                    // ref.read(adminDateAppointmentsProvider(date).notifier).refresh(date);
+                  },
+                ),
+              );
+            }),
           ],
         );
       },
@@ -214,6 +220,7 @@ class _AdminDateAppointmentsContent extends ConsumerWidget {
       },
     );
   }
+
   bool _isPastStartTime(DateTime startTime) {
     return startTime.localDateTime.isBefore(DateTime.now());
   }
@@ -223,10 +230,11 @@ class _AdminDateAppointmentsContent extends ConsumerWidget {
     final local = startTime.localDateTime;
     return local.year < now.year ||
         (local.year == now.year && local.month < now.month) ||
-        (local.year == now.year && local.month == now.month && local.day <= now.day);
+        (local.year == now.year &&
+            local.month == now.month &&
+            local.day <= now.day);
   }
 }
-
 
 String _formatDate(DateTime date) {
   return date.formatLocal('dd/MM/yyyy');
@@ -236,8 +244,7 @@ String _formatHour(DateTime date) {
   return date.displayTime;
 }
 
-String _formatCardDate(DateTime date) =>
-    date.displayDateShort;
+String _formatCardDate(DateTime date) => date.displayDateShort;
 
 String _statusLabel(BadgeVariant status) {
   switch (status) {
