@@ -44,12 +44,12 @@ public sealed class NoShowAppointmentEndpoint(ApplicationDbContext dbContext)
 
 		if (!appointment.IsActive())
 		{
-			AddError("Somente agendamentos ativos podem ser marcados como no-show.");
+			AddError("Somente agendamentos ativos podem ser marcados como não comparecimento.");
 			await Send.ErrorsAsync(cancellation: ct);
 			return;
 		}
 
-		// Admin/Manager pode marcar no-show antecipado (cliente avisou previamente).
+		// Admin/Manager pode marcar não comparecimento antecipado (cliente avisou previamente).
 		// Cliente só pode marcar após o horário do agendamento.
 		if (!isAdminOrManager && DateTime.UtcNow <= appointment.StartTime)
 		{
@@ -76,7 +76,7 @@ public sealed class NoShowAppointmentEndpoint(ApplicationDbContext dbContext)
 				new DebtBalance(appointment.ClientId, appointment.Id, penaltyAmount, DebtType.NoShow, description, 50),
 				ct);
 		}
-s
+
 		await dbContext.SaveChangesAsync(ct);
 
 		await Send.NoContentAsync(ct);

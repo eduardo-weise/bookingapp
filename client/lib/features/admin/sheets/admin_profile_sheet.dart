@@ -7,8 +7,11 @@ import 'package:app/widgets/app_bottom_sheet.dart';
 import '../absences/admin_absences_flow.dart';
 import '../../auth/services/auth_service.dart';
 
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../client/providers/client_providers.dart';
+import '../../client/services/user_profile_service.dart';
 
 void showAdminProfileSheet(BuildContext context) {
   showAppBottomSheet(
@@ -35,10 +38,32 @@ class _AdminProfileSheetContent extends ConsumerWidget {
           Center(
             child: AppAvatar(
               size: AvatarSize.large,
+              imageUrl: profile.avatarUrl,
               initials: profile.initials,
               showEditBadge: true,
-              onEditTap: () {
-                // TODO: Implement image picker
+              editIcon: Icons.camera_alt,
+              onEditTap: () async {
+                final picker = ImagePicker();
+                final image = await picker.pickImage(source: ImageSource.gallery, maxWidth: 512, maxHeight: 512);
+                if (image != null) {
+                  final bytes = await image.readAsBytes();
+                  final base64Image = 'data:${image.mimeType ?? "image/jpeg"};base64,${base64Encode(bytes)}';
+                  
+                  try {
+                    await UserProfileService().updateProfile(
+                      name: profile.name ?? '',
+                      phoneNumber: profile.phoneNumber ?? '',
+                      avatarUrl: base64Image,
+                    );
+                    ref.read(userProfileProvider.notifier).refresh();
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Erro ao atualizar foto: $e')),
+                      );
+                    }
+                  }
+                }
               },
             ),
           ),

@@ -6,6 +6,8 @@ import '../widgets/app_input.dart';
 import '../widgets/app_avatar.dart';
 import '../widgets/app_snackbar.dart';
 import '../features/auth/services/auth_service.dart';
+import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
 import '../features/client/services/user_profile_service.dart';
 
 class UserEditForm extends StatefulWidget {
@@ -33,6 +35,7 @@ class _UserEditFormState extends State<UserEditForm> {
   bool _isLoading = true;
   bool _isSaving = false;
   String _initials = '?';
+  String? _avatarUrl;
 
   @override
   void initState() {
@@ -60,6 +63,7 @@ class _UserEditFormState extends State<UserEditForm> {
         _cpfCtrl.text = profile.cpf ?? '';
         _phoneCtrl.text = profile.phoneNumber ?? '';
         _initials = profile.initials;
+        _avatarUrl = profile.avatarUrl;
         _isLoading = false;
       });
     } catch (e) {
@@ -79,6 +83,7 @@ class _UserEditFormState extends State<UserEditForm> {
       await _profileService.updateProfile(
         name: _nameCtrl.text.trim(),
         phoneNumber: _phoneCtrl.text,
+        avatarUrl: _avatarUrl,
       );
       if (!mounted) return;
       AppSnackBar.showSuccess(context, 'Perfil atualizado com sucesso!');
@@ -112,10 +117,22 @@ class _UserEditFormState extends State<UserEditForm> {
           Center(
             child: AppAvatar(
               size: AvatarSize.large,
+              imageUrl: _avatarUrl,
               initials: _initials,
               showEditBadge: true,
-              onEditTap: () {
-                // TODO: Implement image picker
+              editIcon: Icons.camera_alt,
+              onEditTap: () async {
+                final picker = ImagePicker();
+                final image = await picker.pickImage(source: ImageSource.gallery, maxWidth: 512, maxHeight: 512);
+                if (image != null) {
+                  final bytes = await image.readAsBytes();
+                  final base64Image = 'data:${image.mimeType ?? "image/jpeg"};base64,${base64Encode(bytes)}';
+                  if (mounted) {
+                    setState(() {
+                      _avatarUrl = base64Image;
+                    });
+                  }
+                }
               },
             ),
           ),

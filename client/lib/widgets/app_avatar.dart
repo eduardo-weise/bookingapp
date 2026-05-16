@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import '../core/theme/app_colors.dart';
 
 enum AvatarSize { small, medium, large }
@@ -8,6 +9,7 @@ class AppAvatar extends StatelessWidget {
   final String? initials;
   final AvatarSize size;
   final bool showEditBadge;
+  final IconData editIcon;
   final VoidCallback? onEditTap;
 
   const AppAvatar({
@@ -16,6 +18,7 @@ class AppAvatar extends StatelessWidget {
     this.initials,
     this.size = AvatarSize.medium,
     this.showEditBadge = false,
+    this.editIcon = Icons.edit,
     this.onEditTap,
   });
 
@@ -30,6 +33,16 @@ class AppAvatar extends StatelessWidget {
     AvatarSize.medium => 18,
     AvatarSize.large => 28,
   };
+
+  ImageProvider _getImageProvider(String url) {
+    if (url.startsWith('data:image')) {
+      final parts = url.split(',');
+      if (parts.length > 1) {
+        return MemoryImage(base64Decode(parts[1]));
+      }
+    }
+    return NetworkImage(url);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +60,7 @@ class AppAvatar extends StatelessWidget {
             ),
             image: imageUrl != null
                 ? DecorationImage(
-                    image: NetworkImage(imageUrl!),
+                    image: _getImageProvider(imageUrl!),
                     fit: BoxFit.cover,
                   )
                 : null,
@@ -78,8 +91,8 @@ class AppAvatar extends StatelessWidget {
                   color: AppColors.brandPrimary,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.edit,
+                child: Icon(
+                  editIcon,
                   size: 10,
                   color: AppColors.textInverse,
                 ),

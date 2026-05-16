@@ -30,10 +30,12 @@ class UserProfile extends _$UserProfile {
   }
 
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(
+    final newState = await AsyncValue.guard(
       () => ref.read(userProfileServiceProvider).getProfile(),
     );
+    if (newState is AsyncData || newState is AsyncError) {
+      state = newState;
+    }
   }
 }
 

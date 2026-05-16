@@ -7,6 +7,7 @@ class UserProfileModel {
   final String? name;
   final String? phoneNumber;
   final String? cpf;
+  final String? avatarUrl;
 
   UserProfileModel({
     required this.id,
@@ -14,6 +15,7 @@ class UserProfileModel {
     this.name,
     this.phoneNumber,
     this.cpf,
+    this.avatarUrl,
   });
 
   factory UserProfileModel.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class UserProfileModel {
       name: json['name']?.toString(),
       phoneNumber: json['phoneNumber']?.toString(),
       cpf: json['cpf']?.toString(),
+      avatarUrl: json['avatarUrl']?.toString(),
     );
   }
 
@@ -60,12 +63,16 @@ class UserProfileService {
   Future<void> updateProfile({
     required String name,
     required String phoneNumber,
+    String? avatarUrl,
   }) async {
     try {
-      await _client.patch(
-        '/users',
-        data: {'name': name, 'phoneNumber': phoneNumber},
-      );
+      final data = <String, dynamic>{
+        'name': name,
+        'phoneNumber': phoneNumber,
+      };
+      if (avatarUrl != null) data['avatarUrl'] = avatarUrl;
+      
+      await _client.patch('/users', data: data);
     } on DioException catch (e) {
       throw Exception(_handleError(e));
     }

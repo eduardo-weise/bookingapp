@@ -14,6 +14,7 @@ public sealed class User : AggregateRoot
 	public bool IsDeleted { get; private set; }
 	public string Role { get; private set; }
 	public TimeSpan ExtraServiceDuration { get; private set; }
+	public string? AvatarUrl { get; private set; }
 
 	// Password Recovery
 	public string? ResetPasswordToken { get; private set; }
@@ -48,11 +49,12 @@ public sealed class User : AggregateRoot
 		ExtraServiceDuration = extraDuration;
 	}
 
-	public void UpdateProfile(string name, string phoneNumber, string? cpf = null)
+	public void UpdateProfile(string name, string phoneNumber, string? cpf = null, string? avatarUrl = null)
 	{
 		Name = name;
 		PhoneNumber = phoneNumber;
 		if (cpf != null) Cpf = cpf;
+		if (avatarUrl != null) AvatarUrl = avatarUrl;
 	}
 
 	public void GeneratePasswordResetToken(string token, DateTime expiry)

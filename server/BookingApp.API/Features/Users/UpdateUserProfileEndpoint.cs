@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookingApp.API.Features.Users.UpdateUserProfile;
 
-public sealed record UpdateUserProfileRequest(string Name, string PhoneNumber);
+public sealed record UpdateUserProfileRequest(string Name, string PhoneNumber, string? AvatarUrl = null);
 
 public sealed class UpdateUserProfileValidator : Validator<UpdateUserProfileRequest>
 {
@@ -43,7 +43,7 @@ public sealed class UpdateUserProfileEndpoint(ApplicationDbContext dbContext)
 			.SingleOrDefaultAsync(u => u.Id == userId, ct)
 			?? throw new NotFoundException("Usuário não encontrado.");
 
-		user.UpdateProfile(req.Name, req.PhoneNumber);
+		user.UpdateProfile(req.Name, req.PhoneNumber, avatarUrl: req.AvatarUrl);
 
 		await dbContext.SaveChangesAsync(ct);
 

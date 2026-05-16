@@ -16,18 +16,19 @@ class ClientProfileHeader extends ConsumerWidget {
       data: (profile) {
         final name = profile.displayName;
         final initials = profile.initials;
-        return _buildContent(name, initials);
+        return _buildContent(name, initials, profile.avatarUrl);
       },
-      loading: () => _buildContent('', '?'), // Show loading state
-      error: (error, stackTrace) => _buildContent('', '?'),
+      loading: () => _buildContent('', '?', null), // Show loading state
+      error: (error, stackTrace) => _buildContent('', '?', null),
     );
   }
 
-  Widget _buildContent(String name, String initials) {
+  Widget _buildContent(String name, String initials, String? avatarUrl) {
     return PageHeader(
       name: name.isNotEmpty ? 'Olá, $name' : 'Olá!',
       notificationCount: 1,
       initials: initials.isNotEmpty ? initials : '?',
+      imageUrl: avatarUrl,
       showEditBadge: true,
       onAvatarTap: onEditTap,
     );

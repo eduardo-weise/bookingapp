@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookingApp.API.Features.Users.GetUserProfile;
 
-public sealed record UserProfileDto(Guid Id, string Email, string? Name, string? PhoneNumber, bool IsMfaEnabled);
+public sealed record UserProfileDto(Guid Id, string Email, string? Name, string? PhoneNumber, string? AvatarUrl, bool IsMfaEnabled);
 
 public sealed class GetUserProfileEndpoint(ApplicationDbContext dbContext)
 	: EndpointWithoutRequest<UserProfileDto>
@@ -34,6 +34,6 @@ public sealed class GetUserProfileEndpoint(ApplicationDbContext dbContext)
 			.SingleOrDefaultAsync(u => u.Id == userId, ct)
 			?? throw new NotFoundException("Usuário não encontrado.");
 
-		await Send.OkAsync(new UserProfileDto(user.Id, user.Email, user.Name, user.PhoneNumber, user.IsMfaEnabled), cancellation: ct);
+		await Send.OkAsync(new UserProfileDto(user.Id, user.Email, user.Name, user.PhoneNumber, user.AvatarUrl, user.IsMfaEnabled), cancellation: ct);
 	}
 }

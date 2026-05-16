@@ -309,6 +309,7 @@ class AdminHomePage extends ConsumerWidget {
                   name: profile.displayName,
                   notificationCount: 1,
                   initials: profile.initials,
+                  imageUrl: profile.avatarUrl,
                   showEditBadge: true,
                   onAvatarTap: () => _showEditProfileSheet(context),
                 ),

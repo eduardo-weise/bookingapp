@@ -83,8 +83,6 @@ public sealed class RescheduleAppointmentEndpoint(ApplicationDbContext dbContext
 
 		await EnsureNoSchedulingConflicts(req.Id, startTime, endTime, ct);
 
-		// Salva o horário original para usar na descrição do débito.
-		var originalStartTime = appointment.StartTime;
 
 		// Update existing appointment and mark as rescheduled
 		appointment.Reschedule(req.ServiceId, startTime, endTime, allowLateReschedule: true);
