@@ -22,6 +22,7 @@ import 'sheets/admin_profile_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/admin_providers.dart';
 import '../client/providers/client_providers.dart';
+import 'package:app/core/providers/notifications_provider.dart';
 import 'package:app/core/extensions/date_time_extensions.dart';
 
 // ── Admin Home ─────────────────────────────────────────────────────────────
@@ -294,6 +295,18 @@ class AdminHomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(notificationStreamProvider, (prev, next) {
+      if (next.hasValue && next.value != null) {
+        final event = next.value!;
+        AppSnackBar.showInfo(context, event.message);
+        
+        // Invalidates to trigger a re-fetch
+        ref.invalidate(adminTodayAppointmentsProvider);
+        ref.invalidate(adminPendingDebtsProvider);
+        // We could also invalidate the specific date provider but today's enough for now
+      }
+    });
+
     final profileAsync = ref.watch(userProfileProvider);
 
     return Scaffold(

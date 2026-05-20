@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using BookingApp.API.Extentions;
 using BookingApp.Domain.Entities;
+using BookingApp.Domain.Events;
 using BookingApp.Domain.Exceptions;
 using BookingApp.Infrastructure.Data;
 using BookingApp.Infrastructure.Settings.Authentication;
@@ -89,6 +90,7 @@ public sealed class RescheduleAppointmentEndpoint(ApplicationDbContext dbContext
 
 		// Apply late reschedule fee if applicable
 		var shouldApplyFee = isLateReschedule && (!isAdminOrManager || req.ApplyLateRescheduleFee == true);
+		decimal? feeAmount = null;
 
 		if (shouldApplyFee)
 		{
@@ -98,15 +100,19 @@ public sealed class RescheduleAppointmentEndpoint(ApplicationDbContext dbContext
 
 			if (!hasPendingDebt)
 			{
-				var feeAmount = service.Price * 0.15m;
+				feeAmount = service.Price * 0.15m;
 				var description = $"Taxa de reagendamento tardio (15%) — {service.Name}";
 				await dbContext.DebtBalances.AddAsync(
-					new DebtBalance(appointment.ClientId, appointment.Id, feeAmount, DebtType.LateReschedule, description, 15),
+					new DebtBalance(appointment.ClientId, appointment.Id, feeAmount.Value, DebtType.LateReschedule, description, 15),
 					ct);
 			}
 		}
 
 		await dbContext.SaveChangesAsync(ct);
+
+		var actorRole = isAdminOrManager ? (User.IsInRole("Admin") ? "Admin" : "Manager") : "Client";
+		await new AppointmentRescheduled(appointment.Id, appointment.ClientId, authenticatedUserId, actorRole, shouldApplyFee, feeAmount).PublishAsync(cancellation: ct);
+
 		await Send.NoContentAsync(ct);
 	}
 

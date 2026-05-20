@@ -2,8 +2,8 @@ using BookingApp.Domain.Common;
 
 namespace BookingApp.Domain.Events;
 
-public sealed record AppointmentNoShowed(
-	Guid AppointmentId,
+public sealed record DebtCanceled(
 	Guid ClientId,
-	decimal FeeAmount
+	List<Guid> DebtIds,
+	decimal TotalCanceledAmount
 ) : DomainEvent;

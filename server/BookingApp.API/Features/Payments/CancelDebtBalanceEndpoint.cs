@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using BookingApp.Domain.Entities;
+using BookingApp.Domain.Events;
 using BookingApp.Infrastructure.Data;
 using BookingApp.Infrastructure.Settings.Authentication;
 using FastEndpoints;
@@ -39,13 +40,21 @@ public sealed class CancelDebtBalanceEndpoint(ApplicationDbContext dbContext)
 			return;
 		}
 
-		foreach (var debt in debts)
+		var canceledDebts = debts.Where(d => d.Status == DebtStatus.Pending).ToList();
+		foreach (var debt in canceledDebts)
 		{
-			if (debt.Status == DebtStatus.Pending)
-				debt.Cancel();
+			debt.Cancel();
 		}
 
 		await dbContext.SaveChangesAsync(ct);
+
+		if (canceledDebts.Count > 0)
+		{
+			var totalCanceled = canceledDebts.Sum(d => d.Amount);
+			var canceledIds = canceledDebts.Select(d => d.Id).ToList();
+			await new DebtCanceled(req.ClientId, canceledIds, totalCanceled).PublishAsync(cancellation: ct);
+		}
+
 		await Send.NoContentAsync(ct);
 	}
 }

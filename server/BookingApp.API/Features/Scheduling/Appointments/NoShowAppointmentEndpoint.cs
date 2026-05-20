@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using BookingApp.Domain.Entities;
+using BookingApp.Domain.Events;
 using BookingApp.Domain.Exceptions;
 using BookingApp.Infrastructure.Data;
 using BookingApp.Infrastructure.Settings.Authentication;
@@ -60,6 +61,8 @@ public sealed class NoShowAppointmentEndpoint(ApplicationDbContext dbContext)
 
 		appointment.NoShow();
 
+		decimal penaltyAmount = 0;
+
 		if (req.ApplyNoShowFee)
 		{
 			var service = await dbContext.Services
@@ -69,7 +72,7 @@ public sealed class NoShowAppointmentEndpoint(ApplicationDbContext dbContext)
 			if (service is null)
 				throw new NotFoundException("Serviço não encontrado para aplicar multa de não comparecimento.");
 
-			var penaltyAmount = service.Price * 0.5m;
+			penaltyAmount = service.Price * 0.5m;
 			var description = $"Multa por não comparecimento (50%) — {service.Name}";
 
 			await dbContext.DebtBalances.AddAsync(
@@ -78,6 +81,8 @@ public sealed class NoShowAppointmentEndpoint(ApplicationDbContext dbContext)
 		}
 
 		await dbContext.SaveChangesAsync(ct);
+
+		await new AppointmentNoShowed(appointment.Id, appointment.ClientId, penaltyAmount).PublishAsync(cancellation: ct);
 
 		await Send.NoContentAsync(ct);
 	}

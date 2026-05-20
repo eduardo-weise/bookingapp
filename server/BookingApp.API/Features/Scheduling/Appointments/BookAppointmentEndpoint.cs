@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using BookingApp.API.Extentions;
 using BookingApp.Domain.Entities;
+using BookingApp.Domain.Events;
 using BookingApp.Domain.Exceptions;
 using BookingApp.Infrastructure.Data;
 using BookingApp.Infrastructure.Settings.Authentication;
@@ -92,6 +93,9 @@ public sealed class BookAppointmentEndpoint(ApplicationDbContext dbContext)
 
 		await dbContext.Appointments.AddAsync(appointment, ct);
 		await dbContext.SaveChangesAsync(ct);
+
+		var actorRole = isAdminOrManager ? (User.IsInRole("Admin") ? "Admin" : "Manager") : "Client";
+		await new AppointmentBooked(appointment.Id, targetClientId, authenticatedUserId, actorRole).PublishAsync(cancellation: ct);
 
 		await Send.CreatedAtAsync<BookAppointmentEndpoint>(null, new { Id = appointment.Id }, cancellation: ct);
 	}

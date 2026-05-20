@@ -163,3 +163,53 @@ Rescheduled → Canceled | Rescheduled | NoShow | Completed
 - **Admin**: no-show só aparece se data do agendamento ≤ hoje (`_isTodayOrBefore`).
 - **Admin**: remarcar sem confirmação se > 24h do horário.
 - **Booking flow**: `minDate = hoje`, `maxDate = hoje + 90 dias`; domingo/segunda bloqueados para cliente.
+
+---
+
+## Notificações SSE — Regras de Negócio
+
+> Serviço de notificação em tempo real via Server-Sent Events. O endpoint autenticado é `GET /notifications/stream`.
+> Toda notificação carrega: `type`, `title`, `message`, `appointmentId?`, `clientId?`, `feeApplied?` (bool), `feeAmount?` (decimal), `occurredOn`.
+
+### Roteamento
+
+- **Admin/Manager**: recebe notificações de eventos originados por **clientes** (agendou, cancelou, reagendou, pagou taxa).
+- **Cliente**: recebe notificações de eventos originados pelo **admin/manager** (agendou, cancelou, reagendou, no-show, cancelou taxa, pagou serviço presencial).
+- Filtragem no servidor: `NotificationHub.PublishAsync` entrega apenas ao destinatário correto pelo `UserId` / `Role`.
+
+### Cenários e Domain Events
+
+| # | Ator | Ação | Destinatário | Tipo do Evento | Observação sobre Taxa |
+|---|---|---|---|---|---|
+| 1 | Cliente | Agenda | Admin/Manager | `AppointmentBooked` | — |
+| 2 | Cliente | Cancela | Admin/Manager | `AppointmentCanceled` | Mensagem indica se taxa de 35% foi gerada (`feeApplied`) |
+| 3 | Cliente | Reagenda | Admin/Manager | `AppointmentRescheduled` | Mensagem indica se taxa de 15% foi gerada (`feeApplied`) |
+| 4 | Cliente | Paga taxa (online) | Admin/Manager | `DebtPaid` | Informa valor pago e quais débitos |
+| 5 | Admin | Agenda em nome do cliente | Cliente | `AppointmentBooked` | — |
+| 6 | Admin | Cancela | Cliente | `AppointmentCanceled` | Mensagem indica se taxa de 35% foi aplicada opcionalmente (`feeApplied`) |
+| 7 | Admin | Reagenda | Cliente | `AppointmentRescheduled` | Mensagem indica se taxa de 15% foi aplicada opcionalmente (`feeApplied`) |
+| 8 | Admin | Marca no-show | Cliente | `AppointmentNoShowed` | Taxa de 50% **sempre** aplicada; mensagem sempre inclui valor da multa |
+| 9 | Admin | Cancela taxa | Cliente | `DebtCanceled` | Informa quais débitos foram cancelados e o valor total |
+| 10 | Admin | Paga serviço (espécie) | Cliente | `ServicePaidInPerson` | Informa que o pagamento presencial foi registrado |
+
+### Regras de Emissão
+
+- **Cenários 1–3 (cliente age)**: evento publicado **após** `SaveChangesAsync` no endpoint correspondente; destinatário = qualquer conexão com role `Admin` ou `Manager`.
+- **Cenário 4 (`DebtPaid` pelo cliente)**: evento publicado no `PayDebtBalanceEndpoint`; destinatário = Admin/Manager. Payload inclui `clientId`, lista de `debtIds` e `totalAmount`.
+- **Cenários 5–8 (admin age)**: evento publicado após `SaveChangesAsync`; destinatário = conexão SSE do `ClientId` do agendamento.
+- **Cenário 9 (`DebtCanceled`)**: evento publicado no `CancelDebtBalanceEndpoint`; destinatário = cliente dono dos débitos. Payload inclui `totalCanceledAmount`.
+- **Cenário 10 (`ServicePaidInPerson`)**: evento publicado no `PayDebtBalanceEndpoint` **quando o pagador é Admin/Manager**; destinatário = cliente.
+
+### Distinguir pagamento online vs. presencial (Cenários 4 e 10)
+
+O `PayDebtBalanceEndpoint` é chamado por ambos os roles. A distinção é feita pela role do usuário autenticado:
+- **Role `Client`** → evento `DebtPaid` → notifica Admin/Manager.
+- **Role `Admin`/`Manager`** → evento `ServicePaidInPerson` → notifica o `ClientId` dos débitos.
+
+### Flutter — Comportamento de UI para Notificações
+
+- Notificações exibidas como `SnackBar` com ícone e cor temática (sucesso/aviso/info).
+- Ao receber qualquer notificação, invalidar os providers relevantes (`ClientAppointments`, `AdminTodayAppointments`, `ClientDebts`, `AdminPendingDebts`) para forçar re-fetch automático.
+- Conexão SSE iniciada no `build()` do provider, reconectada automaticamente com backoff exponencial (1s → 2s → 4s → … → 30s máx).
+- **Não exibir** notificação de no-show na visão do cliente como tipo `NoShow` — exibir apenas a mensagem da multa.
+- Token JWT renovado automaticamente antes de reconectar o SSE (usar o mesmo interceptor do `ApiClient`).

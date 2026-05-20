@@ -16,6 +16,7 @@ import 'sheets/client_profile_sheet.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:app/features/client/providers/client_providers.dart';
+import 'package:app/core/providers/notifications_provider.dart';
 
 // ── Client Home Page ─────────────────────────────────────────────────────────
 class ClientHomePage extends ConsumerWidget {
@@ -128,6 +129,17 @@ class ClientHomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(notificationStreamProvider, (prev, next) {
+      if (next.hasValue && next.value != null) {
+        final event = next.value!;
+        AppSnackBar.showInfo(context, event.message);
+        
+        // Invalidates to trigger a re-fetch
+        ref.invalidate(clientAppointmentsProvider);
+        ref.invalidate(clientDebtsProvider);
+      }
+    });
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(

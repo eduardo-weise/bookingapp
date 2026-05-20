@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using BookingApp.Domain.Entities;
+using BookingApp.Domain.Events;
 using BookingApp.Domain.Exceptions;
 using BookingApp.Infrastructure.Data;
 using BookingApp.Infrastructure.Settings.Authentication;
@@ -49,6 +50,7 @@ public sealed class CancelAppointmentEndpoint(ApplicationDbContext dbContext)
 		var hoursUntilStart = (appointment.StartTime - DateTime.UtcNow).TotalHours;
 		var isLateCancellation = hoursUntilStart < 24;
 		var shouldApplyFee = false;
+		decimal? feeAmount = null;
 
 		if (isLateCancellation)
 		{
@@ -72,15 +74,18 @@ public sealed class CancelAppointmentEndpoint(ApplicationDbContext dbContext)
 				if (service is null)
 					throw new NotFoundException("Serviço não encontrado para aplicar taxa de cancelamento.");
 
-				var feeAmount = service.Price * 0.35m;
+				feeAmount = service.Price * 0.35m;
 				var description = $"Taxa de cancelamento tardio (35%) — {service.Name}";
 				await dbContext.DebtBalances.AddAsync(
-					new DebtBalance(appointment.ClientId, appointment.Id, feeAmount, DebtType.LateCancellation, description, 35),
+					new DebtBalance(appointment.ClientId, appointment.Id, feeAmount.Value, DebtType.LateCancellation, description, 35),
 					ct);
 			}
 		}
 
 		await dbContext.SaveChangesAsync(ct);
+
+		var actorRole = canOptionallyApplyFee ? (User.IsInRole("Admin") ? "Admin" : "Manager") : "Client";
+		await new AppointmentCanceled(appointment.Id, appointment.ClientId, authenticatedUserId, actorRole, shouldApplyFee, feeAmount).PublishAsync(cancellation: ct);
 
 		await Send.NoContentAsync(ct);
 	}

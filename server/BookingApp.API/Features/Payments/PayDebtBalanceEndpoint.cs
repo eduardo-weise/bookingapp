@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using BookingApp.Domain.Entities;
+using BookingApp.Domain.Events;
 using BookingApp.Infrastructure.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +23,7 @@ public sealed class PayDebtBalanceEndpoint(ApplicationDbContext dbContext)
 	public override async Task HandleAsync(PayDebtBalanceRequest req, CancellationToken ct)
 	{
 		var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-		if (!Guid.TryParse(userIdString, out var _))
+		if (!Guid.TryParse(userIdString, out var authenticatedUserId))
 		{
 			await Send.UnauthorizedAsync(ct);
 			return;
@@ -38,12 +39,25 @@ public sealed class PayDebtBalanceEndpoint(ApplicationDbContext dbContext)
 			return;
 		}
 
-		foreach (var debt in debts.Where(d => d.Status == DebtStatus.Pending))
+		var paidDebts = debts.Where(d => d.Status == DebtStatus.Pending).ToList();
+		foreach (var debt in paidDebts)
 		{
 			debt.MarkAsPaid();
 		}
 
 		await dbContext.SaveChangesAsync(ct);
+
+		if (paidDebts.Count > 0)
+		{
+			var payerRole = User.IsInRole("Admin") || User.IsInRole("Manager")
+				? (User.IsInRole("Admin") ? "Admin" : "Manager")
+				: "Client";
+			var totalAmount = paidDebts.Sum(d => d.Amount);
+			var paidIds = paidDebts.Select(d => d.Id).ToList();
+
+			await new DebtPaid(req.ClientId, authenticatedUserId, payerRole, paidIds, totalAmount).PublishAsync(cancellation: ct);
+		}
+
 		await Send.NoContentAsync(ct);
 	}
 }

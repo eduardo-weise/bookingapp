@@ -1,4 +1,5 @@
 using BookingApp.API.Extentions;
+using BookingApp.API.Features.Notifications;
 using FastEndpoints;
 using FastEndpoints.Swagger;
 
@@ -9,6 +10,7 @@ var environment = builder.Environment;
 
 builder.Services
 	.AddEmail(configuration)
+	.AddSingleton<INotificationHub, NotificationHub>()
 	.AddCors(options =>
 	{
 		options.AddDefaultPolicy(policy =>
