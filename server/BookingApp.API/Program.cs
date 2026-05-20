@@ -1,5 +1,6 @@
 using BookingApp.API.Extentions;
 using BookingApp.API.Features.Notifications;
+using BookingApp.API.Features.Notifications.Outbox;
 using FastEndpoints;
 using FastEndpoints.Swagger;
 
@@ -11,6 +12,8 @@ var environment = builder.Environment;
 builder.Services
 	.AddEmail(configuration)
 	.AddSingleton<INotificationHub, NotificationHub>()
+	.Configure<OutboxOptions>(configuration.GetSection("Outbox"))
+	.AddHostedService<OutboxProcessorBackgroundService>()
 	.AddCors(options =>
 	{
 		options.AddDefaultPolicy(policy =>

@@ -14,6 +14,7 @@ public sealed class ApplicationDbContext(
 	public DbSet<SwapRequest> SwapRequests => Set<SwapRequest>();
 	public DbSet<AbsenceDay> AbsenceDays => Set<AbsenceDay>();
 	public DbSet<DebtBalance> DebtBalances => Set<DebtBalance>();
+	public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{

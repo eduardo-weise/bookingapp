@@ -45,8 +45,6 @@ public sealed class PayDebtBalanceEndpoint(ApplicationDbContext dbContext)
 			debt.MarkAsPaid();
 		}
 
-		await dbContext.SaveChangesAsync(ct);
-
 		if (paidDebts.Count > 0)
 		{
 			var payerRole = User.IsInRole("Admin") || User.IsInRole("Manager")
@@ -55,8 +53,12 @@ public sealed class PayDebtBalanceEndpoint(ApplicationDbContext dbContext)
 			var totalAmount = paidDebts.Sum(d => d.Amount);
 			var paidIds = paidDebts.Select(d => d.Id).ToList();
 
-			await new DebtPaid(req.ClientId, authenticatedUserId, payerRole, paidIds, totalAmount).PublishAsync(cancellation: ct);
+			var domainEvent = new DebtPaid(req.ClientId, authenticatedUserId, payerRole, paidIds, totalAmount);
+			var outboxMessage = OutboxMessage.FromDomainEvent(domainEvent);
+			await dbContext.OutboxMessages.AddAsync(outboxMessage, ct);
 		}
+
+		await dbContext.SaveChangesAsync(ct);
 
 		await Send.NoContentAsync(ct);
 	}

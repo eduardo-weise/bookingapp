@@ -92,10 +92,12 @@ public sealed class BookAppointmentEndpoint(ApplicationDbContext dbContext)
 		var appointment = new Appointment(targetClientId, req.ServiceId, startTime, endTime);
 
 		await dbContext.Appointments.AddAsync(appointment, ct);
-		await dbContext.SaveChangesAsync(ct);
-
 		var actorRole = isAdminOrManager ? (User.IsInRole("Admin") ? "Admin" : "Manager") : "Client";
-		await new AppointmentBooked(appointment.Id, targetClientId, authenticatedUserId, actorRole).PublishAsync(cancellation: ct);
+		var domainEvent = new AppointmentBooked(appointment.Id, targetClientId, authenticatedUserId, actorRole);
+		var outboxMessage = OutboxMessage.FromDomainEvent(domainEvent);
+		await dbContext.OutboxMessages.AddAsync(outboxMessage, ct);
+
+		await dbContext.SaveChangesAsync(ct);
 
 		await Send.CreatedAtAsync<BookAppointmentEndpoint>(null, new { Id = appointment.Id }, cancellation: ct);
 	}

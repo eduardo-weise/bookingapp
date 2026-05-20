@@ -80,9 +80,11 @@ public sealed class NoShowAppointmentEndpoint(ApplicationDbContext dbContext)
 				ct);
 		}
 
-		await dbContext.SaveChangesAsync(ct);
+		var domainEvent = new AppointmentNoShowed(appointment.Id, appointment.ClientId, penaltyAmount);
+		var outboxMessage = OutboxMessage.FromDomainEvent(domainEvent);
+		await dbContext.OutboxMessages.AddAsync(outboxMessage, ct);
 
-		await new AppointmentNoShowed(appointment.Id, appointment.ClientId, penaltyAmount).PublishAsync(cancellation: ct);
+		await dbContext.SaveChangesAsync(ct);
 
 		await Send.NoContentAsync(ct);
 	}

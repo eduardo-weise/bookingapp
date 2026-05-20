@@ -46,14 +46,16 @@ public sealed class CancelDebtBalanceEndpoint(ApplicationDbContext dbContext)
 			debt.Cancel();
 		}
 
-		await dbContext.SaveChangesAsync(ct);
-
 		if (canceledDebts.Count > 0)
 		{
 			var totalCanceled = canceledDebts.Sum(d => d.Amount);
 			var canceledIds = canceledDebts.Select(d => d.Id).ToList();
-			await new DebtCanceled(req.ClientId, canceledIds, totalCanceled).PublishAsync(cancellation: ct);
+			var domainEvent = new DebtCanceled(req.ClientId, canceledIds, totalCanceled);
+			var outboxMessage = OutboxMessage.FromDomainEvent(domainEvent);
+			await dbContext.OutboxMessages.AddAsync(outboxMessage, ct);
 		}
+
+		await dbContext.SaveChangesAsync(ct);
 
 		await Send.NoContentAsync(ct);
 	}

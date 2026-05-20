@@ -82,10 +82,12 @@ public sealed class CancelAppointmentEndpoint(ApplicationDbContext dbContext)
 			}
 		}
 
-		await dbContext.SaveChangesAsync(ct);
-
 		var actorRole = canOptionallyApplyFee ? (User.IsInRole("Admin") ? "Admin" : "Manager") : "Client";
-		await new AppointmentCanceled(appointment.Id, appointment.ClientId, authenticatedUserId, actorRole, shouldApplyFee, feeAmount).PublishAsync(cancellation: ct);
+		var domainEvent = new AppointmentCanceled(appointment.Id, appointment.ClientId, authenticatedUserId, actorRole, shouldApplyFee, feeAmount);
+		var outboxMessage = OutboxMessage.FromDomainEvent(domainEvent);
+		await dbContext.OutboxMessages.AddAsync(outboxMessage, ct);
+
+		await dbContext.SaveChangesAsync(ct);
 
 		await Send.NoContentAsync(ct);
 	}

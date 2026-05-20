@@ -108,10 +108,12 @@ public sealed class RescheduleAppointmentEndpoint(ApplicationDbContext dbContext
 			}
 		}
 
-		await dbContext.SaveChangesAsync(ct);
-
 		var actorRole = isAdminOrManager ? (User.IsInRole("Admin") ? "Admin" : "Manager") : "Client";
-		await new AppointmentRescheduled(appointment.Id, appointment.ClientId, authenticatedUserId, actorRole, shouldApplyFee, feeAmount).PublishAsync(cancellation: ct);
+		var domainEvent = new AppointmentRescheduled(appointment.Id, appointment.ClientId, authenticatedUserId, actorRole, shouldApplyFee, feeAmount);
+		var outboxMessage = OutboxMessage.FromDomainEvent(domainEvent);
+		await dbContext.OutboxMessages.AddAsync(outboxMessage, ct);
+
+		await dbContext.SaveChangesAsync(ct);
 
 		await Send.NoContentAsync(ct);
 	}
