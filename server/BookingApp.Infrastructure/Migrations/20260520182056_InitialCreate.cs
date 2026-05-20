@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace BookingApp.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddUserCpf : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,11 +16,28 @@ namespace BookingApp.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Date = table.Column<DateTime>(type: "date", nullable: false)
+                    StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AbsenceDays", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OutboxMessages",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Type = table.Column<string>(type: "text", nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    OccurredOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ProcessedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Error = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OutboxMessages", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -50,7 +67,11 @@ namespace BookingApp.Infrastructure.Migrations
                     IsMfaEnabled = table.Column<bool>(type: "boolean", nullable: false),
                     MfaSecret = table.Column<string>(type: "text", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    Role = table.Column<string>(type: "text", nullable: false)
+                    Role = table.Column<string>(type: "text", nullable: false),
+                    ExtraServiceDuration = table.Column<TimeSpan>(type: "interval", nullable: false),
+                    AvatarUrl = table.Column<string>(type: "text", nullable: true),
+                    ResetPasswordToken = table.Column<string>(type: "text", nullable: true),
+                    ResetPasswordExpiry = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -86,32 +107,6 @@ namespace BookingApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ClientServiceDurations",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ClientId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ServiceId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Duration = table.Column<TimeSpan>(type: "interval", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ClientServiceDurations", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ClientServiceDurations_Services_ServiceId",
-                        column: x => x.ServiceId,
-                        principalTable: "Services",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ClientServiceDurations_Users_ClientId",
-                        column: x => x.ClientId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "RefreshTokens",
                 columns: table => new
                 {
@@ -142,6 +137,9 @@ namespace BookingApp.Infrastructure.Migrations
                     AppointmentId = table.Column<Guid>(type: "uuid", nullable: false),
                     Amount = table.Column<decimal>(type: "numeric(10,2)", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: false),
+                    Type = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    FeePercentage = table.Column<decimal>(type: "numeric(5,2)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -190,10 +188,9 @@ namespace BookingApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_AbsenceDays_Date",
+                name: "IX_AbsenceDays_StartDate_EndDate",
                 table: "AbsenceDays",
-                column: "Date",
-                unique: true);
+                columns: new[] { "StartDate", "EndDate" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Appointments_ClientId_StartTime",
@@ -203,17 +200,6 @@ namespace BookingApp.Infrastructure.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Appointments_ServiceId",
                 table: "Appointments",
-                column: "ServiceId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ClientServiceDurations_ClientId_ServiceId",
-                table: "ClientServiceDurations",
-                columns: new[] { "ClientId", "ServiceId" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ClientServiceDurations_ServiceId",
-                table: "ClientServiceDurations",
                 column: "ServiceId");
 
             migrationBuilder.CreateIndex(
@@ -261,10 +247,10 @@ namespace BookingApp.Infrastructure.Migrations
                 name: "AbsenceDays");
 
             migrationBuilder.DropTable(
-                name: "ClientServiceDurations");
+                name: "DebtBalances");
 
             migrationBuilder.DropTable(
-                name: "DebtBalances");
+                name: "OutboxMessages");
 
             migrationBuilder.DropTable(
                 name: "RefreshTokens");
